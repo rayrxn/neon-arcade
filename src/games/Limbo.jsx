@@ -26,7 +26,7 @@ function useSpinNumber(final, key) {
 
 export default function Limbo({ game }) {
   const { t } = useT()
-  const { run } = useRunner()
+  const { run, busy } = useRunner()
   const [bet, setBet] = useState(100)
   const [target, setTarget] = useState('2.00')
   const [outcome, setOutcome] = useState(null)
@@ -56,7 +56,7 @@ export default function Limbo({ game }) {
           <button key={v} onClick={() => setTarget(v.toFixed(2))} className="h-8 flex-1 rounded-lg bg-white/[0.05] text-xs font-bold text-slate-300 hover:bg-white/[0.09]">{v}×</button>
         ))}
       </div>
-      <Button size="lg" className="w-full" onClick={go}>{t('play.play')}</Button>
+      <Button size="lg" className="w-full" onClick={go} disabled={busy || (outcome && !settled)}>{t('play.play')}</Button>
     </>
   )
 

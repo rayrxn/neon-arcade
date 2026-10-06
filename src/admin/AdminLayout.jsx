@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   Activity, ArrowLeft, Award, ChartColumn, CalendarCheck, FileText, FlaskConical, Gamepad2, Gift, LayoutDashboard,
   ListChecks, Megaphone, Menu, MessagesSquare, ScrollText, Settings, ShieldAlert, ShieldBan, Ticket, Users, Wallet, X, LifeBuoy, Server, Gavel,
-  Filter, Coins, WalletCards, BadgeCheck, ShoppingBag, Smile, Target, Gem,
+  Filter, Coins, WalletCards, BadgeCheck, ShoppingBag, Smile, Target, Gem, ChevronDown,
 } from 'lucide-react'
 import clsx from 'clsx'
 import Avatar from '@/components/ui/Avatar'
@@ -19,55 +19,97 @@ import RoleTag from '@/components/ui/RoleTag'
 
 /** Menu admin + permission yang dibutuhkan. Menu yang tidak boleh diakses tidak ditampilkan. */
 export const ADMIN_SECTIONS = [
-  { path: '', key: 'dashboard', icon: LayoutDashboard, perm: 'dashboard' },
-  { path: 'users', key: 'users', icon: Users, perm: 'users.view' },
-  { path: 'wallets', key: 'wallets', icon: Wallet, perm: 'wallet.manage' },
-  { path: 'games', key: 'games', icon: Gamepad2, perm: 'games.manage' },
-  { path: 'sessions', key: 'sessions', icon: Activity, perm: 'sessions.view' },
-  { path: 'anticheat', key: 'anticheat', icon: ShieldAlert, perm: 'anticheat' },
-  { path: 'moderation', key: 'moderation', icon: Gavel, perm: 'reports.view' },
-  { path: 'restrictions', key: 'restrictions', icon: ShieldBan, perm: 'moderation' },
-  { path: 'support', key: 'support', icon: LifeBuoy, perm: 'support.manage' },
-  { path: 'rewards', key: 'rewards', icon: Gift, perm: 'rewards.view' },
-  { path: 'daily', key: 'daily', icon: CalendarCheck, perm: 'rewards.view' },
-  { path: 'quests', key: 'quests', icon: ListChecks, perm: 'rewards.view' },
-  { path: 'achievements', key: 'achievements', icon: Award, perm: 'rewards.view' },
-  { path: 'codes', key: 'codes', icon: Ticket, perm: 'codes.manage' },
-  { path: 'chat', key: 'chat', icon: MessagesSquare, perm: 'moderation' },
-  { path: 'chat-filter', key: 'chatFilter', icon: Filter, perm: 'moderation.config' },
-  { path: 'economy', key: 'economy', icon: Coins, perm: 'economy.manage' },
-  { path: 'loyalty', key: 'loyalty', icon: WalletCards, perm: 'loyalty.manage' },
-  { path: 'player-roles', key: 'playerRoles', icon: BadgeCheck, perm: 'playerroles.manage' },
-  { path: 'shop', key: 'shop', icon: ShoppingBag, perm: 'shop.manage' },
-  { path: 'emotes', key: 'emotes', icon: Smile, perm: 'emotes.manage' },
-  { path: 'missions', key: 'missions', icon: Target, perm: 'rewards.manage' },
-  { path: 'memberships', key: 'memberships', icon: Gem, perm: 'memberships.manage' },
-  { path: 'announcements', key: 'announcements', icon: Megaphone, perm: 'announcements.manage' },
-  { path: 'reports', key: 'reports', icon: FileText, perm: 'moderation' },
-  { path: 'analytics', key: 'analytics', icon: ChartColumn, perm: 'analytics' },
-  { path: 'logs', key: 'logs', icon: ScrollText, perm: 'logs.view' },
-  { path: 'testmode', key: 'testmode', icon: FlaskConical, perm: 'testmode' },
-  { path: 'system', key: 'system', icon: Server, perm: 'system.manage' },
-  { path: 'settings', key: 'settings', icon: Settings, perm: 'dashboard' },
+  // Overview
+  { path: '', key: 'dashboard', icon: LayoutDashboard, perm: 'dashboard', group: 'overview' },
+  { path: 'analytics', key: 'analytics', icon: ChartColumn, perm: 'analytics', group: 'overview' },
+  { path: 'logs', key: 'logs', icon: ScrollText, perm: 'logs.view', group: 'overview' },
+  // Players & money
+  { path: 'users', key: 'users', icon: Users, perm: 'users.view', group: 'players' },
+  { path: 'wallets', key: 'wallets', icon: Wallet, perm: 'wallet.manage', group: 'players' },
+  { path: 'loyalty', key: 'loyalty', icon: WalletCards, perm: 'loyalty.manage', group: 'players' },
+  { path: 'player-roles', key: 'playerRoles', icon: BadgeCheck, perm: 'playerroles.manage', group: 'players' },
+  { path: 'memberships', key: 'memberships', icon: Gem, perm: 'memberships.manage', group: 'players' },
+  { path: 'economy', key: 'economy', icon: Coins, perm: 'economy.manage', group: 'players' },
+  // Games & fairness
+  { path: 'games', key: 'games', icon: Gamepad2, perm: 'games.manage', group: 'games' },
+  { path: 'sessions', key: 'sessions', icon: Activity, perm: 'sessions.view', group: 'games' },
+  { path: 'anticheat', key: 'anticheat', icon: ShieldAlert, perm: 'anticheat', group: 'games' },
+  { path: 'testmode', key: 'testmode', icon: FlaskConical, perm: 'testmode', group: 'games' },
+  // Community
+  { path: 'moderation', key: 'moderation', icon: Gavel, perm: 'reports.view', group: 'community' },
+  { path: 'reports', key: 'reports', icon: FileText, perm: 'moderation', group: 'community' },
+  { path: 'chat', key: 'chat', icon: MessagesSquare, perm: 'moderation', group: 'community' },
+  { path: 'chat-filter', key: 'chatFilter', icon: Filter, perm: 'moderation.config', group: 'community' },
+  { path: 'restrictions', key: 'restrictions', icon: ShieldBan, perm: 'moderation', group: 'community' },
+  { path: 'support', key: 'support', icon: LifeBuoy, perm: 'support.manage', group: 'community' },
+  { path: 'announcements', key: 'announcements', icon: Megaphone, perm: 'announcements.manage', group: 'community' },
+  // Rewards & store
+  { path: 'rewards', key: 'rewards', icon: Gift, perm: 'rewards.view', group: 'rewards' },
+  { path: 'daily', key: 'daily', icon: CalendarCheck, perm: 'rewards.view', group: 'rewards' },
+  { path: 'quests', key: 'quests', icon: ListChecks, perm: 'rewards.view', group: 'rewards' },
+  { path: 'achievements', key: 'achievements', icon: Award, perm: 'rewards.view', group: 'rewards' },
+  { path: 'missions', key: 'missions', icon: Target, perm: 'rewards.manage', group: 'rewards' },
+  { path: 'codes', key: 'codes', icon: Ticket, perm: 'codes.manage', group: 'rewards' },
+  { path: 'shop', key: 'shop', icon: ShoppingBag, perm: 'shop.manage', group: 'rewards' },
+  { path: 'emotes', key: 'emotes', icon: Smile, perm: 'emotes.manage', group: 'rewards' },
+  // Site
+  { path: 'system', key: 'system', icon: Server, perm: 'system.manage', group: 'system' },
+  { path: 'settings', key: 'settings', icon: Settings, perm: 'dashboard', group: 'system' },
 ]
+export const ADMIN_GROUPS = ['overview', 'players', 'games', 'community', 'rewards', 'system']
 
 function Nav({ onNavigate }) {
   const { t } = useT()
   const user = useCurrentUser()
+  const { pathname } = useLocation()
+  const visible = ADMIN_SECTIONS.filter((s) => can(user?.role, s.perm))
+  const activeGroup = visible.find((s) => (s.path ? pathname.startsWith(`/admin/${s.path}`) : pathname === '/admin'))?.group ?? 'overview'
+  const [open, setOpen] = useState(() => new Set([activeGroup]))
+  useEffect(() => setOpen((o) => (o.has(activeGroup) ? o : new Set([...o, activeGroup]))), [activeGroup])
+  const toggle = (g) => setOpen((o) => {
+    const n = new Set(o)
+    if (n.has(g)) n.delete(g)
+    else n.add(g)
+    return n
+  })
   return (
-    <nav className="space-y-0.5 p-2" aria-label="Admin">
-      {ADMIN_SECTIONS.filter((s) => can(user?.role, s.perm)).map((s) => (
-        <NavLink
-          key={s.key}
-          to={`/admin${s.path ? `/${s.path}` : ''}`}
-          end={!s.path}
-          onClick={onNavigate}
-          className={({ isActive }) => clsx('flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition', isActive ? 'bg-white/[0.08] text-white' : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200')}
-        >
-          <s.icon className="h-4 w-4 shrink-0" />
-          {t(`admin.nav.${s.key}`)}
-        </NavLink>
-      ))}
+    <nav className="space-y-1 p-2" aria-label="Admin">
+      {ADMIN_GROUPS.map((g) => {
+        const items = visible.filter((s) => s.group === g)
+        if (!items.length) return null
+        const isOpen = open.has(g)
+        return (
+          <div key={g}>
+            <button type="button" onClick={() => toggle(g)} aria-expanded={isOpen} className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition hover:bg-white/[0.03]">
+              <span>
+                <span className="block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">{t(`admin.groups.${g}`)}</span>
+                {!isOpen && <span className="block text-[11px] text-slate-600">{t(`admin.groupHints.${g}`)}</span>}
+              </span>
+              <ChevronDown className={clsx('h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform', isOpen && 'rotate-180')} />
+            </button>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }} className="overflow-hidden">
+                  <div className="space-y-0.5 pb-2 pl-1">
+                    {items.map((s) => (
+                      <NavLink
+                        key={s.key}
+                        to={`/admin${s.path ? `/${s.path}` : ''}`}
+                        end={!s.path}
+                        onClick={onNavigate}
+                        className={({ isActive }) => clsx('flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition', isActive ? 'bg-white/[0.08] text-white' : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200')}
+                      >
+                        <s.icon className="h-4 w-4 shrink-0" />
+                        {t(`admin.nav.${s.key}`)}
+                      </NavLink>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )
+      })}
     </nav>
   )
 }

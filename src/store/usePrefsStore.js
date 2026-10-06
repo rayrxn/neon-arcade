@@ -20,6 +20,8 @@ export const usePrefsStore = create(
       notifications: { transfers: true, redeem: true, jackpots: true, mentions: true, progress: true, friends: true },
       sound: DEFAULT_SOUND,
       betCurrency: 'AC',
+      sidebarCollapsed: false,
+      toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
       setLanguage: (language) => LANGUAGES.includes(language) && set({ language }),
       setBetCurrency: (betCurrency) => ['AC', 'AG'].includes(betCurrency) && set({ betCurrency }),

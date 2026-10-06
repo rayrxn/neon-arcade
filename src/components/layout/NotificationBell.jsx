@@ -4,7 +4,7 @@ import { Bell, BellOff } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { useCurrentUser } from '@/store/useAuthStore'
-import { useNotificationStore, useNotifications } from '@/store/useNotificationStore'
+import { useNotificationStore, useBellNotifications } from '@/store/useNotificationStore'
 import { describeNotification } from '@/components/notifications/describe'
 import { EmptyState } from '@/components/ui/Controls'
 import { useNow } from '@/hooks/useNow'
@@ -14,7 +14,7 @@ import { useT } from '@/i18n'
 export default function NotificationBell() {
   const { t, lang } = useT()
   const user = useCurrentUser()
-  const items = useNotifications(user?.id)
+  const items = useBellNotifications(user?.id)
   const markAllRead = useNotificationStore((s) => s.markAllRead)
   const markRead = useNotificationStore((s) => s.markRead)
   const [open, setOpen] = useState(false)

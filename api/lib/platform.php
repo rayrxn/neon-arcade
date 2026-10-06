@@ -6,7 +6,8 @@ declare(strict_types=1);
 
 const TRANSFER_LIMITS = ['AC' => ['min' => 10, 'max' => 100000, 'daily' => 50000], 'AG' => ['min' => 1, 'max' => 10, 'daily' => 3]];
 const AG_HOLD_S = 60;
-const JACKPOT_THRESHOLD = 10000;
+// Hanya kemenangan sangat besar yang diumumkan di Global Chat.
+const JACKPOT_THRESHOLD = ['AC' => 100000000, 'AG' => 2500];
 const ONLINE_WINDOW_MS = 75000;
 const EMOTES = ['emote-gg' => ['gg', 'GG'], 'emote-wave' => ['wave', '👋'], 'emote-fire' => ['fire', '🔥'], 'emote-gem' => ['gem', '💎']];
 const FREE_EMOTES = ['emote-gg', 'emote-wave'];
@@ -83,7 +84,7 @@ function progress_summary(array $p): array
 function chat_view(array $m): array
 {
     $data = jdec($m['data'] ?? null, []);
-    $v = ['id' => $m['id'], 'type' => $m['type'], 'userId' => $m['user_id'], 'text' => $m['body'], 'at' => iso_to_ms($m['created_at']), 'flagged' => (bool) $m['flagged'], 'badge' => $m['badge'], 'reports' => (int) ($m['reports'] ?? 0)];
+    $v = ['id' => $m['id'], 'type' => $m['type'], 'userId' => $m['user_id'], 'text' => $m['body'], 'at' => iso_to_ms($m['created_at']), 'flagged' => (bool) $m['flagged'], 'badge' => $m['badge'], 'reports' => (int) ($m['reports'] ?? 0), 'room' => $m['room'] ?? 'global'];
     if (!empty($data['jackpotId'])) $v['jackpotId'] = $data['jackpotId'];
     if ($m['deleted_at']) $v['deleted'] = ['by' => username_of($m['deleted_by']), 'at' => iso_to_ms($m['deleted_at']), 'reason' => $m['delete_reason']];
     return $v;
@@ -137,6 +138,8 @@ function ticket_view(array $t, bool $staff): array
         'status' => $t['status'], 'assignee' => $t['assignee_id'] ? ['id' => $t['assignee_id'], 'name' => username_of($t['assignee_id'])] : null,
         'info' => (object) jdec($t['info'], []), 'createdAt' => iso_to_ms($t['created_at']), 'updatedAt' => iso_to_ms($t['updated_at']), 'closedAt' => iso_to_ms($t['closed_at']),
         'messages' => $messages, 'notes' => $notes, 'history' => jdec($t['history'], []),
+        // Priority support: tickets of VIP / VVIP members are shown first to staff.
+        'memberTier' => member_tier($t['user_id']),
     ];
 }
 
@@ -172,7 +175,7 @@ function code_defs_view(): array
     $out = [];
     foreach (q('SELECT c.*, u.username FROM redeem_codes c LEFT JOIN users u ON u.id = c.created_by')->fetchAll() as $c) {
         $out[$c['code']] = ['rewards' => jdec($c['rewards'], []), 'globalLimit' => $c['max_uses'] ? (int) $c['max_uses'] : null, 'maxUses' => $c['max_uses'] ? (int) $c['max_uses'] : null,
-            'perUser' => (int) $c['per_user'], 'expiresAt' => iso_to_ms($c['expires_at']), 'active' => (bool) $c['active'], 'createdAt' => iso_to_ms($c['created_at']), 'createdBy' => $c['username'] ?? 'system'];
+            'perUser' => (int) $c['per_user'], 'expiresAt' => iso_to_ms($c['expires_at']), 'active' => (bool) $c['active'], 'createdAt' => iso_to_ms($c['created_at']), 'createdBy' => $c['username'] ?? 'system', 'membersOnly' => $c['members_only'] ?? null];
     }
     return $out;
 }
@@ -204,9 +207,12 @@ function sync_view(array $me): array
     }
     $presence[$me['id']] = now_ms();
 
-    $chat = array_reverse(array_map('chat_view', q("SELECT m.*, (SELECT count(*) FROM reports r WHERE r.message_id = m.id) AS reports FROM chat_messages m ORDER BY m.created_at DESC LIMIT 150")->fetchAll()));
+    // VIP room: visible to VIP / VVIP members and staff only.
+    $vipRoom = $staff || (bool) member_perk($me['id'], 'room', false);
+    $chat = array_reverse(array_map('chat_view', q("SELECT m.*, (SELECT count(*) FROM reports r WHERE r.message_id = m.id) AS reports FROM chat_messages m WHERE m.room = 'global' ORDER BY m.created_at DESC LIMIT 150")->fetchAll()));
+    if ($vipRoom) $chat = array_merge($chat, array_reverse(array_map('chat_view', q("SELECT m.*, (SELECT count(*) FROM reports r WHERE r.message_id = m.id) AS reports FROM chat_messages m WHERE m.room = 'vip' ORDER BY m.created_at DESC LIMIT 100")->fetchAll())));
     $hidden = q('SELECT message_id FROM chat_hidden WHERE user_id = ?', [$me['id']])->fetchAll(PDO::FETCH_COLUMN);
-    $jackpots = array_map(fn($j) => ['id' => $j['id'], 'userId' => $j['user_id'], 'username' => $j['username'], 'amount' => num($j['amount']), 'currency' => 'AC', 'game' => $j['game'], 'at' => iso_to_ms($j['at'])],
+    $jackpots = array_map(fn($j) => ['id' => $j['id'], 'userId' => $j['user_id'], 'username' => $j['username'], 'amount' => num($j['amount']), 'currency' => $j['currency'] ?? 'AC', 'game' => $j['game'], 'at' => iso_to_ms($j['at'])],
         q('SELECT j.*, u.username FROM jackpots j JOIN users u ON u.id = j.user_id ORDER BY j.at DESC LIMIT 50')->fetchAll());
     $friendships = array_map(fn($f) => ['id' => $f['id'], 'from' => $f['requester_id'], 'to' => $f['addressee_id'], 'status' => $f['status'], 'at' => iso_to_ms($f['created_at']), 'acceptedAt' => iso_to_ms($f['accepted_at'])],
         q('SELECT * FROM friendships WHERE requester_id = ? OR addressee_id = ?', [$me['id'], $me['id']])->fetchAll());
@@ -226,7 +232,8 @@ function sync_view(array $me): array
         'platform' => [
             'chat' => $chat, 'hidden' => (object) [$me['id'] => $hidden], 'presence' => (object) $presence, 'jackpots' => $jackpots,
             'friendships' => $friendships, 'blocks' => (object) $blocks, 'favorites' => (object) $favorites, 'chatSettings' => ['slowMode' => $slow],
-            'codeUsage' => (object) code_usage_view(), 'seededAt' => 1, 'catalog' => catalog_view(),
+            'codeUsage' => (object) code_usage_view(), 'seededAt' => 1, 'catalog' => catalog_view() + ['pass' => pass_catalog()],
+            'live' => live_results(), 'vipRoom' => $vipRoom,
         ],
         'admin' => [
             'announcements' => array_map('announcement_view', q('SELECT * FROM announcements ORDER BY created_at DESC LIMIT 100')->fetchAll()),
@@ -313,6 +320,8 @@ function redeem_resolve(array $me, $raw): array
     $def = q1('SELECT * FROM redeem_codes WHERE code = ?', [$code]);
     if (!$def || !$def['active']) fail('redeem.errors.invalid');
     if ($def['expires_at'] && strtotime($def['expires_at']) < time()) fail('redeem.errors.expired');
+    // Member-only codes (VIP codes work for VIP and VVIP; VVIP codes only for VVIP).
+    if (!empty($def['members_only']) && tier_rank(member_tier($me['id'])) < tier_rank($def['members_only'])) fail('redeem.errors.members', ['tier' => strtoupper($def['members_only'])]);
     if ((int) qv('SELECT count(*) FROM redeem_uses WHERE code = ? AND user_id = ?', [$code, $me['id']]) >= (int) $def['per_user']) fail('redeem.errors.used');
     $used = (int) qv('SELECT count(*) FROM redeem_uses WHERE code = ?', [$code]);
     if ($def['max_uses'] && $used >= (int) $def['max_uses']) fail('redeem.errors.soldOut');
@@ -347,13 +356,11 @@ function redeem_claim(array $me, array &$meta, array &$profile, $raw): array
 
 // ───────────────────────────── Jackpot ─────────────────────────────
 
-function record_jackpot(string $userId, float $amount, string $game): void
+function record_jackpot(string $userId, float $amount, string $game, string $currency = 'AC'): void
 {
-    if ($amount < JACKPOT_THRESHOLD) return;
-    $id = (string) qv('INSERT INTO jackpots (user_id, amount, game) VALUES (?, ?, ?) RETURNING id', [$userId, (string) $amount, $game]);
+    if ($amount <= (JACKPOT_THRESHOLD[$currency] ?? INF)) return;
+    $id = (string) qv('INSERT INTO jackpots (user_id, amount, game, currency) VALUES (?, ?, ?, ?::currency_code) RETURNING id', [$userId, (string) $amount, $game, $currency]);
     q("INSERT INTO chat_messages (user_id, type, body, data) VALUES (NULL, 'jackpot', 'jackpot', ?::jsonb)", [jenc(['jackpotId' => $id])]);
-    $name = username_of($userId);
-    q("INSERT INTO notifications (user_id, kind, data) SELECT id, 'jackpot', ?::jsonb FROM users WHERE id <> ? AND NOT is_test", [jenc(['username' => $name, 'amount' => $amount, 'game' => $game]), $userId]);
 }
 
 // ───────────────────────────── Chat ─────────────────────────────
@@ -370,9 +377,11 @@ function chat_moderate(string $text): array
     return [$masked, $flagged];
 }
 
-function chat_send(array $me, array &$p, array &$meta, array &$profile, $raw, ?array $verdict = null): array
+function chat_send(array $me, array &$p, array &$meta, array &$profile, $raw, ?array $verdict = null, string $room = 'global'): array
 {
     $now = now_ms();
+    if (!in_array($room, ['global', 'vip'], true)) fail('errors.invalidRequest');
+    if ($room === 'vip' && !is_staff_role($me['role']) && !member_perk($me['id'], 'room', false)) fail('chat.errors.vipOnly');
     if (($me['muted_until'] ?? null) === 'infinity') fail('chat.errors.mutedPermanent');
     if (!empty($me['muted_until']) && strtotime($me['muted_until']) > time()) {
         fail('chat.errors.muted', ['until' => local_dt(iso_to_ms($me['muted_until']))->format('d/m/Y H:i')]);
@@ -406,7 +415,7 @@ function chat_send(array $me, array &$p, array &$meta, array &$profile, $raw, ?a
     if ($mine && $now - iso_to_ms($mine[0]['created_at']) < 60000 && mb_strtolower($mine[0]['body']) === mb_strtolower($text)) fail('chat.errors.duplicate');
     $badge = $profile['equipped']['chatBadge'] ?? null;
     $badge = in_array($badge, CHAT_BADGES, true) && in_array($badge, $meta['inventory'], true) ? $badge : null;
-    $row = q1("INSERT INTO chat_messages (user_id, type, body, flagged, badge) VALUES (?, 'user', ?, ?, ?) RETURNING *", [$me['id'], $text, $flagged, $badge]);
+    $row = q1("INSERT INTO chat_messages (user_id, type, body, flagged, badge, room) VALUES (?, 'user', ?, ?, ?, ?) RETURNING *", [$me['id'], $text, $flagged, $badge, $room]);
     log_event('MESSAGE_SENT', $me['id'], ['messageId' => $row['id'], 'flagged' => $flagged]);
     if ($flagged) log_event('SECURITY_EVENT', $me['id'], ['kind' => 'profanity', 'messageId' => $row['id']]);
     preg_match_all('/@([a-zA-Z0-9_]{3,16})/', $text, $mm);

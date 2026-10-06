@@ -8,7 +8,7 @@ import { COSMETICS, SEASON_TIER_XP } from '@/config/cosmetics'
 import { ACHIEVEMENTS, levelFromXp } from '@/config/progression'
 import { getGameName } from '@/config/games'
 import { equippedOf } from '@/services/cosmetics'
-import { currentSeason, seasonTier, seasonXpOf } from '@/services/seasons'
+import { currentSeason, seasonTier, seasonTierProgress, seasonXpOf } from '@/services/seasons'
 import { formatCoins, formatDate, timeAgo } from '@/utils/format'
 import { pick, useT } from '@/i18n'
 import { ProfileBanner, StyledName, UserTags } from '@/components/ui/Identity'
@@ -21,20 +21,20 @@ export function ProfileHero({ user, progress, actions, online }) {
   const banner = eq.banner ? COSMETICS[eq.banner]?.gradient : 'from-neon-cyan/15 via-neon-purple/10 to-transparent'
   return (
     <section className="glass overflow-hidden rounded-2xl">
-      <ProfileBanner user={user} fallback={clsx('bg-gradient-to-r', banner)} className="h-20 sm:h-24" />
-      <div className="-mt-10 flex flex-col gap-4 px-4 pb-5 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between sm:px-6">
-        <div className="flex min-w-0 items-end gap-4">
-          <Avatar user={user} size="xl" online={online} className="rounded-2xl ring-4 ring-ink-900" />
-          <div className="min-w-0 pb-1">
+      <ProfileBanner user={user} fallback={clsx('bg-gradient-to-r', banner)} className="h-28 sm:h-40" />
+      <div className="flex flex-col gap-4 px-4 pb-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+        <div className="flex min-w-0 items-start gap-4">
+          <Avatar user={user} size="xl" online={online} className="-mt-10 shrink-0 rounded-2xl ring-4 ring-ink-900 sm:-mt-12" />
+          <div className="min-w-0 pt-3">
             <h1 className="flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-xl font-bold text-white sm:text-2xl">
-              <StyledName user={user} className="truncate" /> <UserTags user={user} /> {user.isDemo && <DemoTag />}
+              <StyledName user={user} className="min-w-0 truncate" /> <UserTags user={user} /> {user.isDemo && <DemoTag />}
               {user.isTest && <span className="rounded bg-neon-gold/15 px-1.5 py-0.5 text-[10px] font-extrabold text-neon-gold">TEST</span>}
             </h1>
-            <p className="truncate text-sm text-slate-400">
+            <p className="mt-0.5 truncate text-sm text-slate-400">
               @{user.username}
               {eq.title && <span className="ml-2 text-neon-cyan">· {pick(COSMETICS[eq.title]?.name, lang)}</span>}
             </p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <span className="rounded-md bg-neon-cyan/10 px-1.5 py-0.5 font-mono text-[11px] font-bold text-neon-cyan ring-1 ring-inset ring-neon-cyan/25">Lv {lv.level}</span>
               {eq.badges.map((b) => (
                 <span key={b} title={pick(COSMETICS[b]?.name, lang)} className="origin-left scale-75"><ItemPreview id={b} user={user} size="sm" /></span>
@@ -42,7 +42,7 @@ export function ProfileHero({ user, progress, actions, online }) {
             </div>
           </div>
         </div>
-        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap gap-2 sm:shrink-0 sm:pt-3">{actions}</div>}
       </div>
       <div className="flex flex-wrap gap-x-5 gap-y-2 border-t hairline px-4 py-3 text-xs text-slate-500 sm:px-6">
         <span className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> {t('profile.memberSince', { date: formatDate(user.createdAt, { month: 'long', year: 'numeric' }) })}</span>
@@ -74,7 +74,7 @@ export function ProfileDetails({ user, progress, favorites = [] }) {
     [t('profile.stats.wl'), `${formatCoins(ps.wins)} / ${formatCoins(ps.losses)}`, t('profile.stats.winRate', { pct: winRate })],
     [t('profile.stats.achievements'), `${achieved}/${ACHIEVEMENTS.length}`],
     [t('profile.stats.bestMultiplier'), `${ps.bestMultiplier.toFixed(2)}×`],
-    [t('profile.stats.season'), t('profile.stats.tier', { tier: seasonTier(sxp) }), `${formatCoins(sxp % SEASON_TIER_XP)} / ${SEASON_TIER_XP} SXP`],
+    [t('profile.stats.season'), t('profile.stats.tier', { tier: seasonTier(sxp) }), `${formatCoins(seasonTierProgress(sxp))} / ${SEASON_TIER_XP} SXP`],
   ]
   return (
     <>

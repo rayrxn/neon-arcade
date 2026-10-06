@@ -15,6 +15,7 @@ import { GAMES } from '@/config/games'
 import { useNow } from '@/hooks/useNow'
 import { useT } from '@/i18n'
 import { StyledName, UserTags } from '@/components/ui/Identity'
+import EventBanner from '@/components/home/EventBanner'
 
 function greetingKey(hour) {
   if (hour < 11) return 'home.greeting.morning'
@@ -82,6 +83,8 @@ export default function HomePage() {
           <LevelBar compact />
         </div>
       </div>
+
+      <EventBanner />
 
       <BalanceCards />
 

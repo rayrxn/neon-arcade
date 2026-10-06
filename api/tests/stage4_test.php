@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../index.php';
+$GLOBALS['NEON_NO_COOLDOWN'] = true;
 
 $pass = 0;
 $failures = [];
@@ -140,18 +141,13 @@ check('limit message vars (AC / AG / card)', ($r['vars']['ac'] ?? '') === '250,0
 expect_error('No card: max 250,000 AC', call('POST', 'game/dice', ['bet' => 250001, 'target' => 50, 'over' => true], 'p1'), 'play.errors.loyaltyMax');
 expect_error('bad currency rejected', call('POST', 'game/dice', ['bet' => 5, 'target' => 50, 'over' => true, 'currency' => 'BTC'], 'p1'), 'play.errors.invalid');
 
-// ───────── Loyalty unlock ─────────
-echo "Loyalty unlock\n";
-setbal($P1, 1000000, 2);
-$r = call('POST', 'loyalty/unlock', [], 'p1');
-expect_error('unlock with too little → nothing deducted', $r, 'loyalty.errors.insufficient');
-check('exact missing amounts shown', ($r['vars']['ac'] ?? '') === '500,000' && ($r['vars']['ag'] ?? '') === '3', $r['vars'] ?? null);
-check('balances unchanged after failed unlock', bal('p1') == 1000000 && bal('p1', 'AG') == 2);
-setbal($P1, 1600000, 6);
-$r = call('POST', 'loyalty/unlock', [], 'p1');
-check('unlock Silver with 1,500,000 AC + 5 AG', $r['ok'] && $r['data']['result']['card'] === 'silver', $r);
-check('both currencies deducted atomically', bal('p1') == 100000 && bal('p1', 'AG') == 1);
-check('card stored server-side (floor)', qv('SELECT loyalty_floor FROM users WHERE id = ?', [$P1]) === 'silver' && extras('p1')['loyalty']['card'] === 'silver');
+// ───────── Loyalty: earned with XP only ─────────
+echo "Loyalty (XP only)\n";
+setbal($P1, 5000000, 20);
+expect_error('cards cannot be bought', call('POST', 'loyalty/unlock', [], 'p1'), 'loyalty.errors.notForSale');
+check('balances unchanged after refused unlock', bal('p1') == 5000000 && bal('p1', 'AG') == 20);
+tx(fn() => add_loyalty_xp($P1, 5000, 'admin'));
+check('5,000 Loyalty XP → Silver', extras('p1')['loyalty']['card'] === 'silver');
 setbal($P1, 600000, 30);
 cool();
 check('Silver: 500,000 AC bet allowed', ($x = call('POST', 'game/dice', ['bet' => 500000, 'target' => 50, 'over' => true], 'p1'))['ok'], $x);
@@ -257,7 +253,7 @@ expect_error('second claim while pending', call('POST', 'missions/claim', ['miss
 expect_error('player cannot approve his own claim', admin('p3', 'reviewClaim', ['claimId' => $c['data']['result']['id'], 'approve' => true]), 'admin.errors.forbidden');
 $ac = bal('p3'); $ag = bal('p3', 'AG'); $lx = (int) qv('SELECT loyalty_xp FROM users WHERE id = ?', [$P3]);
 check('owner approves → rewards credited', admin('own', 'reviewClaim', ['claimId' => $c['data']['result']['id'], 'approve' => true, 'note' => 'seen in game'])['ok']
-    && bal('p3') == $ac + 25000 && bal('p3', 'AG') == $ag + 2 && (int) qv('SELECT loyalty_xp FROM users WHERE id = ?', [$P3]) === $lx + 500);
+    && bal('p3') == $ac + 25000 && bal('p3', 'AG') == $ag + 2 && (int) qv('SELECT loyalty_xp FROM users WHERE id = ?', [$P3]) >= $lx + 500);
 expect_error('approve twice → rejected', admin('own', 'reviewClaim', ['claimId' => $c['data']['result']['id'], 'approve' => true]), 'missions.errors.reviewed');
 expect_error('one-time mission cannot be claimed again', call('POST', 'missions/claim', ['missionId' => 'roblox-merge-inc', 'proof' => 'Rayzer_99'], 'p3'), 'missions.errors.claimed');
 $c2 = call('POST', 'missions/claim', ['missionId' => 'roblox-merge-inc', 'proof' => 'Other_1'], 'p1');
@@ -274,7 +270,7 @@ check('owner activates VVIP', admin('own', 'setMembership', ['userId' => $P2, 't
 $ex = extras('p2');
 check('membership state + VIP/VVIP emotes unlocked', $ex['membership']['tier'] === 'vvip' && in_array('vvip', $ex['emotes'], true) && in_array('vip', $ex['emotes'], true));
 check('VVIP cosmetic equippable without buying', call('POST', 'shop/equip', ['slot' => 'nameEffect', 'itemId' => 'vvip-name'], 'p2')['ok']);
-check('membership does not change bet limits', extras('p2')['loyalty']['maxBetAC'] == 250000);
+check('VVIP: Platinum card floor + 50% bet limit', extras('p2')['loyalty']['card'] === 'platinum' && extras('p2')['loyalty']['maxBetAC'] == 3750000 && extras('p2')['loyalty']['maxBetAG'] == 187, extras('p2')['loyalty']);
 check('owner ends membership → cosmetics drop', admin('own', 'setMembership', ['userId' => $P2, 'tier' => null, 'reason' => 'refund'])['ok'] && empty(me('p2')['user']['style']['nameEffect']) && !in_array('vvip', extras('p2')['emotes'], true));
 
 // ───────── Crash minimum cash out ─────────
@@ -283,8 +279,11 @@ cool();
 setbal($P3, 50000, 0);
 $t0 = now_ms();
 $GLOBALS['NEON_NOW'] = $t0;
+$t0 = $t0 + 7200000;
+$GLOBALS['NEON_NOW'] = $t0;
 $cs = call('POST', 'game/crash-start', ['bet' => 100], 'p3');
 $cid = $cs['data']['result']['id'];
+$t0 = $cs['data']['result']['startedAt'];
 q("UPDATE game_sessions SET state = jsonb_set(state, '{point}', '50') WHERE id = ?", [$cid]);
 $GLOBALS['NEON_NOW'] = $t0 + (int) crash_time_of(1.02) + 5;
 expect_error('crash: cash out at 1.02× rejected', call('POST', 'game/crash-cashout', ['id' => $cid], 'p3'), 'play.crash.minCashout');

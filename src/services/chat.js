@@ -47,11 +47,11 @@ export function moderate(text) {
   return { text: masked, flagged }
 }
 
-export async function sendMessage(raw) {
+export async function sendMessage(raw, room = 'global') {
   const me = getCurrentUser()
   if (!me) throw new AppError('errors.sessionExpired')
   if (SERVER_MODE) {
-    const data = await api('chat/send', { text: String(raw ?? '') })
+    const data = await api('chat/send', { text: String(raw ?? ''), room })
     applyState(data.state)
     applyOut(me.id, data.result.out)
     usePlatformStore.setState((s) => ({ chat: [...s.chat.filter((m) => m.id !== data.result.message.id), data.result.message].slice(-200) }))

@@ -4,6 +4,8 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../index.php';
+// Jeda antar ronde (anti-spam) dimatikan di tes umum; diuji sendiri di stage5_test.php.
+$GLOBALS['NEON_NO_COOLDOWN'] = true;
 
 $pass = 0;
 $failures = [];
@@ -131,36 +133,54 @@ expect_error('roulette tanpa taruhan', call('POST', 'game/roulette', ['bets' => 
 // Batas 8 ronde/detik juga berlaku di tes → beri jeda antar bagian.
 function cool(): void { usleep(1100000); }
 
-// ── Crash (waktu dipalsukan) ──
+// ── Crash global (waktu dipalsukan): satu ronde untuk semua pemain ──
 cool();
-$t0 = now_ms();
+$t0 = now_ms() + 3600000;
 $GLOBALS['NEON_NOW'] = $t0;
-$cs = call('POST', 'game/crash-start', ['bet' => 50], 'a');
-check('crash start', $cs['ok'] && !isset($cs['data']['result']['point']), $cs);
+$st = call('GET', 'crash/state', [], 'a');
+check('crash: state ronde betting', $st['ok'] && $st['data']['round']['phase'] === 'betting' && $st['data']['round']['point'] === null, $st);
+$rid = $st['data']['round']['id'];
+$start = $st['data']['round']['startAt'];
+$cs = call('POST', 'game/crash-bet', ['bet' => 50], 'a');
+check('crash: taruhan masuk ronde global', $cs['ok'] && $cs['data']['result']['roundId'] === $rid && $cs['data']['result']['startedAt'] === $start, $cs);
 $cid = $cs['data']['result']['id'];
-expect_error('crash: ronde kedua ditolak', call('POST', 'game/crash-start', ['bet' => 50], 'a'), 'play.errors.roundOpen');
-$point = (float) jdec((string) qv('SELECT state FROM game_sessions WHERE id = ?', [$cid]))['point'];
-check('titik crash tidak dikirim ke UI', !str_contains(jenc($cs['data']['result']), 'point'));
-$GLOBALS['NEON_NOW'] = $t0 + 100;
-$tk = call('POST', 'game/crash-tick', ['id' => $cid], 'a');
-check('crash tick berjalan', $tk['ok'] && ($point <= 1.01 || $tk['data']['result']['done'] === false), $tk['data']['result'] ?? $tk);
+expect_error('crash: taruhan kedua di ronde yang sama ditolak', call('POST', 'game/crash-bet', ['bet' => 50], 'a'), 'play.crash.alreadyIn');
+check('titik crash tidak dikirim ke UI', !str_contains(jenc($cs['data']['result']), 'point') && !str_contains(jenc(call('GET', 'crash/state', [], 'a')['data']['round']), '"point":' . '1'));
+$point = (float) qv('SELECT point FROM crash_rounds WHERE id = ?', [$rid]);
+$cb = call('POST', 'game/crash-bet', ['bet' => 30, 'autoCashout' => 1.5], 'b');
+check('crash: pemain lain ikut ronde yang sama', $cb['ok'] && $cb['data']['result']['roundId'] === $rid, $cb);
+$GLOBALS['NEON_NOW'] = $start - 100;
+expect_error('crash: cash out sebelum roket berangkat ditolak', call('POST', 'game/crash-cashout', ['id' => $cid], 'a'), 'play.crash.minCashout');
+$GLOBALS['NEON_NOW'] = $start + 50;
+expect_error('crash: taruhan setelah ronde mulai ditolak', call('POST', 'game/crash-bet', ['bet' => 10], 'b'), 'play.crash.betClosed');
+$fly = call('GET', 'crash/state', [], 'a');
+check('crash: fase terbang, titik masih rahasia', $fly['data']['round']['phase'] === ($point <= 1.0 ? 'crashed' : 'flying') && ($point <= 1.0 || $fly['data']['round']['point'] === null));
 if ($point > 1.2) {
-    $GLOBALS['NEON_NOW'] = $t0 + (int) (crash_time_of(1.1) + 50);
+    $GLOBALS['NEON_NOW'] = $start + (int) (crash_time_of(1.1) + 50);
     $co = call('POST', 'game/crash-cashout', ['id' => $cid], 'a');
     check('crash cash out menang', $co['ok'] && $co['data']['result']['session']['result'] === 'win' && $co['data']['result']['cashedAt'] >= 1.1, $co['data']['result'] ?? $co);
     $again = call('POST', 'game/crash-cashout', ['id' => $cid], 'a');
     check('crash cash out kedua = hasil lama', $again['ok'] && !empty($again['data']['result']['stale']));
+    check('crash: cash out terlihat di daftar pemain', (float) qv('SELECT cashed_at FROM crash_bets WHERE session_id = ?', [$cid]) >= 1.1);
 } else {
-    $GLOBALS['NEON_NOW'] = $t0 + 60000;
+    $GLOBALS['NEON_NOW'] = $start + 60000;
     $co = call('POST', 'game/crash-tick', ['id' => $cid], 'a');
     check('crash meledak', $co['ok'] && $co['data']['result']['crashed'] === true);
 }
-// Crash meledak saat waktunya lewat
-$GLOBALS['NEON_NOW'] = $t0 + 120000;
-$cs2 = call('POST', 'game/crash-start', ['bet' => 20], 'a');
+// Ronde berikutnya: ronde lama diselesaikan untuk semua (termasuk auto cash out pemain yang tidak membuka halaman).
+$GLOBALS['NEON_NOW'] = $start + (int) crash_time_of($point) + 4000;
+$nx = call('GET', 'crash/state', [], 'b');
+check('crash: ronde baru dibuat setelah jeda', $nx['ok'] && $nx['data']['round']['id'] > $rid && $nx['data']['round']['phase'] === 'betting', $nx['data']['round'] ?? $nx);
+$prev = array_values(array_filter($nx['data']['history'], fn($h) => $h['id'] === $rid))[0] ?? null;
+$bs = q1('SELECT status, payout FROM game_sessions WHERE id = ?', [$cb['data']['result']['id']]);
+check('crash: taruhan pemain offline diselesaikan otomatis', $bs['status'] !== 'OPEN' && ($point >= 1.5 ? (float) $bs['payout'] == 45.0 : (float) $bs['payout'] == 0.0), [$point, $bs]);
+check('crash: seed diungkap setelah ronde (provably fair)', (bool) qv('SELECT 1 FROM crash_rounds WHERE id = ? AND settled AND seed_hash = encode(digest(server_seed, \'sha256\'), \'hex\')', [$rid]) || hash('sha256', (string) qv('SELECT server_seed FROM crash_rounds WHERE id = ?', [$rid])) === qv('SELECT seed_hash FROM crash_rounds WHERE id = ?', [$rid]));
+// Cash out setelah meledak = kalah
+$r2 = $nx['data']['round'];
+$cs2 = call('POST', 'game/crash-bet', ['bet' => 20], 'a');
 $cid2 = $cs2['data']['result']['id'];
-$p2 = (float) jdec((string) qv('SELECT state FROM game_sessions WHERE id = ?', [$cid2]))['point'];
-$GLOBALS['NEON_NOW'] = $t0 + 120000 + (int) crash_time_of($p2) + 10;
+$p2 = (float) qv('SELECT point FROM crash_rounds WHERE id = ?', [$r2['id']]);
+$GLOBALS['NEON_NOW'] = $r2['startAt'] + (int) crash_time_of($p2) + 10;
 $late = call('POST', 'game/crash-cashout', ['id' => $cid2], 'a');
 check('crash: cash out setelah meledak = kalah', $late['ok'] && $late['data']['result']['crashed'] === true && $late['data']['result']['session']['payout'] == 0, $late['data']['result'] ?? $late);
 cool();

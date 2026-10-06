@@ -139,7 +139,8 @@ export function EconomyAdmin() {
           columns={[
             { key: 'at', label: t('admin.cols.time'), render: (x) => <span className="whitespace-nowrap text-xs">{formatDateTime(x.at)}</span> },
             { key: 'user', label: t('admin.cols.user'), render: (x) => `@${x.username}` },
-            { key: 'type', label: t('adm2.type'), render: (x) => <Badge tone={x.category === 'admin' ? 'gold' : 'slate'}>{x.category} · {x.type}</Badge> },
+            { key: 'why', label: t('adm2.economy.why'), render: (x) => <Badge tone={x.why === 'selfCredit' || x.why === 'hugeWin' ? 'red' : 'gold'}>{t(`adm2.economy.whys.${x.why ?? 'other'}`)}</Badge> },
+            { key: 'type', label: t('adm2.type'), render: (x) => <span className="text-xs text-slate-400">{x.category} · {x.type}</span> },
             { key: 'amount', label: t('adm2.amount'), align: 'right', mono: true, render: (x) => <span className={x.amount < 0 ? 'text-neon-red' : 'text-neon-green'}>{x.amount > 0 ? '+' : ''}{formatCoins(x.amount)} {x.currency}</span> },
             { key: 'reason', label: t('admin.reason'), render: (x) => <span className="text-xs text-slate-400">{x.reason ?? '—'}</span> },
           ]}
@@ -162,10 +163,11 @@ export function EconomyAdmin() {
 
 function CardEditor({ card, onClose, ask }) {
   const { t } = useT()
-  const [f, setF] = useState({ ...card, benefitsText: card.benefits.join('\n') })
+  const [f, setF] = useState({ ...card, perks: { dailyAc: 0, dailyAg: 0, convertPct: 0, shopDiscount: 0, lxpPct: 0, ...(card.perks ?? {}) }, benefitsText: card.benefits.join('\n') })
+  const perk = (k) => (e) => setF({ ...f, perks: { ...f.perks, [k]: Number(e.target.value.replace(/\D/g, '')) || 0 } })
   const num = (k) => (e) => setF({ ...f, [k]: e.target.value === '' ? null : Number(e.target.value.replace(/[^\d.]/g, '')) })
   return (
-    <Modal open onClose={onClose} size="lg" title={t('adm2.loyalty.editCard', { card: card.name })} footer={<><Button variant="ghost" className="flex-1" onClick={onClose}>{t('common.cancel')}</Button><Button className="flex-1" onClick={() => { ask(t('adm2.loyalty.editCard', { card: card.name }), 'updateCard', { slug: card.slug, patch: { name: f.name, xpRequired: f.xpRequired, maxBetAC: f.maxBetAC, maxBetAG: f.maxBetAG, unlockAC: f.unlockAC, unlockAG: f.unlockAG, color: f.color, benefits: lines(f.benefitsText) } }); onClose() }}>{t('adm2.save')}</Button></>}>
+    <Modal open onClose={onClose} size="lg" title={t('adm2.loyalty.editCard', { card: card.name })} footer={<><Button variant="ghost" className="flex-1" onClick={onClose}>{t('common.cancel')}</Button><Button className="flex-1" onClick={() => { ask(t('adm2.loyalty.editCard', { card: card.name }), 'updateCard', { slug: card.slug, patch: { name: f.name, xpRequired: f.xpRequired, maxBetAC: f.maxBetAC, maxBetAG: f.maxBetAG, perks: f.perks, color: f.color, benefits: lines(f.benefitsText) } }); onClose() }}>{t('adm2.save')}</Button></>}>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t('adm2.name')}><input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={inputCls} /></Field>
         <Field label={t('adm2.color')}><div className="flex gap-2"><input type="color" value={f.color} onChange={(e) => setF({ ...f, color: e.target.value })} className="h-10 w-12 rounded-lg bg-transparent" /><input value={f.color} onChange={(e) => setF({ ...f, color: e.target.value })} className={inputCls} /></div></Field>
@@ -173,8 +175,11 @@ function CardEditor({ card, onClose, ask }) {
         <div />
         <Field label={t('adm2.loyalty.maxAc')}><input inputMode="numeric" value={f.maxBetAC ?? ''} onChange={num('maxBetAC')} className={inputCls} /></Field>
         <Field label={t('adm2.loyalty.maxAg')}><input inputMode="numeric" value={f.maxBetAG ?? ''} onChange={num('maxBetAG')} className={inputCls} /></Field>
-        {card.slug !== 'none' && <Field label={t('adm2.loyalty.unlockAc')} hint={t('adm2.loyalty.emptyNotForSale')}><input inputMode="numeric" value={f.unlockAC ?? ''} onChange={num('unlockAC')} className={inputCls} /></Field>}
-        {card.slug !== 'none' && <Field label={t('adm2.loyalty.unlockAg')}><input inputMode="numeric" value={f.unlockAG ?? ''} onChange={num('unlockAG')} className={inputCls} /></Field>}
+        <Field label={t('adm2.loyalty.perkDailyAc')}><input inputMode="numeric" value={f.perks.dailyAc} onChange={perk('dailyAc')} className={inputCls} /></Field>
+        <Field label={t('adm2.loyalty.perkDailyAg')}><input inputMode="numeric" value={f.perks.dailyAg} onChange={perk('dailyAg')} className={inputCls} /></Field>
+        <Field label={t('adm2.loyalty.perkConvert')}><input inputMode="numeric" value={f.perks.convertPct} onChange={perk('convertPct')} className={inputCls} /></Field>
+        <Field label={t('adm2.loyalty.perkDiscount')}><input inputMode="numeric" value={f.perks.shopDiscount} onChange={perk('shopDiscount')} className={inputCls} /></Field>
+        <Field label={t('adm2.loyalty.perkLxp')}><input inputMode="numeric" value={f.perks.lxpPct} onChange={perk('lxpPct')} className={inputCls} /></Field>
       </div>
       <Field label={t('adm2.benefits')} hint={t('adm2.onePerLine')}><textarea rows={5} value={f.benefitsText} onChange={(e) => setF({ ...f, benefitsText: e.target.value })} className={clsx(inputCls, 'h-auto py-2')} /></Field>
     </Modal>
@@ -204,7 +209,7 @@ export function LoyaltyAdmin() {
             { key: 'name', label: t('adm2.name'), render: (c) => <span className="font-semibold text-white">{c.name}</span> },
             { key: 'xp', label: t('adm2.loyalty.xpRequired'), align: 'right', mono: true, render: (c) => formatCoins(c.xpRequired) },
             { key: 'max', label: t('adm2.loyalty.maxBet'), align: 'right', mono: true, render: (c) => `${formatCoins(c.maxBetAC)} AC · ${formatCoins(c.maxBetAG)} AG` },
-            { key: 'unlock', label: t('adm2.loyalty.unlock'), align: 'right', mono: true, render: (c) => (c.unlockAC === null ? '—' : `${formatCoins(c.unlockAC)} AC + ${formatCoins(c.unlockAG)} AG`) },
+            { key: 'perk', label: t('adm2.loyalty.dailyBonus'), align: 'right', mono: true, render: (c) => (c.perks?.dailyAc ? `${formatCoins(c.perks.dailyAc)} AC${c.perks.dailyAg ? ` + ${c.perks.dailyAg} AG` : ''}` : '—') },
             { key: 'holders', label: t('adm2.loyalty.holders'), align: 'right', mono: true, render: (c) => counts[c.slug] ?? 0 },
             { key: 'edit', label: '', align: 'right', render: (c) => <Button size="xs" variant="ghost" onClick={() => setEditing(c)}><Pencil className="h-3.5 w-3.5" /> {t('adm2.edit')}</Button> },
           ]}
@@ -580,6 +585,7 @@ export function MembershipsAdmin() {
   const [tier, setTier] = useState('vip')
   const [days, setDays] = useState(30)
   const [cfg, setCfg] = useState(null)
+  const [mgr, setMgr] = useState('')
   const c = cfg ?? catalog.memberships ?? {}
   const target = Object.values(users).find((u) => u.id === uid)
   if (!SERVER_MODE) return <LiveOnly title={t('adm2.members.title')} />
@@ -599,6 +605,14 @@ export function MembershipsAdmin() {
             <span className="text-xs text-slate-500">{t('adm2.members.days')}</span>
             <Button size="sm" onClick={() => ask(t('adm2.members.activateFor', { user: target.username }), 'setMembership', { userId: target.id, tier, days })}>{t('adm2.members.activateBtn')}</Button>
             {target.membership && <Button size="sm" variant="danger" onClick={() => ask(t('adm2.members.end', { user: target.username }), 'setMembership', { userId: target.id, tier: null })}><Ban className="h-3.5 w-3.5" /> {t('adm2.members.endBtn')}</Button>}
+            <Button size="sm" variant="ghost" onClick={() => ask(t('adm2.members.grantPass', { user: target.username }), 'grantPass', { userId: target.id })}>{t('adm2.members.grantPassBtn')}</Button>
+          </div>
+        )}
+        {target?.membership === 'vvip' && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-400">{t('adm2.members.manager')}</span>
+            <Select value={mgr} onChange={setMgr} options={[{ value: '', label: '—' }, ...Object.values(users).filter((u) => u.role && u.role !== 'user').map((u) => ({ value: u.id, label: `@${u.username}` }))]} />
+            <Button size="sm" onClick={() => ask(t('adm2.members.setManager', { user: target.username }), 'setManager', { userId: target.id, managerId: mgr })}>{t('adm2.save')}</Button>
           </div>
         )}
         <p className="mt-3 text-xs text-slate-500">{t('adm2.members.paymentNote')}</p>
@@ -625,6 +639,7 @@ export function MembershipsAdmin() {
           { key: 'state', label: t('admin.cols.status'), render: (m) => (m.active ? <Badge tone="green">{t('membership.active')}</Badge> : <Badge>{t('adm2.members.ended')}</Badge>) },
           { key: 'ends', label: t('adm2.members.endsAt'), render: (m) => <span className="text-xs">{m.endsAt ? formatDateTime(m.endsAt) : '—'}</span> },
           { key: 'by', label: t('admin.cols.admin'), render: (m) => (m.by ? `@${m.by}` : '—') },
+          { key: 'manager', label: t('adm2.members.manager'), render: (m) => (m.manager ? `@${m.manager}` : '—') },
           { key: 'note', label: t('admin.reason'), render: (m) => <span className="text-xs text-slate-400">{m.note}</span> },
         ]} />
       </Card>

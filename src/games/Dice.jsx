@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
-import { BetInput, Choice, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
+import { BetInput, Choice, Field, GameShell, Stage, fmtMult, playOutcome, useLock, useRunner } from '@/components/play/GameKit'
 import { playDice } from '@/services/games'
 import { diceMultiplier, HOUSE_EDGE } from '@/utils/rng'
 import { formatCoins } from '@/utils/format'
@@ -10,7 +10,8 @@ import { useT } from '@/i18n'
 
 export default function Dice({ game }) {
   const { t } = useT()
-  const { run } = useRunner()
+  const { run, busy } = useRunner()
+  const [locked, lock] = useLock()
   const [bet, setBet] = useState(100)
   const [target, setTarget] = useState(50)
   const [over, setOver] = useState(true)
@@ -24,6 +25,7 @@ export default function Dice({ game }) {
   const go = async () => {
     const res = await run(() => playDice({ bet, target, over }))
     if (!res) return
+    lock(700)
     setOutcome(res)
     playOutcome(res)
   }
@@ -34,7 +36,7 @@ export default function Dice({ game }) {
       <Field label={t('play.dice.mode')}>
         <Choice value={over} onChange={setOver} options={[{ value: false, label: t('play.dice.under') }, { value: true, label: t('play.dice.over') }]} />
       </Field>
-      <Button size="lg" className="w-full" onClick={go}>{t('play.play')}</Button>
+      <Button size="lg" className="w-full" onClick={go} disabled={busy || locked}>{t('play.play')}</Button>
     </>
   )
 

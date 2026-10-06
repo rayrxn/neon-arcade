@@ -17,7 +17,9 @@ export const TRANSFER_LIMITS = {
 export const AG_HOLD_MS = 60_000
 
 /** Kemenangan ≥ nilai ini diumumkan sebagai jackpot di Global Chat. */
-export const JACKPOT_THRESHOLD = 10_000
+/** Kemenangan di atas angka ini diumumkan di Global Chat (sama dengan server). */
+export const JACKPOT_THRESHOLDS = { AC: 100_000_000, AG: 2_500 }
+export const JACKPOT_THRESHOLD = JACKPOT_THRESHOLDS.AC
 
 /** Paket Top Up — harga dalam Rupiah. Pembayaran belum terhubung (lihat services/payments.js). */
 export const TOP_UP_PACKAGES = [

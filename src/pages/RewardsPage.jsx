@@ -2,6 +2,8 @@ import { Award, CalendarDays, Crown, Gift, ListChecks } from 'lucide-react'
 import { Panel } from '@/components/ui/Controls'
 import { AchievementGrid, DailyReward, LevelBar, QuestList, SeasonPanel } from '@/components/progress/ProgressKit'
 import Missions from '@/components/progress/Missions'
+import { PassStrip } from '@/pages/BattlePassPage'
+import { SERVER_MODE } from '@/config/runtime'
 import { useNow } from '@/hooks/useNow'
 import { formatCountdown } from '@/utils/format'
 import { useT } from '@/i18n'
@@ -25,9 +27,13 @@ export default function RewardsPage() {
 
       <Missions />
 
-      <Panel title={t('season.panel')} icon={Crown} bodyClassName="p-4 sm:p-5">
-        <SeasonPanel />
-      </Panel>
+      {SERVER_MODE ? (
+        <PassStrip />
+      ) : (
+        <Panel title={t('season.panel')} icon={Crown} bodyClassName="p-4 sm:p-5">
+          <SeasonPanel />
+        </Panel>
+      )}
 
       <Panel title={t('rewards.daily.title')} icon={Gift} bodyClassName="p-4 sm:p-5">
         <DailyReward />

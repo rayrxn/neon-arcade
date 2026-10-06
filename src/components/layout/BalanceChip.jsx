@@ -33,8 +33,6 @@ export default function BalanceChip({ currency }) {
     // Label "+xxx" untuk payout ikut ditahan sampai reveal.
     if (anyHeld && lastDelta.amount > 0) return setQueued(lastDelta)
     setFlash(lastDelta)
-    const timer = setTimeout(() => setFlash(null), 1500)
-    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastDelta, currency])
 
@@ -42,9 +40,14 @@ export default function BalanceChip({ currency }) {
     if (anyHeld || !queued) return
     setFlash(queued)
     setQueued(null)
+  }, [anyHeld, queued])
+
+  // Label +/− selalu hilang 1,5 detik setelah muncul (dulu bisa tertinggal kalau ada perubahan saldo mata uang lain).
+  useEffect(() => {
+    if (!flash) return
     const timer = setTimeout(() => setFlash(null), 1500)
     return () => clearTimeout(timer)
-  }, [anyHeld, queued])
+  }, [flash])
 
   return (
     <Link

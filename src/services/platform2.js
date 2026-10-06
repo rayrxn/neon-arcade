@@ -27,6 +27,17 @@ export const equipStyle = (slot, itemId) => call('shop/equip', { slot, itemId: i
 export const favoriteEmote = (code, on) => call('emotes/favorite', { code, on })
 export const claimMission = (missionId, proof) => call('missions/claim', { missionId, proof: String(proof ?? '').trim() })
 export const requestMembership = (tier) => call('membership/request', { tier }).then((r) => (sync(), r))
+// ── v3: perks, battle pass, banner, manager ──
+export const claimPerk = (kind) => call('perk/claim', { kind }).then((r) => (r?.ac || r?.ag ? play('reward') : null, r))
+export const setNameAffix = (prefix, suffix) => call('profile/affix', { prefix, suffix })
+export const uploadBanner = (image) => call('profile/banner', { image })
+export const buyPass = () => call('pass/buy').then((r) => (play('levelup'), r))
+export const claimPass = (track = 'all', tier = 0) => call('pass/claim', { track, tier }).then((r) => (play('reward'), r))
+export const contactManager = (text) => call('manager/contact', { text }).then((r) => (sync(), r))
+export async function fetchPnl(days) {
+  if (!SERVER_MODE) throw new AppError('errors.serverOnly')
+  return api(`stats/pnl?days=${days}`)
+}
 
 // ── selectors ──
 const EMPTY_CATALOG = { cards: [], roles: [], emotes: [], shop: [], missions: [], memberships: {}, economy: { acPerAg: 25000, convertMinAg: 1, convertMaxAgPerDay: 200 } }

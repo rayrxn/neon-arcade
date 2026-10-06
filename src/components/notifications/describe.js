@@ -55,7 +55,7 @@ export function describeNotification(t, lang, n) {
   if (n.kind === 'announcement') return { ...meta, title: d.title, body: d.message }
   if (n.kind === 'security') {
     const event = d.event ?? 'suspicious'
-    const sv = { ...vars, until: d.permanent ? t('admin.permanent') : d.until ? new Date(d.until).toLocaleString() : '', reason: d.reason ?? '', amount: d.amount != null ? `${formatCoins(Math.abs(d.amount))} ${d.currency ?? 'AC'}` : '' }
+    const sv = { ...vars, until: d.permanent ? t('admin.permanent') : d.until ? new Date(d.until).toLocaleString() : '', reason: d.reason && d.reason !== '—' ? d.reason : '', amount: d.amount != null ? `${formatCoins(Math.abs(d.amount))} ${d.currency ?? 'AC'}` : '' }
     return { ...meta, title: t(`notifications.securityEvents.${event}.title`, sv), body: t(`notifications.securityEvents.${event}.body`, sv) }
   }
   if (n.kind === 'levelUp' && vars.reward) return { ...meta, title: prefix + t('notifications.levelUp.title', vars), body: t('notifications.levelUp.bodyReward', vars) }

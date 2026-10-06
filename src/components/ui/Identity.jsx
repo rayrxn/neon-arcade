@@ -21,12 +21,18 @@ export function StyledName({ user, className, children }) {
   const fx = itemOf(catalog, user?.style?.nameEffect)
   const colors = fx?.style?.colors
   const text = children ?? user?.displayName ?? '—'
-  if (!colors || colors.length < 2) return <span className={className}>{text}</span>
-  return (
-    <span className={clsx('name-fx', fx.style.glitch && 'name-fx--glitch', className)} style={{ backgroundImage: gradient(colors) }} data-text={typeof text === 'string' ? text : undefined}>
+  // VVIP prefix / suffix around the name (only when the name itself is shown).
+  const pre = children == null && user?.namePrefix ? <span className="name-affix">{user.namePrefix}</span> : null
+  const suf = children == null && user?.nameSuffix ? <span className="name-affix">{user.nameSuffix}</span> : null
+  const name = !colors || colors.length < 2 ? (
+    <span className={pre || suf ? undefined : className}>{text}</span>
+  ) : (
+    <span className={clsx('name-fx', fx.style.glitch && 'name-fx--glitch', !(pre || suf) && className)} style={{ backgroundImage: gradient(colors) }} data-text={typeof text === 'string' ? text : undefined}>
       {text}
     </span>
   )
+  if (!pre && !suf) return name
+  return <span className={clsx('inline-flex min-w-0 items-baseline gap-1', className)}>{pre}{name}{suf}</span>
 }
 
 /** Small loyalty card tag ([SILVER], [GOLD], ...). Hidden for "No Card". */
@@ -112,6 +118,8 @@ export function RichText({ text, myUsername }) {
 /** Inline style for a chat message with an equipped chat effect. */
 export function chatEffectProps(catalog, user) {
   const fx = itemOf(catalog, user?.style?.chatEffect)
+  // VVIP: highlighted messages (used when no chat effect is equipped).
+  if (!fx?.style?.color && user?.membership === 'vvip') return { className: 'chat-highlight' }
   if (!fx?.style?.color) return {}
   return {
     className: clsx('chat-fx', fx.style.animated && 'chat-fx--animated'),
@@ -125,11 +133,14 @@ export function ProfileBanner({ user, fallback, className }) {
   const theme = itemOf(catalog, user?.style?.theme)
   const fx = itemOf(catalog, user?.style?.profileEffect)
   const colors = theme?.style?.colors
+  // Banner upload pemain (gambar sendiri) menang atas tema; efek profil tetap tampil di atasnya.
+  const image = user?.bannerUrl
   return (
     <div
-      className={clsx('relative overflow-hidden', !colors && fallback, className)}
-      style={colors ? { backgroundImage: `linear-gradient(120deg, ${colors[0]}, ${colors[1] ?? colors[0]})` } : undefined}
+      className={clsx('relative overflow-hidden', !colors && !image && fallback, className)}
+      style={image ? { backgroundImage: `url("${image}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : colors ? { backgroundImage: `linear-gradient(120deg, ${colors[0]}, ${colors[1] ?? colors[0]})` } : undefined}
     >
+      {image && <span className="absolute inset-0 bg-gradient-to-t from-ink-950/50 to-transparent" aria-hidden="true" />}
       {fx?.style?.kind && <ProfileFx kind={fx.style.kind} colors={fx.style.colors ?? ['#22d3ee', '#a855f7']} />}
     </div>
   )

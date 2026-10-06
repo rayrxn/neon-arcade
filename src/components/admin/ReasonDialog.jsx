@@ -24,7 +24,6 @@ export default function ReasonDialog({ open, onClose, title, description, childr
   }, [open])
 
   const submit = async () => {
-    if (reason.trim().length < 5) return setError(t('admin.errors.reason'))
     setBusy(true)
     try {
       await onConfirm(reason.trim())
@@ -54,10 +53,10 @@ export default function ReasonDialog({ open, onClose, title, description, childr
       <div className="space-y-4">
         {children}
         <div>
-          <label htmlFor="admin-reason" className="mb-1.5 block text-xs font-semibold text-slate-400">{t('admin.reason')}</label>
+          <label htmlFor="admin-reason" className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-400">{t('admin.reason')} <span className="font-normal text-slate-600">{t('play.optional')}</span></label>
           <textarea
             id="admin-reason"
-            rows={3}
+            rows={2}
             value={reason}
             onChange={(e) => {
               setReason(e.target.value)

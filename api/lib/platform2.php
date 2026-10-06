@@ -68,8 +68,12 @@ function effective_card(array $u): string
 {
     if (!empty($u['loyalty_override']) && isset(cards_all()[$u['loyalty_override']])) return $u['loyalty_override'];
     $byXp = card_for_xp((int) ($u['loyalty_xp'] ?? 0));
-    $floor = $u['loyalty_floor'] ?? 'none';
-    return card_rank($floor) > card_rank($byXp) ? $floor : $byXp;
+    $best = $byXp;
+    // Floor: card granted by the Owner, or the card that comes with an active VIP/VVIP membership.
+    foreach ([$u['loyalty_floor'] ?? 'none', member_card_floor($u['id'] ?? '')] as $floor) {
+        if ($floor && isset(cards_all()[$floor]) && card_rank($floor) > card_rank($best)) $best = $floor;
+    }
+    return $best;
 }
 
 function next_card(string $slug): ?array
@@ -85,7 +89,7 @@ function card_view(array $c): array
         'slug' => $c['slug'], 'name' => $c['name'], 'rank' => (int) $c['rank'], 'xpRequired' => (int) $c['xp_required'],
         'maxBetAC' => num($c['max_bet_ac']), 'maxBetAG' => num($c['max_bet_ag']),
         'unlockAC' => $c['unlock_ac'] === null ? null : num($c['unlock_ac']), 'unlockAG' => $c['unlock_ag'] === null ? null : num($c['unlock_ag']),
-        'color' => $c['color'], 'benefits' => jdec($c['benefits'], []),
+        'color' => $c['color'], 'benefits' => jdec($c['benefits'], []), 'perks' => card_perks($c['slug']),
     ];
 }
 
@@ -98,16 +102,24 @@ function loyalty_view(array $u): array
     return [
         'xp' => $xp, 'card' => $card, 'floor' => $u['loyalty_floor'], 'override' => $u['loyalty_override'],
         'next' => $next ? $next['slug'] : null, 'nextXp' => $next ? (int) $next['xp_required'] : null,
-        'maxBetAC' => num($c['max_bet_ac']), 'maxBetAG' => num($c['max_bet_ag']),
+        'maxBetAC' => bet_limits($u)['AC'], 'maxBetAG' => bet_limits($u)['AG'],
+        'perks' => card_perks($card),
     ];
 }
 
-/** Hard server-side bet limit from the player's Loyalty Card. */
-function check_loyalty_bet(array $u, string $currency, int $bet): void
+/** Bet limits: the Loyalty Card limit, raised by an active VIP (+20%) / VVIP (+50%) membership. */
+function bet_limits(array $u): array
 {
     $c = cards_all()[effective_card($u)];
-    $max = (float) ($currency === 'AG' ? $c['max_bet_ag'] : $c['max_bet_ac']);
-    if ($bet > $max) fail('play.errors.loyaltyMax', ['ac' => number_format((float) $c['max_bet_ac']), 'ag' => number_format((float) $c['max_bet_ag']), 'card' => $c['name']]);
+    $pct = member_perk($u['id'] ?? '', 'betPct', 0);
+    return ['AC' => (float) floor((float) $c['max_bet_ac'] * (1 + $pct / 100)), 'AG' => (float) floor((float) $c['max_bet_ag'] * (1 + $pct / 100)), 'card' => $c['name']];
+}
+
+/** Hard server-side bet limit from the player's Loyalty Card (+ membership bonus). */
+function check_loyalty_bet(array $u, string $currency, int $bet): void
+{
+    $l = bet_limits($u);
+    if ($bet > $l[$currency === 'AG' ? 'AG' : 'AC']) fail('play.errors.loyaltyMax', ['ac' => number_format($l['AC']), 'ag' => number_format($l['AG']), 'card' => $l['card']]);
 }
 
 const LXP_GAME_DAILY_CAP = 5000;
@@ -122,7 +134,7 @@ function add_loyalty_xp(string $userId, int $amount, string $source, ?string $re
 {
     if ($amount === 0) return 0;
     if ($amount > 0) {
-        $amount = (int) floor($amount * boost_mult($userId, 'lxp'));
+        $amount = (int) floor($amount * boost_mult($userId, 'lxp') * (1 + card_perks(effective_card(q1('SELECT * FROM users WHERE id = ?', [$userId]) ?? []))['lxpPct'] / 100));
         if ($source === 'game') {
             $today = (int) qv("SELECT coalesce(sum(amount), 0) FROM loyalty_xp_log WHERE user_id = ? AND source = 'game' AND at > date_trunc('day', now() AT TIME ZONE 'Asia/Jakarta') AT TIME ZONE 'Asia/Jakarta'", [$userId]);
             $amount = max(0, min($amount, LXP_GAME_DAILY_CAP - $today));
@@ -145,6 +157,8 @@ function add_loyalty_xp(string $userId, int $amount, string $source, ?string $re
 /** Buy the next card with AC + AG. Atomic: both debits or nothing. */
 function loyalty_unlock(array $me): array
 {
+    // Cards are earned with Loyalty XP only.
+    fail('loyalty.errors.notForSale');
     $u = q1('SELECT * FROM users WHERE id = ? FOR UPDATE', [$me['id']]);
     if ($u['wallet_frozen']) fail('errors.walletFrozen');
     $current = effective_card($u);
@@ -181,7 +195,7 @@ function convert_ac_to_ag(array $me, $amountAc, string $requestId): array
     $cost = $ag * $rate;
     if ((float) qv('SELECT ac_balance FROM wallets WHERE user_id = ?', [$me['id']]) < $cost) fail('errors.insufficient');
     $today = (float) qv("SELECT coalesce(sum(amount), 0) FROM wallet_transactions WHERE user_id = ? AND category = 'convert' AND currency = 'AG' AND created_at > now() - interval '24 hours'", [$me['id']]);
-    $max = (int) $cfg['convertMaxAgPerDay'];
+    $max = convert_cap($me);
     if ($today + $ag > $max) fail('convert.errors.daily', ['max' => $max, 'left' => max(0, $max - (int) $today)]);
     wallet_post($me['id'], 'AC', -$cost, 'convert', 'convert', 'converter', "AC → AG ($rate AC = 1 AG)", null, "convert:$requestId:AC");
     wallet_post($me['id'], 'AG', $ag, 'convert', 'convert', 'converter', "AC → AG ($rate AC = 1 AG)", null, "convert:$requestId:AG");
@@ -361,7 +375,8 @@ function shop_buy(array $me, string $itemId, string $requestId): array
     if (!meets_requires($req, $u, $tier)) fail('shop.errors.requires', ['card' => isset($req['card']) ? cards_all()[$req['card']]['name'] ?? $req['card'] : '', 'tier' => strtoupper((string) ($req['membership'] ?? ''))]);
     $owned = (int) (qv('SELECT qty FROM shop_inventory WHERE user_id = ? AND item_id = ? FOR UPDATE', [$me['id'], $itemId]) ?? 0);
     if (!$item['repeatable'] && $owned > 0) fail('shop.errors.owned');
-    $price = (float) $item['price_ag'];
+    // Discount: the best of the Loyalty Card and membership discounts (they don't stack).
+    $price = (float) ceil((float) $item['price_ag'] * (100 - shop_discount_of($u)) / 100);
     $tx = null;
     if ($price > 0) {
         $bal = (float) qv('SELECT ag_balance FROM wallets WHERE user_id = ?', [$me['id']]);
@@ -687,6 +702,8 @@ function catalog_view(bool $withInactive = false): array
         'shop' => array_values(array_map('shop_item_view', shop_items_all())),
         'missions' => array_map('mission_view', $missions),
         'memberships' => kv_get('memberships'),
+        'memberPerks' => MEMBER_PERKS,
+        'endless' => ['rounds' => ENDLESS_ROUNDS, 'ac' => ENDLESS_REWARD_AC, 'lxp' => ENDLESS_REWARD_LXP],
         'economy' => kv_get('economy'),
     ];
 }
@@ -715,6 +732,8 @@ function extras_view(string $userId, array $meta): array
         'membership' => $m ? ['tier' => $m['tier'], 'endsAt' => iso_to_ms($m['ends_at'])] : null,
         'claims' => $claims,
         'convertedToday' => num($convertedToday),
+        'convertCap' => convert_cap($u),
+        'perks' => perks_view($u, $meta),
     ];
 }
 
@@ -730,5 +749,8 @@ function user_extra_fields(array $u, array $profile): array
         'playerRoleManual' => $u['player_role'] ?? null,
         'membership' => $tier,
         'style' => (object) style_view($u, $profile, null, $tier),
+        'bannerUrl' => banner_url($u['id']),
+        'namePrefix' => $tier === 'vvip' ? ($u['name_prefix'] ?? null) : null,
+        'nameSuffix' => $tier === 'vvip' ? ($u['name_suffix'] ?? null) : null,
     ];
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../index.php';
+$GLOBALS['NEON_NO_COOLDOWN'] = true;
 
 $pass = 0;
 $failures = [];
@@ -109,7 +110,6 @@ $balOf = fn($id) => (float) qv('SELECT ac_balance FROM wallets WHERE user_id = ?
 $xpOf = fn($id) => (int) qv("SELECT (progress->>'xp')::int FROM user_docs WHERE user_id = ?", [$id]);
 $p1Bal = $balOf($P1);
 expect_error('reset: teks konfirmasi salah', admin('owner', 'releaseReset', ['scope' => 'testers', 'confirm' => 'reset', 'reason' => 'rilis v1']), 'admin.errors.invalid');
-expect_error('reset: alasan wajib', admin('owner', 'releaseReset', ['scope' => 'testers', 'confirm' => 'RESET TESTER', 'reason' => '']), 'admin.errors.reason');
 $r = admin('owner', 'releaseReset', ['scope' => 'testers', 'confirm' => 'RESET TESTER', 'reason' => 'rilis v1.1']);
 check('reset tester jalan', $r['ok'] && $r['data']['result']['accounts'] >= 1, $r);
 check('reset tester: saldo tester kembali 10.000 AC', $balOf($TESTER) == 10000, $balOf($TESTER));

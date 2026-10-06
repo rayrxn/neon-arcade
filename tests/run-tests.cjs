@@ -45,7 +45,7 @@ const ReactRouterDOM = {
     return h('a', { href: to, className: typeof className === 'function' ? className({ isActive }) : className, ...p }, typeof children === 'function' ? children({ isActive }) : children)
   },
   Navigate: ({ to }) => h('meta', { 'data-navigate': to }),
-  Outlet: () => outlet, useLocation: () => ({ pathname: currentPath, state: null }), useNavigate: () => () => {},
+  Outlet: () => outlet, useLocation: () => ({ pathname: currentPath, state: null }), useNavigate: () => () => {}, useSearchParams: () => [new URLSearchParams(''), () => {}],
   useParams: () => ({ slug: currentPath.split('/').pop(), username: currentPath.split('/').pop(), id: currentPath.startsWith('/admin/users/') ? globalThis.__adminUserId : currentPath.split('/')[2] }),
   matchPath: (pattern, p) => (p.startsWith('/games/') ? { params: { slug: p.split('/').pop() } } : null),
 }
@@ -291,7 +291,7 @@ const assert = (label, cond, extra = '') => { if (!cond) failures++; console.log
   assert('RBAC: normal user blocked', tryErr(() => AD.adjustCurrency(B, 'AC', 100, 'testing reason')) === 'admin.errors.forbidden')
   // switch to budi (super admin)
   auth().getState().logout(); await auth().getState().login({ email: 'budi@arcade.test', password: 'arcade123' })
-  assert('reason required', tryErr(() => AD.adjustCurrency(A, 'AC', 100, 'no')) === 'admin.errors.reason')
+  assert('reason optional (short ok)', tryErr(() => AD.adjustCurrency(A, 'AC', 1, 'no')) === null)
   let before = w()[A].balance
   const adj = AD.adjustCurrency(A, 'AC', 1000, 'Compensation for bug')
   assert('give AC: before→after + audit log', adj.after === before + 1000 && w()[A].balance === before + 1000 && L('src/store/useAdminStore.js').useAdminStore.getState().logs[0].action === 'wallet.add')

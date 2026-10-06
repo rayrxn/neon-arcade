@@ -48,7 +48,7 @@ function JackpotMessage({ jackpot, now }) {
       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-neon-gold/15 text-neon-gold"><Trophy className="h-4 w-4" /></span>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-neon-gold">{t('jackpot.announcement')}</p>
-        <p className="text-sm font-semibold text-slate-200">{t('jackpot.wonOn', { user: jackpot.username, amount: `${formatCoins(jackpot.amount)} AC`, game: getGameName(jackpot.game) })}</p>
+        <p className="text-sm font-semibold text-slate-200">{t('jackpot.wonOn', { user: jackpot.username, amount: `${formatCoins(jackpot.amount)} ${jackpot.currency ?? 'AC'}`, game: getGameName(jackpot.game) })}</p>
       </div>
       <span className="shrink-0 self-start text-[11px] text-slate-500">{timeAgo(jackpot.at, now)}</span>
     </div>
@@ -116,7 +116,7 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
  * Global Chat. `compact` = pratinjau di Home (beberapa pesan terakhir + link).
  * Pesan & author dibaca dari store, jadi edit profil langsung terlihat di chat.
  */
-export default function ChatRoom({ compact = false, limit, className }) {
+export default function ChatRoom({ compact = false, limit, className, room = 'global' }) {
   const { t } = useT()
   const me = useCurrentUser()
   const chat = usePlatformStore((s) => s.chat)
@@ -130,9 +130,9 @@ export default function ChatRoom({ compact = false, limit, className }) {
   const byId = useMemo(() => Object.fromEntries(Object.values(users).map((u) => [u.id, u])), [users])
   const jackpotById = useMemo(() => Object.fromEntries(jackpots.map((j) => [j.id, j])), [jackpots])
   const visible = useMemo(() => {
-    const list = visibleMessages({ chat, hidden: { [me?.id]: hidden }, blocks: { [me?.id]: blocks } }, me?.id)
+    const list = visibleMessages({ chat, hidden: { [me?.id]: hidden }, blocks: { [me?.id]: blocks } }, me?.id).filter((m) => (m.room ?? 'global') === room)
     return limit ? list.slice(-limit) : list
-  }, [chat, hidden, blocks, limit, me?.id])
+  }, [chat, hidden, blocks, limit, me?.id, room])
 
   const [text, setText] = useState('')
   const [error, setError] = useState(null)
@@ -167,7 +167,7 @@ export default function ChatRoom({ compact = false, limit, className }) {
   const submit = async (e) => {
     e.preventDefault()
     try {
-      await sendMessage(text)
+      await sendMessage(text, room)
       setText('')
       setError(null)
       setAtBottom(true)

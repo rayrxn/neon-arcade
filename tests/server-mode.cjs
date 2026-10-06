@@ -42,7 +42,7 @@ const ReactRouterDOM = {
   Link: ({ to, children, ...p }) => h('a', { href: to, ...p }, children),
   NavLink: ({ to, children, className, end, ...p }) => h('a', { href: to, className: typeof className === 'function' ? className({ isActive: false }) : className, ...p }, typeof children === 'function' ? children({ isActive: false }) : children),
   Navigate: ({ to }) => h('meta', { 'data-navigate': to }),
-  Outlet: () => outlet, useLocation: () => ({ pathname: currentPath, state: null }), useNavigate: () => () => {},
+  Outlet: () => outlet, useLocation: () => ({ pathname: currentPath, state: null }), useNavigate: () => () => {}, useSearchParams: () => [new URLSearchParams(''), () => {}],
   useParams: () => ({ slug: currentPath.split('/').pop(), username: currentPath.split('/').pop(), id: currentPath.split('/').pop() }),
   matchPath: (pattern, p) => (p.startsWith('/games/') ? { params: { slug: p.split('/').pop() } } : null),
 }
@@ -152,20 +152,28 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   assert('error server → AppError i18n', (await code(() => Gm.playDice({ bet: 1.5, target: 50, over: true }))) === 'play.errors.wholeBet')
   await sleep(1100)
 
-  // Crash: start → tick lokal + polling server → cash out
-  const cs = await Gm.crashStart({ bet: 20 })
-  assert('crash start', !!cs?.id && Math.abs(cs.startedAt - Date.now()) < 5000)
-  assert('crash resume (openRound) dari server', Gm.openRound('crash')?.id === cs.id)
-  let tick = Gm.crashTick(cs.id)
-  assert('crash tick sinkron (kurva lokal)', tick.done === false && tick.multiplier >= 1)
-  let crashRes = null
-  for (let i = 0; i < 20 && !crashRes; i++) {
-    await sleep(100)
-    const t = Gm.crashTick(cs.id)
-    if (t.done) crashRes = t
+  // Crash global: one shared round → wait for the betting window → bet → cash out after launch
+  let gs = await Gm.crashGlobalState()
+  assert('crash global state (seed hash, no point)', !!gs?.round?.seedHash && (gs.round.phase !== 'betting' || gs.round.point === null))
+  for (let i = 0; i < 300 && !(gs.round.phase === 'betting' && gs.round.startAt - Date.now() > 1500); i++) {
+    await sleep(200)
+    gs = await Gm.crashGlobalState()
   }
-  if (!crashRes) crashRes = await Gm.crashCashout(cs.id)
-  assert('crash selesai (cash out / meledak)', crashRes?.done === true && (crashRes.session || crashRes.stale), JSON.stringify(crashRes).slice(0, 200))
+  const cs = await Gm.crashGlobalBet({ bet: 20 })
+  assert('crash global bet', !!cs?.id && Math.abs(cs.startedAt - gs.round.startAt) < 2000)
+  assert('crash: second bet same round refused', (await code(() => Gm.crashGlobalBet({ bet: 20 }))) === 'play.crash.alreadyIn')
+  await sleep(Math.max(0, cs.startedAt - Date.now()) + 700)
+  let crashRes = null
+  try {
+    crashRes = await Gm.crashGlobalCashout(cs.id, cs.startedAt)
+  } catch (e) {
+    crashRes = { error: e.code }
+  }
+  if (crashRes?.error === 'play.crash.minCashout') {
+    await sleep(800)
+    crashRes = await Gm.crashGlobalCashout(cs.id, cs.startedAt)
+  }
+  assert('crash selesai (cash out / meledak)', crashRes?.done === true && (crashRes.session || crashRes.stale || crashRes.crashed), JSON.stringify(crashRes).slice(0, 200))
   if (crashRes?.session) reveal.releaseReveal(crashRes.session.id)
   await sleep(1100)
 
@@ -305,7 +313,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   const bannedErr = await code(() => LB('src/services/server.js').api('sync'))
   assert('pemain di-ban dikeluarkan dari perangkatnya', bannedErr === 'errors.sessionExpired' && LB('src/store/useAuthStore.js').useAuthStore.getState().session === null)
   await ADM.unbanUser(B, 'banding diterima')
-  assert('aksi tanpa alasan ditolak server', (await code(() => ADM.setGameStatus('dice', 'maintenance', 'x'))) === 'admin.errors.reason')
+  assert('aksi tanpa alasan diterima server', (await code(() => ADM.setGameStatus('dice', 'live', ''))) === null)
   await ADM.setGameMaxBet('dice', 5000, 'batasi taruhan')
   assert('konfigurasi game dari server', L('src/store/useAdminStore.js').useAdminStore.getState().gameConfig.dice.maxBet === 5000)
   await ADM.setGameMaxBet('dice', 20000000, 'kembali normal')

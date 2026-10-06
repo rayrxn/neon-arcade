@@ -10,7 +10,7 @@ import { toast } from '@/store/useUiStore'
 import { ACHIEVEMENTS, DAILY_REWARDS, levelFromXp } from '@/config/progression'
 import { ITEMS } from '@/config/economy'
 import { achievementProgress, claimDailyReward, claimQuest, dailyState, questView } from '@/services/progression'
-import { currentSeason, seasonTier, seasonXpOf } from '@/services/seasons'
+import { currentSeason, seasonTier, seasonTierProgress, seasonXpOf } from '@/services/seasons'
 import { SEASON_TIERS, SEASON_TIER_XP } from '@/config/cosmetics'
 import { play } from '@/services/sound'
 import { useNow } from '@/hooks/useNow'
@@ -74,10 +74,10 @@ export function SeasonPanel() {
           <p className="font-display text-lg font-bold text-white">{t('season.title', { id: season.id })} · {t('season.tier', { tier })}</p>
           <p className="text-xs text-slate-500">{t('season.endsIn', { time: formatLeft(season.endAt - now) })}</p>
         </div>
-        <span className="num font-mono text-xs text-slate-400">{formatCoins(sxp % SEASON_TIER_XP)} / {SEASON_TIER_XP} SXP</span>
+        <span className="num font-mono text-xs text-slate-400">{formatCoins(seasonTierProgress(sxp))} / {SEASON_TIER_XP} SXP</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-white/[0.07]">
-        <motion.div className="h-full rounded-full bg-neon-purple" initial={false} animate={{ width: `${((sxp % SEASON_TIER_XP) / SEASON_TIER_XP) * 100}%` }} />
+        <motion.div className="h-full rounded-full bg-neon-purple" initial={false} animate={{ width: `${(seasonTierProgress(sxp) / SEASON_TIER_XP) * 100}%` }} />
       </div>
       <ol className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {SEASON_TIERS.map((st) => {

@@ -13,6 +13,7 @@ import RewardsPage from '@/pages/RewardsPage'
 import ShopPage from '@/pages/ShopPage'
 import LoyaltyPage from '@/pages/LoyaltyPage'
 import MembershipPage from '@/pages/MembershipPage'
+import BattlePassPage from '@/pages/BattlePassPage'
 import HistoryPage from '@/pages/HistoryPage'
 import LeaderboardPage from '@/pages/LeaderboardPage'
 import FriendsPage from '@/pages/FriendsPage'
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="shop" element={<ShopPage />} />
             <Route path="loyalty" element={<LoyaltyPage />} />
             <Route path="membership" element={<MembershipPage />} />
+            <Route path="pass" element={<BattlePassPage />} />
             <Route path="history" element={<HistoryPage />} />
             <Route path="history/:id" element={<HistoryPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />

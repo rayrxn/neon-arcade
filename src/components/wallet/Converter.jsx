@@ -20,7 +20,7 @@ import { useT } from '@/i18n'
 export default function Converter() {
   const { t } = useT()
   const { economy } = useCatalog()
-  const { convertedToday } = useExtras()
+  const { convertedToday, convertCap } = useExtras()
   const ac = useDisplayBalance('AC')
   const [amount, setAmount] = useState('')
   const [confirm, setConfirm] = useState(false)
@@ -30,7 +30,7 @@ export default function Converter() {
   const value = Number(amount) || 0
   const ag = Math.floor(value / rate)
   const cost = ag * rate
-  const leftToday = Math.max(0, (economy?.convertMaxAgPerDay ?? 200) - (convertedToday ?? 0))
+  const leftToday = Math.max(0, (convertCap ?? economy?.convertMaxAgPerDay ?? 200) - (convertedToday ?? 0))
   const problem = !value ? null : value > ac ? 'errors.insufficientAC' : ag < (economy?.convertMinAg ?? 1) ? 'convert.errors.minShort' : ag > leftToday ? 'convert.errors.dailyShort' : null
 
   if (!SERVER_MODE) return null

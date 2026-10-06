@@ -13,6 +13,7 @@ import { useProgress } from '@/store/useProgressStore'
 import { GAMES, getGameName } from '@/config/games'
 import { formatCoins, formatDateTime, shortHash } from '@/utils/format'
 import { useT } from '@/i18n'
+import PnlChart from '@/components/stats/PnlChart'
 
 export const SESSION_TONE = {
   WON: 'bg-neon-green/10 text-neon-green',
@@ -99,6 +100,7 @@ export default function HistoryPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t('history.title')} subtitle={t('history.subtitle')} />
+      <PnlChart />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
           [t('history.kpi.games'), formatCoins(totals.games)],

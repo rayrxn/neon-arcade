@@ -1,7 +1,7 @@
 import { usePlatformStore } from '@/store/usePlatformStore'
 import { useProgressStore } from '@/store/useProgressStore'
 import { useAuthStore } from '@/store/useAuthStore'
-import { SEASON_LENGTH_DAYS, SEASON_TIER_XP } from '@/config/cosmetics'
+import { SEASON_LENGTH_DAYS, SEASON_MAX_TIER, SEASON_TIER_XP } from '@/config/cosmetics'
 import { emit } from './events'
 
 /**
@@ -10,7 +10,9 @@ import { emit } from './events'
  * season baru dimulai. Progres season pemain di-reset saat ia pertama kali main di season baru.
  */
 const DAY = 86_400_000
-export const seasonTier = (xp) => Math.floor((xp ?? 0) / SEASON_TIER_XP)
+export const seasonTier = (xp) => Math.min(SEASON_MAX_TIER, Math.floor((xp ?? 0) / SEASON_TIER_XP))
+/** XP di dalam tier sekarang (penuh kalau sudah tier maksimal). */
+export const seasonTierProgress = (xp) => (seasonTier(xp) >= SEASON_MAX_TIER ? SEASON_TIER_XP : (xp ?? 0) % SEASON_TIER_XP)
 
 export function currentSeason(now = Date.now()) {
   const s = usePlatformStore.getState().season

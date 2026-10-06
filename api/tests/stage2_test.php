@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../index.php';
+$GLOBALS['NEON_NO_COOLDOWN'] = true;
 
 $pass = 0;
 $failures = [];
@@ -107,11 +108,19 @@ foreach (['p1', 'p2', 'p3'] as $k) call('POST', 'redeem/claim', ['code' => 'GEMD
 expect_error('GEMDROP habis untuk akun keempat', call('POST', 'redeem/claim', ['code' => 'GEMDROP'], 'own'), 'redeem.errors.soldOut');
 
 // ── Jackpot ──
+// Hanya kemenangan > 100 juta AC atau > 2.500 AG yang masuk Global Chat.
+$before = count(sync('p2')['platform']['jackpots']);
 tx(fn() => record_jackpot($P1, 25000, 'crash'));
+tx(fn() => record_jackpot($P1, 100000000, 'crash'));
+tx(fn() => record_jackpot($P1, 2500, 'dice', 'AG'));
+check('kemenangan biasa tidak masuk feed jackpot', count(sync('p2')['platform']['jackpots']) === $before);
+tx(fn() => record_jackpot($P1, 150000000, 'crash'));
+tx(fn() => record_jackpot($P1, 3000, 'dice', 'AG'));
 $s = sync('p2');
-check('jackpot masuk feed', $s['platform']['jackpots'][0]['username'] === "alpha_$tag" && $s['platform']['jackpots'][0]['amount'] == 25000);
+check('jackpot AC > 100 juta masuk feed', $s['platform']['jackpots'][1]['username'] === "alpha_$tag" && $s['platform']['jackpots'][1]['amount'] == 150000000 && $s['platform']['jackpots'][1]['currency'] === 'AC');
+check('jackpot AG > 2.500 masuk feed dengan mata uang AG', $s['platform']['jackpots'][0]['amount'] == 3000 && $s['platform']['jackpots'][0]['currency'] === 'AG');
 check('jackpot diumumkan di chat', end($s['platform']['chat'])['type'] === 'jackpot');
-check('pemain lain dapat notifikasi jackpot', count(notifs('p2', 'jackpot')) >= 1 && count(notifs('p1', 'jackpot')) === 0);
+check('tidak ada notifikasi massal untuk jackpot', count(notifs('p2', 'jackpot')) === 0);
 
 // ── Chat ──
 $m = call('POST', 'chat/send', ['text' => "halo @bravo_$tag :gg:"], 'p1');
@@ -190,13 +199,13 @@ check('snapshot admin: semua user + email (super admin)', $snap['ok'] && count($
 check('snapshot admin: dompet & progres semua user', isset($snap['data']['wallets'][$P1]['balance']) && isset($snap['data']['progress'][$P1]['stats']));
 $modSnap = call('GET', 'admin/snapshot', [], 'mod');
 check('moderator: email disembunyikan', $modSnap['ok'] && !array_filter($modSnap['data']['users'], fn($u) => $u['email'] !== ''));
-expect_error('alasan wajib (min 5 huruf)', admin('own', 'adjustCurrency', ['userId' => $P1, 'currency' => 'AC', 'delta' => 100, 'reason' => 'ok']), 'admin.errors.reason');
+check('alasan boleh pendek / kosong', admin('own', 'adjustCurrency', ['userId' => $P1, 'currency' => 'AC', 'delta' => 100, 'reason' => 'ok'])['ok']);
 
 // ── Admin: saldo ──
 $b = bal('p1');
 $adj = admin('own', 'adjustCurrency', ['userId' => $P1, 'currency' => 'AC', 'delta' => 2500, 'reason' => 'kompensasi bug']);
 check('tambah AC', $adj['ok'] && bal('p1') == $b + 2500 && $adj['data']['result']['after'] == $b + 2500);
-check('pemain dapat notifikasi adminCredit', count(notifs('p1', 'adminCredit')) === 1);
+check('pemain dapat notifikasi adminCredit', count(notifs('p1', 'adminCredit')) === 2);
 expect_error('kurangi melebihi saldo ditolak', admin('own', 'adjustCurrency', ['userId' => $P1, 'currency' => 'AC', 'delta' => -99999999, 'reason' => 'tes negatif']), 'admin.errors.negative');
 expect_error('moderator tidak boleh ubah saldo', admin('mod', 'adjustCurrency', ['userId' => $P1, 'currency' => 'AC', 'delta' => 100, 'reason' => 'iseng saja']), 'admin.errors.forbidden');
 $txid = null; foreach (me('p1')['wallet']['transactions'] as $x) if ($x['type'] === 'adjust') { $txid = $x['id']; break; }

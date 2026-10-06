@@ -28,7 +28,7 @@ export default function Header({ onMenu }) {
   const titleKey = titleKeyFor(pathname)
 
   return (
-    <header className="fixed inset-x-0 top-0 z-20 lg:left-[248px]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <header className="fixed inset-x-0 top-0 z-20 lg:left-[var(--sb-w,248px)] lg:transition-[left] lg:duration-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="flex h-16 items-center gap-2 border-b hairline bg-ink-950/80 px-3 backdrop-blur-xl sm:gap-3 sm:px-6 lg:px-8">
         <button
           onClick={onMenu}

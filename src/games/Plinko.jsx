@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import { BetInput, Choice, Field, GameShell, Stage, playOutcome, useRunner } from '@/components/play/GameKit'
@@ -32,6 +32,7 @@ export default function Plinko({ game }) {
   const [balls, setBalls] = useState([])
   const [outcome, setOutcome] = useState(null)
   const [hitBin, setHitBin] = useState(null)
+  const [recent, setRecent] = useState([])
   const timers = useRef([])
   const table = PLINKO_TABLES[risk]
 
@@ -57,6 +58,7 @@ export default function Plinko({ game }) {
       setTimeout(() => {
         setBalls((b) => b.filter((x) => x.id !== id))
         setHitBin({ bin: res.bin, id })
+        setRecent((r) => [{ id, m: res.session.multiplier }, ...r].slice(0, 12))
         setOutcome(res)
         playOutcome(res)
       }, duration * 1000),
@@ -76,6 +78,17 @@ export default function Plinko({ game }) {
 
   const stage = (
     <Stage className="p-3 sm:p-5">
+      {recent.length > 0 && (
+        <ol className="absolute right-2 top-2 z-10 flex flex-col gap-1 sm:right-3 sm:top-3" aria-label={t('play.plinko.recent')}>
+          <AnimatePresence initial={false}>
+            {recent.map((r, i) => (
+              <motion.li key={r.id} layout initial={{ opacity: 0, scale: 0.6, x: 8 }} animate={{ opacity: 1 - i * 0.06, scale: 1, x: 0 }} exit={{ opacity: 0 }} className={clsx('grid h-6 w-12 place-items-center rounded-md font-mono text-[10px] font-bold', binTone(r.m))}>
+                {r.m}×
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </ol>
+      )}
       <svg viewBox={`0 0 100 ${BIN_Y + 3}`} className="mx-auto block w-full max-w-[560px]" role="img" aria-label="Plinko">
         {Array.from({ length: ROWS }, (_, r) =>
           Array.from({ length: r + 3 }, (_, j) => <circle key={`${r}-${j}`} cx={pegX(r, j)} cy={pegY(r)} r={0.7} className="fill-slate-400" />),

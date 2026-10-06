@@ -66,7 +66,8 @@ export const ACHIEVEMENT_ITEMS = {
 }
 
 /** Season: tier tiap 500 season XP; hadiah kosmetik di tier tertentu. */
-export const SEASON_TIER_XP = 500
+export const SEASON_TIER_XP = 1000
+export const SEASON_MAX_TIER = 50
 export const SEASON_LENGTH_DAYS = 28
 export const SEASON_TIERS = [
   { tier: 1, item: 'emote-gem' },

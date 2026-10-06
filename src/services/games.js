@@ -21,7 +21,7 @@ import { isStaff } from '@/config/roles'
 import { play } from './sound'
 import { SERVER_MODE } from '@/config/runtime'
 import { usePrefsStore } from '@/store/usePrefsStore'
-import { act, applyOut, serverOpenRound, toLocalTime } from './server'
+import { act, api, applyOut, serverOpenRound, toLocalTime } from './server'
 
 /**
  * Game engine — "server" mode lokal.
@@ -189,7 +189,7 @@ function finish(round, { multiplier, result, detail, status }) {
     const summary = recordGame(round.userId, session)
     emit('GAME_COMPLETED', { userId: round.userId, game: round.game, sessionId: round.id, status: session.status, isTest: session.isTest })
     if (valid) emit(session.result === 'win' ? 'GAME_WON' : session.result === 'loss' ? 'GAME_LOST' : 'GAME_COMPLETED', { userId: round.userId, game: round.game, sessionId: round.id, payout: session.payout, isTest: session.isTest })
-    if (valid && !round.isTest && result === 'win' && payout > 0) recordWin({ userId: round.userId, amount: payout, game: round.game })
+    if (valid && !round.isTest && result === 'win' && payout > 0) recordWin({ userId: round.userId, amount: payout, game: round.game, currency: round.currency ?? 'AC' })
     if (!round.isTest) detect(round, session)
     // Suara menang/kalah + saldo baru ditampilkan UI saat animasi selesai (playOutcome di GameKit).
     return { session, summary }
@@ -715,3 +715,27 @@ export function startRound({ game, bet, floats = 1 }) {
   }
 }
 export const finishRound = ({ round, multiplier, result, detail }) => finish(round, { multiplier, result, detail })
+
+// ───────────────────────────── Crash global (mode server) ─────────────────────────────
+// Satu ronde untuk semua pemain: taruhan dibuka ±7 detik, roket berangkat bersamaan, titik crash
+// baru diungkap setelah meledak. Status ditanya berkala lewat /api/crash/state.
+
+/** Status ronde global + jam server → waktu lokal. */
+export async function crashGlobalState() {
+  const data = await api('crash/state')
+  const local = (ms) => (ms == null ? null : toLocalTime(ms))
+  return { ...data, round: { ...data.round, startAt: local(data.round.startAt), crashAt: local(data.round.crashAt), nextAt: local(data.round.nextAt) } }
+}
+
+export function crashGlobalBet({ bet, autoCashout }) {
+  return remoteStart('crash-bet', { bet, autoCashout: autoCashout || null }).then((r) => ({ ...r, startedAt: toLocalTime(r.startedAt) }))
+}
+
+export async function crashGlobalCashout(id, startAtLocal) {
+  const res = await remote('crash-cashout', { id, elapsed: startAtLocal != null ? Date.now() - startAtLocal : undefined })
+  if (res?.crashed) play('explode')
+  return res
+}
+
+/** Hasil taruhan saya setelah ronde selesai (diselesaikan server walau halaman ditutup). */
+export const crashGlobalResult = (id) => remote('crash-tick', { id })

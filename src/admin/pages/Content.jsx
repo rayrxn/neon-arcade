@@ -200,7 +200,7 @@ export function CodesAdmin() {
   const me = useCurrentUser()
   useAdminStore((s) => s.codes)
   usePlatformStore((s) => s.codeUsage)
-  const [form, setForm] = useState({ code: '', kind: 'AC', amount: 500, itemId: 'neon-frame', maxUses: 100, perUser: 1, expires: '', active: true })
+  const [form, setForm] = useState({ code: '', kind: 'AC', amount: 500, itemId: 'neon-frame', maxUses: 100, perUser: 1, expires: '', active: true, membersOnly: '' })
   const [dialog, setDialog] = useState(null)
   const codes = admin.allCodes()
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
@@ -214,6 +214,7 @@ export function CodesAdmin() {
             { key: 'r', label: t('admin.cols.reward'), render: (c) => c.rewards.map((r, i) => <span key={i} className="mr-1.5"><RewardText r={r} /></span>) },
             { key: 'u', label: t('admin.uses'), align: 'right', mono: true, render: (c) => `${c.used}${c.maxUses ? ` / ${c.maxUses}` : ''}` },
             { key: 'p', label: t('admin.perUser'), align: 'right', mono: true, render: (c) => c.perUser ?? 1 },
+            { key: 'm', label: t('admin.membersOnly'), render: (c) => (c.membersOnly ? <Badge tone="purple">{c.membersOnly.toUpperCase()}</Badge> : '—') },
             { key: 'e', label: t('admin.expiry'), render: (c) => <span className="text-xs">{c.expiresAt ? formatDateTime(typeof c.expiresAt === 'number' ? c.expiresAt : Date.parse(c.expiresAt)) : '—'}</span> },
             { key: 's', label: t('admin.cols.status'), render: (c) => {
               const exp = c.expiresAt && Date.now() > (typeof c.expiresAt === 'number' ? c.expiresAt : Date.parse(c.expiresAt))
@@ -237,6 +238,7 @@ export function CodesAdmin() {
           <div className="grid grid-cols-2 gap-3">
             <FormField label={t('admin.maxUses')} hint="0 = ∞"><input id="c-max" inputMode="numeric" value={form.maxUses} onChange={set('maxUses')} className={inputCls} /></FormField>
             <FormField label={t('admin.perUser')}><input id="c-per" inputMode="numeric" value={form.perUser} onChange={set('perUser')} className={inputCls} /></FormField>
+            <FormField label={t('admin.membersOnly')}><select id="c-members" value={form.membersOnly} onChange={set('membersOnly')} className={inputCls}><option value="">{t('admin.everyone')}</option><option value="vip">VIP + VVIP</option><option value="vvip">VVIP</option></select></FormField>
           </div>
           <FormField label={t('admin.expiry')}><input id="c-exp" type="datetime-local" value={form.expires} onChange={set('expires')} className={inputCls} /></FormField>
           <label className="flex items-center gap-2 text-sm text-slate-300"><input id="c-active" type="checkbox" checked={form.active} onChange={set('active')} /> {t('admin.active')}</label>
@@ -248,7 +250,7 @@ export function CodesAdmin() {
         <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} tone="primary"
           title={dialog.kind === 'create' ? `${t('admin.createCode')} · ${form.code}` : `${dialog.c.code} → ${dialog.c.active === false ? t('admin.enable') : t('admin.disable')}`}
           onConfirm={(r) => (dialog.kind === 'create'
-            ? admin.createCode({ code: form.code, kind: form.kind, amount: Number(form.amount), itemId: form.itemId, maxUses: Number(form.maxUses), perUser: Number(form.perUser), expiresAt: form.expires ? new Date(form.expires).getTime() : null, active: form.active }, r)
+            ? admin.createCode({ code: form.code, kind: form.kind, amount: Number(form.amount), itemId: form.itemId, maxUses: Number(form.maxUses), perUser: Number(form.perUser), expiresAt: form.expires ? new Date(form.expires).getTime() : null, active: form.active, membersOnly: form.membersOnly || null }, r)
             : admin.setCodeActive(dialog.c.code, dialog.c.active === false, r))} />
       )}
     </AdminPage>

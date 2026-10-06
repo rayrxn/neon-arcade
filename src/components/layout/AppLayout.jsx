@@ -15,6 +15,7 @@ import { useCurrentUser } from '@/store/useAuthStore'
 import { isStaff } from '@/config/roles'
 import { maintenanceActive } from '@/services/system'
 import { useNow } from '@/hooks/useNow'
+import PopupCenter from '@/components/notifications/PopupCenter'
 
 export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -35,7 +36,7 @@ export default function AppLayout() {
     <div className="min-h-dvh">
       <Sidebar open={drawerOpen} onClose={closeDrawer} />
 
-      <div className="lg:pl-[248px]">
+      <div className="lg:pl-[var(--sb-w,248px)] lg:transition-[padding] lg:duration-200">
         <Header onMenu={() => setDrawerOpen(true)} />
         <main className="px-4 pb-28 pt-[84px] sm:px-6 lg:px-8 lg:pb-16 lg:pt-24">
           <motion.div
@@ -56,6 +57,7 @@ export default function AppLayout() {
       <MobileTabBar />
       <ModalHost />
       <LevelUpOverlay />
+      <PopupCenter />
     </div>
   )
 }

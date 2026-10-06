@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Award, CheckCircle2, ShieldCheck, Sparkles, Target, Trophy } from 'lucide-react'
@@ -10,6 +10,7 @@ import { usePrefsStore } from '@/store/usePrefsStore'
 import { SERVER_MODE } from '@/config/runtime'
 import { useExtras } from '@/services/platform2'
 import { useCurrentUser } from '@/store/useAuthStore'
+import { usePlatformStore } from '@/store/usePlatformStore'
 import { useProgress } from '@/store/useProgressStore'
 import { useFairnessStore } from '@/store/useFairnessStore'
 import { toast } from '@/store/useUiStore'
@@ -59,6 +60,19 @@ export function useRunner() {
     [t],
   )
   return { run, busy }
+}
+
+/** Kunci tombol main selama animasi ronde berjalan (server juga menolak ronde terlalu cepat). */
+export function useLock() {
+  const [locked, setLocked] = useState(false)
+  const timer = useRef(null)
+  useEffect(() => () => clearTimeout(timer.current), [])
+  const lock = useCallback((ms) => {
+    setLocked(true)
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => setLocked(false), ms)
+  }, [])
+  return [locked, lock]
 }
 
 export const fmtMult = (m) => `${(m ?? 0).toFixed(2)}×`
@@ -267,7 +281,7 @@ function GameStats({ slug }) {
     [t('play.stats.played'), formatCoins(g.played)],
     [t('play.stats.wins'), formatCoins(g.wins)],
     [t('play.stats.best'), fmtMult(g.best)],
-    [t('play.stats.bestPayout'), `${formatCoins(g.bestPayout)} AC`],
+    [t('play.stats.bestPayout'), g.bestPayoutAG > 0 ? `${formatCoins(g.bestPayout)} AC · ${formatCoins(g.bestPayoutAG)} AG` : `${formatCoins(g.bestPayout)} AC`],
   ]
   return (
     <section className="glass rounded-2xl">
@@ -325,8 +339,43 @@ export function GameShell({ game, controls, stage, outcome }) {
       </div>
 
       <AnimatePresence mode="wait">{outcome && <ResultCard outcome={outcome} game={game.name} />}</AnimatePresence>
-      <GameStats slug={game.slug} />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <GameStats slug={game.slug} />
+        <LiveFeed slug={game.slug} />
+      </div>
     </div>
+  )
+}
+
+/** Live results of every player for this game (server mode): the global "live bets" feed. */
+export function LiveFeed({ slug }) {
+  const { t } = useT()
+  const live = usePlatformStore((s) => s.live)
+  const meId = useCurrentUser()?.id
+  if (!SERVER_MODE) return null
+  const rows = (live ?? []).filter((l) => l.game === slug).slice(0, 10)
+  return (
+    <section className="glass rounded-2xl">
+      <header className="flex items-center justify-between border-b hairline px-4 py-3">
+        <h3 className="flex items-center gap-2 text-sm font-bold text-white"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-neon-green opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-neon-green" /></span> {t('live.title')}</h3>
+        <span className="text-[11px] text-slate-500">{t('live.allPlayers')}</span>
+      </header>
+      {rows.length === 0 ? (
+        <p className="px-4 py-6 text-center text-sm text-slate-500">{t('live.empty')}</p>
+      ) : (
+        <ul className="divide-y divide-white/[0.04]">
+          {rows.map((r) => (
+            <li key={r.id} className={clsx('grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-2 text-xs', r.userId === meId && 'bg-neon-cyan/[0.04]')}>
+              <span className="truncate font-semibold text-slate-200">{r.username}</span>
+              <span className="num font-mono text-slate-400">{formatCoins(r.bet)} {r.currency}</span>
+              <span className={clsx('num w-28 text-right font-mono font-bold', r.result === 'win' ? 'text-neon-green' : r.result === 'push' ? 'text-slate-300' : 'text-neon-red')}>
+                {r.result === 'win' ? `${fmtMult(r.multiplier)} · +${formatCoins(r.payout)}` : r.result === 'push' ? fmtMult(1) : `−${formatCoins(r.bet)}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

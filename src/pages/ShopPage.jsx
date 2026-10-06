@@ -31,7 +31,15 @@ function availability(item, now) {
   return null
 }
 
+/** Price after the player's best discount (Loyalty Card or membership) — same rounding as the server. */
+export const discounted = (price, pct) => (pct > 0 ? Math.ceil((price * (100 - pct)) / 100) : price)
+function useDiscount() {
+  return useExtras().perks?.shopDiscount ?? 0
+}
+
 function ItemCard({ item, owned, qty, onBuy, onEquip, equipped, now, locked }) {
+  const disc = useDiscount()
+  const price = discounted(item.price, disc)
   const { t } = useT()
   const r = RARITY[item.rarity] ?? RARITY.common
   const blocked = availability(item, now)
@@ -51,7 +59,10 @@ function ItemCard({ item, owned, qty, onBuy, onEquip, equipped, now, locked }) {
         <p className="mt-1 line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-slate-400">{item.description}</p>
         {locked && <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-neon-gold"><Lock className="h-3 w-3" /> {locked}</p>}
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-          <Price value={item.price} className="text-sm text-white" />
+          <span className="flex items-baseline gap-1.5">
+            <Price value={price} className="text-sm text-white" />
+            {price < item.price && <span className="num font-mono text-[11px] text-slate-500 line-through">{formatCoins(item.price)}</span>}
+          </span>
           {ownedOnce ? (
             STYLE_KINDS.includes(item.kind) ? (
               <Button size="xs" variant={equipped ? 'subtle' : 'ghost'} onClick={() => onEquip(item, !equipped)}>{equipped ? t('shop.unequip') : t('shop.equip')}</Button>
@@ -78,8 +89,10 @@ function BuyDialog({ item, onClose }) {
   const [done, setDone] = useState(false)
   // One request id per dialog → a double click can never charge twice.
   const [requestId] = useState(() => `r${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`)
+  const disc = useDiscount()
   if (!item) return null
-  const after = ag - item.price
+  const price = discounted(item.price, disc)
+  const after = ag - price
   const confirm = async () => {
     setBusy(true)
     setError(null)
@@ -133,7 +146,7 @@ function BuyDialog({ item, onClose }) {
       </div>
       {!done && (
         <dl className="mt-4 space-y-2 rounded-xl bg-white/[0.03] p-3 text-sm ring-1 ring-inset ring-white/[0.06]">
-          <div className="flex justify-between"><dt className="text-slate-400">{t('shop.price')}</dt><dd><Price value={item.price} className="text-white" /></dd></div>
+          <div className="flex justify-between"><dt className="text-slate-400">{t('shop.price')}</dt><dd><Price value={price} className="text-white" />{disc > 0 && price < item.price && <span className="ml-1.5 rounded bg-neon-green/10 px-1 text-[10px] font-bold text-neon-green">−{disc}%</span>}</dd></div>
           <div className="flex justify-between"><dt className="text-slate-400">{t('shop.balance')}</dt><dd className="num font-mono text-slate-200">{formatCoins(ag)} AG</dd></div>
           <div className="flex justify-between border-t hairline pt-2"><dt className="text-slate-400">{t('shop.after')}</dt><dd className={clsx('num font-mono font-bold', after < 0 ? 'text-neon-red' : 'text-white')}>{formatCoins(Math.max(0, after))} AG</dd></div>
         </dl>

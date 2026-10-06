@@ -6,7 +6,7 @@ import { EmptyState, Panel, Segmented } from '@/components/ui/Controls'
 import { PageHeader, QueryView, useQuery } from '@/components/ui/PageKit'
 import { describeNotification } from '@/components/notifications/describe'
 import { useCurrentUser } from '@/store/useAuthStore'
-import { useNotificationStore, useNotifications } from '@/store/useNotificationStore'
+import { useNotificationStore, useBellNotifications } from '@/store/useNotificationStore'
 import { useNow } from '@/hooks/useNow'
 import { formatDateTime, timeAgo } from '@/utils/format'
 import { useT } from '@/i18n'
@@ -21,7 +21,7 @@ const GROUPS = {
 export default function NotificationsPage() {
   const { t, lang } = useT()
   const user = useCurrentUser()
-  const items = useNotifications(user?.id)
+  const items = useBellNotifications(user?.id)
   const { markRead, markAllRead, clear } = useNotificationStore()
   const [filter, setFilter] = useState('all')
   const now = useNow(30_000)

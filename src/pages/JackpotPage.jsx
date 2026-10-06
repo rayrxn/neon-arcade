@@ -7,7 +7,7 @@ import { DemoTag, EmptyState, Panel } from '@/components/ui/Controls'
 import { usePlatformStore } from '@/store/usePlatformStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { biggestJackpot } from '@/services/jackpot'
-import { JACKPOT_THRESHOLD } from '@/config/economy'
+import { JACKPOT_THRESHOLDS } from '@/config/economy'
 import { getGameName } from '@/config/games'
 import { useNow } from '@/hooks/useNow'
 import { formatCoins, timeAgo } from '@/utils/format'
@@ -23,9 +23,9 @@ export default function JackpotPage() {
   const best = biggestJackpot(jackpots)
 
   const stats = [
-    { label: t('jackpot.stats.biggest'), value: best ? <Amount currency="AC" value={best.amount} size="md" className="text-white" /> : '—' },
+    { label: t('jackpot.stats.biggest'), value: best ? <Amount currency={best.currency ?? 'AC'} value={best.amount} size="md" className="text-white" /> : '—' },
     { label: t('jackpot.stats.week'), value: <span className="font-mono text-lg font-bold text-white">{week.length}</span> },
-    { label: t('jackpot.stats.threshold'), value: <Amount currency="AC" value={JACKPOT_THRESHOLD} size="md" className="text-white" /> },
+    { label: t('jackpot.stats.threshold'), value: <span className="flex flex-wrap items-center gap-x-2"><Amount currency="AC" value={JACKPOT_THRESHOLDS.AC} size="md" className="text-white" /><span className="text-slate-600">/</span><Amount currency="AG" value={JACKPOT_THRESHOLDS.AG} size="md" className="text-white" /></span> },
   ]
 
   return (
@@ -34,7 +34,7 @@ export default function JackpotPage() {
         <GameArt slug="jackpot" className="hidden h-16 w-24 shrink-0 rounded-xl sm:block" />
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-white">{t('jackpot.title')}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t('jackpot.subtitle', { amount: formatCoins(JACKPOT_THRESHOLD) })}</p>
+          <p className="mt-1 text-sm text-slate-500">{t('jackpot.subtitle2', { ac: formatCoins(JACKPOT_THRESHOLDS.AC), ag: formatCoins(JACKPOT_THRESHOLDS.AG) })}</p>
         </div>
       </div>
 

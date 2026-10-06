@@ -69,12 +69,26 @@ function check_bet($bet): int
     return $bet;
 }
 
+/** Jeda minimal antar ronde per game (= lama animasi di layar), supaya tombol tidak bisa di-spam. */
+const GAME_COOLDOWN_MS = ['dice' => 650, 'limbo' => 750, 'coinflip' => 1250, 'roulette' => 3200, 'case-opening' => 1500, 'case-battle' => 2500, 'plinko' => 250];
+
+function check_cooldown(Ctx $c, string $game): void
+{
+    $cd = GAME_COOLDOWN_MS[$game] ?? 0;
+    if ($cd <= 0 || !empty($GLOBALS['NEON_NO_COOLDOWN'])) return;
+    $last = (int) ($c->meta['lastRound'][$game] ?? 0);
+    $left = $last + $cd - $c->now;
+    if ($left > 0) fail('play.errors.cooldown', ['seconds' => number_format($left / 1000, 1)], 429);
+    $c->meta['lastRound'][$game] = $c->now;
+}
+
 /** Potong taruhan (SQL game_start: blokir akun, maintenance, rate limit, seed, nonce) + ambil float. */
 function begin(Ctx $c, string $game, $bet, int $floatCount, array $extra = []): array
 {
     $bet = check_bet($bet);
     $currency = $c->currency;
     check_loyalty_bet($c->user, $currency, $bet);
+    check_cooldown($c, $game);
     try {
         $st = jdec((string) qv('SELECT game_start(?::uuid, ?, ?::numeric, ?::currency_code)', [$c->user['id'], $game, (string) $bet, $currency]));
     } catch (Throwable $e) {
@@ -162,8 +176,10 @@ function session_from_row(array $r): array
 function detect(Ctx $c, array $round, array $session): void
 {
     $uid = $round['userId'];
-    if ((($session['currency'] ?? 'AC') === 'AC' && $session['payout'] >= 250000) || $session['multiplier'] >= 1000) {
-        raise_flag($uid, 'abnormalReward', $session['payout'] >= 1000000 ? 'critical' : 'high', $session['id'], '≤ 1000×', $session['multiplier'] . '× · ' . $session['payout'] . ' AC');
+    // Thresholds follow the player's own bet limit, so big-card players aren't flagged for normal play.
+    $limit = bet_limits($c->user)[($session['currency'] ?? 'AC') === 'AG' ? 'AG' : 'AC'];
+    if ($session['multiplier'] >= 1000 || $session['payout'] >= 200 * $limit) {
+        raise_flag($uid, 'abnormalReward', $session['payout'] >= 1000 * $limit ? 'critical' : 'high', $session['id'], '≤ 1000× · ≤ ' . number_format(200 * $limit), $session['multiplier'] . '× · ' . $session['payout'] . ' ' . ($session['currency'] ?? 'AC'));
     }
     $detail = (array) $session['detail'];
     if ($round['game'] === 'mines' && ($detail['picks'] ?? 0) >= 5 && $session['durationMs'] < 400) {
@@ -174,7 +190,8 @@ function detect(Ctx $c, array $round, array $session): void
     if (count($recent) >= 20 && $wins >= 18) raise_flag($uid, 'suspiciousPattern', 'medium', $session['id'], '≈ 50% win', "$wins/20 win");
     $net = 0;
     foreach (array_slice($c->p['sessions'], 0, 50) as $s) if (($s['currency'] ?? 'AC') === 'AC') $net += $s['payout'] - $s['bet'];
-    if ($net >= 500000) raise_flag($uid, 'abnormalCurrency', 'high', $session['id'], '< 500.000 AC / 50 ronde', '+' . round($net) . ' AC');
+    $acLimit = bet_limits($c->user)['AC'];
+    if ($net >= 100 * $acLimit) raise_flag($uid, 'abnormalCurrency', 'high', $session['id'], '< ' . number_format(100 * $acLimit) . ' AC / 50 rounds', '+' . round($net) . ' AC');
 }
 
 /** Kredit payout, catat sesi & progres (port finish()). Idempoten per sesi. */
@@ -217,10 +234,10 @@ function finish(Ctx $c, array $round, $multiplier, string $result, array $detail
         $session['payoutTxId'] = wallet_post($round['userId'], $cur, $payout, 'win', 'game', 'game', null, $round['id'], 'game:' . $round['id'] . ':payout');
         if ($cur === 'AC') $c->meta['totalWon'] = round2($c->meta['totalWon'] + $payout);
         $c->meta['wins'] = ($c->meta['wins'] ?? 0) + 1;
-        if (empty($c->meta['biggestWin']) || $payout > $c->meta['biggestWin']['amount']) {
-            $c->meta['biggestWin'] = ['amount' => $payout, 'game' => $round['game'], 'at' => $c->now];
+        if ($cur === 'AC' && (empty($c->meta['biggestWin']) || $payout > $c->meta['biggestWin']['amount'])) {
+            $c->meta['biggestWin'] = ['amount' => $payout, 'game' => $round['game'], 'at' => $c->now, 'currency' => 'AC'];
         }
-        if ($result === 'win' && $cur === 'AC') record_jackpot($round['userId'], (float) $payout, $round['game']);
+        if ($result === 'win' && empty($round['is_test']) && empty($round['isTest'])) record_jackpot($round['userId'], (float) $payout, $round['game'], $cur);
     }
     $sessionArr = $session;
     $sessionArr['detail'] = $detail;
@@ -415,11 +432,14 @@ function crash_tick(Ctx $c, array $a): array
     $elapsed = $c->now - $round['startedAt'];
     $current = crash_multiplier_at($elapsed);
     if ($round['autoCashout'] && $round['autoCashout'] <= $round['point'] && $current >= $round['autoCashout']) {
-        return ['done' => true, 'crashed' => false, 'point' => $round['point'], 'cashedAt' => $round['autoCashout']]
-            + finish($c, $round, $round['autoCashout'], 'win', ['point' => $round['point'], 'cashedAt' => $round['autoCashout'], 'auto' => true]);
+        $res = finish($c, $round, $round['autoCashout'], 'win', ['point' => $round['point'], 'cashedAt' => $round['autoCashout'], 'auto' => true] + crash_detail($round));
+        crash_mark($round, (float) $round['autoCashout'], (float) $res['session']['payout']);
+        return ['done' => true, 'crashed' => false, 'point' => $round['point'], 'cashedAt' => $round['autoCashout']] + $res;
     }
     if ($elapsed >= crash_time_of($round['point'])) {
-        return ['done' => true, 'crashed' => true, 'point' => $round['point']] + finish($c, $round, 0, 'loss', ['point' => $round['point']]);
+        $res = finish($c, $round, 0, 'loss', ['point' => $round['point']] + crash_detail($round));
+        crash_mark($round, null, 0);
+        return ['done' => true, 'crashed' => true, 'point' => $round['point']] + $res;
     }
     return ['done' => false, 'multiplier' => $current];
 }
@@ -437,8 +457,15 @@ function crash_cashout(Ctx $c, array $a): array
     $at = max(1, crash_multiplier_at($elapsed));
     // Cash out paling cepat di 1.05× (cegah "cash out 1.01×" untuk farming XP/statistik).
     if ($at < CRASH_MIN_CASHOUT) fail('play.crash.minCashout', ['min' => number_format(CRASH_MIN_CASHOUT, 2)]);
-    return ['done' => true, 'crashed' => false, 'point' => $round['point'], 'cashedAt' => $at]
-        + finish($c, $round, $at, $at > 1 ? 'win' : 'push', ['point' => $round['point'], 'cashedAt' => $at]);
+    $res = finish($c, $round, $at, $at > 1 ? 'win' : 'push', ['point' => $round['point'], 'cashedAt' => $at] + crash_detail($round));
+    crash_mark($round, $at, (float) $res['session']['payout']);
+    return ['done' => true, 'crashed' => false, 'point' => $round['point'], 'cashedAt' => $at] + $res;
+}
+
+/** Global round id in the session detail (history links to the shared round). */
+function crash_detail(array $round): array
+{
+    return empty($round['globalRound']) ? [] : ['round' => $round['globalRound']];
 }
 
 // ───────────────────────────── Mines ─────────────────────────────
@@ -631,7 +658,7 @@ function open_round(Ctx $c, array $a): ?array
 const GAME_ACTIONS = [
     'dice' => 'play_dice', 'limbo' => 'play_limbo', 'coinflip' => 'play_coinflip', 'plinko' => 'play_plinko',
     'roulette' => 'play_roulette', 'case-open' => 'open_case', 'case-battle' => 'play_case_battle',
-    'crash-start' => 'crash_start', 'crash-tick' => 'crash_tick', 'crash-cashout' => 'crash_cashout',
+    'crash-start' => 'crash_bet', 'crash-bet' => 'crash_bet', 'crash-tick' => 'crash_tick', 'crash-cashout' => 'crash_cashout',
     'mines-start' => 'mines_start', 'mines-reveal' => 'mines_reveal', 'mines-cashout' => 'mines_cashout',
     'blackjack-start' => 'blackjack_start', 'blackjack-action' => 'blackjack_action', 'open' => 'open_round',
 ];

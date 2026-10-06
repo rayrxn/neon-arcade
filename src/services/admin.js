@@ -41,9 +41,10 @@ export function requirePerm(permission) {
   return admin
 }
 
+/** Alasan boleh kosong (dicatat "—" di audit log). */
 function requireReason(reason) {
-  if (!reason || String(reason).trim().length < 5) throw new AppError('admin.errors.reason')
-  return String(reason).trim().slice(0, 300)
+  const r = String(reason ?? '').trim().slice(0, 300)
+  return r || '—'
 }
 
 /** Admin tidak boleh menindak dirinya sendiri atau role yang setara/lebih tinggi. */
@@ -579,8 +580,8 @@ export function allCodes() {
   return [...extra, ...builtIn].map((c) => ({ ...c, used: usage[c.code] ?? 0 }))
 }
 
-export function createCode({ code, kind, amount, itemId, maxUses, perUser, expiresAt, active }, reason) {
-  if (SERVER_MODE) return adminCall('createCode', { code, kind, amount, itemId, maxUses, perUser, expiresAt, active, reason })
+export function createCode({ code, kind, amount, itemId, maxUses, perUser, expiresAt, active, membersOnly }, reason) {
+  if (SERVER_MODE) return adminCall('createCode', { code, kind, amount, itemId, maxUses, perUser, expiresAt, active, membersOnly, reason })
   const admin = requirePerm('codes.manage')
   const r = requireReason(reason)
   const key = String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')

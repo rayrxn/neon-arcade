@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { randomHex } from '@/utils/rng'
@@ -66,3 +67,10 @@ export const useNotificationStore = create(
 
 const EMPTY = []
 export const useNotifications = (userId) => useNotificationStore((s) => (userId ? s.byUser[userId] ?? EMPTY : EMPTY))
+
+/** Moderation actions and staff announcements are shown as a pop-up on screen, not in the bell. */
+export const POPUP_KINDS = new Set(['security', 'announcement'])
+export function useBellNotifications(userId) {
+  const all = useNotifications(userId)
+  return useMemo(() => all.filter((n) => !POPUP_KINDS.has(n.kind)), [all])
+}

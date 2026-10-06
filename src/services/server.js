@@ -104,7 +104,7 @@ export function applyState(state, userId = useAuthStore.getState().session?.user
   }
   if (state.season) usePlatformStore.setState({ season: state.season })
   if (state.notifications) applyNotifications(userId, state.notifications)
-  if (state.extras) useExtrasStore.setState((s) => ({ byUser: { ...s.byUser, [userId]: state.extras } }))
+  if (state.extras) useExtrasStore.setState((s) => ({ byUser: { ...s.byUser, [userId]: { ...state.extras, pass: state.pass ?? s.byUser[userId]?.pass ?? null } } }))
 }
 
 /** Jenis notifikasi yang bisa dimatikan pemain (Settings → Notifikasi). */
