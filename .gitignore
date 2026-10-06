@@ -1,0 +1,33 @@
+node_modules/
+dist/
+tests/output/
+
+# Environment variables (JANGAN COMMIT!)
+.env
+.env.local
+.env.*.local
+
+# SSH Keys (JANGAN COMMIT!)
+*.pem
+*.key
+id_rsa*
+id_ecdsa*
+
+# Sensitive files
+.ssh/
+secrets/
+credentials/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

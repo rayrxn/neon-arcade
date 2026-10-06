@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ───────────────────────── Theme tokens ─────────────────────────
+   Dark = tampilan utama. Light dipilih lewat Settings → Appearance
+   (atribut data-appearance di <html>, diatur oleh ThemeController).
+   Tailwind membaca variabel ini (lihat tailwind.config.js). */
+:root {
+  color-scheme: dark;
+  --white: 255 255 255;
+  --ink-950: 6 7 12;
+  --ink-900: 11 13 21;
+  --ink-850: 15 18 28;
+  --ink-800: 20 24 38;
+  --ink-700: 29 34 52;
+  --ink-600: 43 49 72;
+  --slate-100: 241 245 249;
+  --slate-200: 226 232 240;
+  --slate-300: 203 213 225;
+  --slate-400: 148 160 182;
+  --slate-500: 104 118 142;
+  --slate-600: 74 86 108;
+  --slate-700: 52 63 84;
+  --neon-cyan: 34 225 255;
+  --neon-gold: 255 200 61;
+  --neon-purple: 163 91 255;
+  --neon-pink: 255 77 141;
+  --neon-green: 61 232 160;
+  --neon-red: 255 84 104;
+  --gem: 178 120 255;
+
+  --card: rgb(255 255 255 / 0.035);
+  --card-strong: rgb(13 16 26 / 0.92);
+  --line: rgb(255 255 255 / 0.08);
+  --line-strong: rgb(255 255 255 / 0.12);
+  --shadow-panel: inset 0 1px 0 0 rgb(255 255 255 / 0.05), 0 24px 48px -28px rgb(0 0 0 / 0.85);
+  --shadow-pop: 0 24px 64px -16px rgb(0 0 0 / 0.7);
+  --grid-line: rgb(255 255 255 / 0.03);
+  --glow-a: rgb(34 225 255 / 0.08);
+  --glow-b: rgb(163 91 255 / 0.1);
+  --scrollbar: rgb(255 255 255 / 0.12);
+}
+
+:root[data-appearance='light'] {
+  color-scheme: light;
+  --white: 16 19 33;
+  --ink-950: 243 245 250;
+  --ink-900: 255 255 255;
+  --ink-850: 248 249 252;
+  --ink-800: 237 240 246;
+  --ink-700: 224 228 238;
+  --ink-600: 200 206 220;
+  --slate-100: 20 24 38;
+  --slate-200: 30 36 54;
+  --slate-300: 46 53 74;
+  --slate-400: 78 87 110;
+  --slate-500: 100 109 132;
+  --slate-600: 138 146 166;
+  --slate-700: 170 177 195;
+  --neon-cyan: 6 140 176;
+  --neon-gold: 190 130 6;
+  --neon-purple: 118 56 230;
+  --neon-pink: 214 36 116;
+  --neon-green: 4 145 100;
+  --neon-red: 220 38 74;
+  --gem: 124 58 237;
+
+  --card: rgb(255 255 255);
+  --card-strong: rgb(255 255 255 / 0.97);
+  --line: rgb(16 19 33 / 0.08);
+  --line-strong: rgb(16 19 33 / 0.14);
+  --shadow-panel: 0 1px 2px rgb(16 19 33 / 0.04), 0 8px 24px -14px rgb(16 19 33 / 0.14);
+  --shadow-pop: 0 24px 60px -18px rgb(16 19 33 / 0.28);
+  --grid-line: rgb(16 19 33 / 0.045);
+  --glow-a: rgb(6 140 176 / 0.07);
+  --glow-b: rgb(118 56 230 / 0.06);
+  --scrollbar: rgb(16 19 33 / 0.18);
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-ink-950;
+  }
+  body {
+    @apply m-0 min-h-dvh font-sans text-base text-slate-200 antialiased;
+  }
+  /* Stacking context sendiri supaya .arcade-bg (z -1) tidak tertutup background body. */
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+  ::selection {
+    background: rgb(var(--neon-cyan) / 0.3);
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .glass {
+    border: 1px solid var(--line);
+    background: var(--card);
+    box-shadow: var(--shadow-panel);
+    @apply backdrop-blur-xl;
+  }
+  .glass-strong {
+    border: 1px solid var(--line-strong);
+    background: var(--card-strong);
+    box-shadow: var(--shadow-pop);
+    @apply backdrop-blur-2xl;
+  }
+  .label-caps {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+  }
+  .hairline {
+    border-color: var(--line);
+  }
+  .input-shell {
+    @apply rounded-xl border bg-ink-950/60 transition-[border-color,box-shadow] duration-200;
+    border-color: var(--line-strong);
+  }
+  .input-shell:focus-within {
+    border-color: rgb(var(--neon-cyan) / 0.6);
+    box-shadow: 0 0 0 3px rgb(var(--neon-cyan) / 0.12);
+  }
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-cyan/60;
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ───────── Background global: grid tipis + dua cahaya lembut ───────── */
+.arcade-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* di dalam stacking context #root: di atas background body, di bawah konten */
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 36rem at 8% -12%, var(--glow-a), transparent 62%),
+    radial-gradient(52rem 40rem at 108% 112%, var(--glow-b), transparent 60%);
+}
+.arcade-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 25%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 25%, transparent 75%);
+}
+
+/* ───────── Koin AC 3D (CSS keyframes, loop tak terbatas) ───────── */
+.coin {
+  position: relative;
+  width: var(--size, 20px);
+  height: var(--size, 20px);
+  transform-style: preserve-3d;
+}
+.coin-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  backface-visibility: hidden;
+  background: radial-gradient(circle at 34% 28%, #fff6d2 0 7%, #ffd85e 24%, #f5a524 64%, #b4680a 100%);
+  box-shadow:
+    inset 0 0 0 calc(var(--size, 20px) * 0.085) rgba(255, 238, 176, 0.55),
+    inset 0 calc(var(--size, 20px) * -0.08) calc(var(--size, 20px) * 0.16) rgba(110, 55, 0, 0.55);
+}
+.coin-face > span {
+  font-family: 'Unbounded', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--size, 20px) * 0.44);
+  line-height: 1;
+  color: #8a4e05;
+  text-shadow: 0 1px 0 rgba(255, 240, 190, 0.6);
+}
+.coin-back {
+  transform: rotateY(180deg);
+}
+.coin-spin {
+  animation: coin-spin 3.2s linear infinite;
+}
+@keyframes coin-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+/* ───────── Marquee showcase di halaman auth ───────── */
+.marquee-track {
+  animation: marquee 38s linear infinite;
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coin-spin,
+  .marquee-track {
+    animation: none;
+  }
+}
