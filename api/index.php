@@ -13,6 +13,8 @@ require __DIR__ . '/lib/admin.php';
 require __DIR__ . '/lib/platform2.php';
 require __DIR__ . '/lib/admin2.php';
 require __DIR__ . '/lib/platform3.php';
+require __DIR__ . '/lib/mail.php';
+require __DIR__ . '/lib/account.php';
 
 /** Jalankan aksi yang mengubah progres user dalam satu transaksi, lalu kirim snapshot state. */
 function with_user(callable $fn, bool $lightWhenOpen = false): array
@@ -62,6 +64,11 @@ function route(string $method, string $path): array
         case 'auth/login': return api_login();
         case 'auth/logout': return api_logout();
         case 'auth/password': return api_password();
+        case 'auth/forgot': return api_forgot();
+        case 'auth/reset/check': return api_reset_check();
+        case 'auth/reset': return api_reset_password();
+        case 'auth/verify/send': return api_verify_send();
+        case 'auth/verify': return api_verify_email();
         case 'profile': return api_profile();
 
         case 'daily/claim':

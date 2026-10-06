@@ -253,10 +253,10 @@ export function ResultCard({ outcome, game }) {
               <motion.div className="h-full rounded-full bg-neon-cyan" initial={{ width: 0 }} animate={{ width: `${(level.into / level.need) * 100}%` }} />
             </div>
           )}
-          {summary?.levelUp && <p className="mt-2 text-xs font-bold text-neon-gold">{t('notifications.levelUp.title', { level: summary.levelUp })}</p>}
+          {summary?.levelUp && <p className="mt-2 text-xs font-bold text-neon-gold">{t('notifications.levelUp.title', { level: summary.levelUp.to ?? summary.levelUp })}</p>}
         </div>
         <div className="space-y-1.5 rounded-xl bg-white/[0.03] p-3 text-xs ring-1 ring-inset ring-white/[0.06]">
-          <p className="flex items-center gap-1.5 text-slate-400"><Trophy className="h-3.5 w-3.5 text-neon-gold" /> {t('play.best')} {game}: <b className="text-slate-200">{fmtMult(summary?.best)}</b></p>
+          <p className="flex items-center gap-1.5 text-slate-400"><Trophy className="h-3.5 w-3.5 text-neon-gold" /> {t('play.best')} {game}: <b className="text-slate-200">{summary?.best > 0 ? fmtMult(summary.best) : '—'}</b></p>
           {quests.length > 0 ? (
             quests.map((q) => <p key={q} className="flex items-center gap-1.5 font-semibold text-neon-green"><CheckCircle2 className="h-3.5 w-3.5" /> {t('play.questDone')}: {q}</p>)
           ) : (

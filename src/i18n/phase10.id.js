@@ -107,4 +107,35 @@ export default {
     loyalty: { dailyBonus: 'Bonus harian', perkDailyAc: 'Bonus harian AC', perkDailyAg: 'Bonus harian AG', perkConvert: 'Bonus konverter %', perkDiscount: 'Diskon Shop %', perkLxp: 'Bonus Loyalty XP %' },
     members: { manager: 'Manajer pribadi', setManager: 'Tetapkan manajer pribadi untuk @{user}?', grantPass: 'Beri @{user} pass premium season ini?', grantPassBtn: 'Beri pass premium' },
   },
+  account: {
+    forgot: {
+      link: 'Lupa password?', title: 'Atur ulang password', subtitle: 'Masukkan email akunmu, kami kirim link untuk membuat password baru.',
+      submit: 'Kirim link reset', backToLogin: 'Kembali ke masuk',
+      sentTitle: 'Cek inbox kamu', sentBody: 'Kalau {email} punya akun Neon Arcade, link reset sedang dikirim. Link berlaku {minutes} menit.',
+      tipSpam: 'Belum masuk setelah beberapa menit? Cek folder Spam atau Promosi.', tipNoAccount: 'Kalau tidak ada email sama sekali, biasanya alamat itu belum terdaftar. Coba email yang dipakai saat daftar.',
+      tryAnother: 'Pakai email lain',
+    },
+    reset: {
+      title: 'Buat password baru', subtitle: 'Untuk @{user} ({email}). Minimal 8 karakter.', newPassword: 'Password baru', submit: 'Simpan password baru',
+      signOutNote: 'Setelah disimpan, semua perangkat akan keluar. Masuk lagi dengan password baru.',
+      doneTitle: 'Password berhasil diganti', doneBody: 'Password barumu sudah aktif. Semua perangkat sudah keluar, jadi masuk lagi untuk lanjut.', signIn: 'Masuk',
+      invalidTitle: 'Link ini sudah tidak berlaku', invalidBody: 'Link reset hanya bisa dipakai sekali dan berlaku 30 menit. Link yang lebih baru juga menggantikan link lama. Minta link baru untuk mencoba lagi.', newLink: 'Kirim link baru',
+    },
+    verify: {
+      verified: 'Terverifikasi', unverified: 'Belum diverifikasi', verifiedHint: 'Email ini bisa dipakai untuk reset password.',
+      unverifiedHint: 'Verifikasi email supaya kamu bisa reset password kalau lupa.',
+      send: 'Kirim email verifikasi', resend: 'Kirim lagi', resendIn: 'Kirim lagi dalam {seconds} dtk',
+      sentToast: 'Email verifikasi terkirim', sentBody: 'Link sudah dikirim ke {email}. Buka dalam 24 jam.',
+      doneTitle: 'Email terverifikasi', doneBody: 'Terima kasih! Emailmu sudah dikonfirmasi dan bisa dipakai untuk reset password kapan saja.', toSettings: 'Kembali ke Pengaturan',
+      invalidTitle: 'Link ini sudah tidak berlaku', invalidBody: 'Link verifikasi berlaku 24 jam dan link yang lebih baru menggantikan link lama. Kirim link baru dari Pengaturan.',
+    },
+  },
+  auth: {
+    errors: {
+      linkInvalid: 'Link tidak valid atau sudah kedaluwarsa.', alreadyVerified: 'Emailmu sudah terverifikasi.',
+      waitResend: 'Tunggu {seconds} detik sebelum mengirim email lagi.', tooManyEmails: 'Terlalu banyak permintaan email. Coba lagi dalam {minutes} menit.',
+      mailFailed: 'Email belum bisa dikirim sekarang. Coba lagi beberapa menit lagi.',
+    },
+  },
+  notifications: { securityEvents: { passwordReset: { title: 'Password direset', body: 'Password kamu diganti lewat link email dan semua perangkat sudah dikeluarkan. Bukan kamu? Segera hubungi Support.' } } },
 }

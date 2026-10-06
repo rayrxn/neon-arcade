@@ -139,6 +139,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   const [x1, x2] = await Promise.all([Gm.playCoinflip({ bet: 10, side: 'heads' }), Gm.playCoinflip({ bet: 10, side: 'heads' })])
   assert('klik ganda tidak memotong saldo dua kali', x1.session.id === x2.session.id)
 
+  const roundResults = []
   for (const [name, fn] of [
     ['limbo', () => Gm.playLimbo({ bet: 10, target: 2 })],
     ['plinko', () => Gm.playPlinko({ bet: 10, risk: 'low' })],
@@ -148,6 +149,18 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   ]) {
     const r = await fn()
     assert(`${name} lewat API`, r?.session?.verification === 'verified')
+    roundResults.push([name, r])
+  }
+  // Post-round card with real server results (+ a level-up), text must never show raw objects.
+  {
+    const { ResultCard } = L('src/components/play/GameKit.jsx')
+    for (const [name, r] of roundResults) {
+      for (const outcome of [r, { ...r, summary: { ...r.summary, levelUp: { from: 2, to: 3 } } }]) {
+        const text = Server.renderToString(h(ResultCard, { outcome, game: name })).replace(/<[^>]+>/g, ' ')
+        const bad = /\[object|undefined|NaN|\{\w+\}/.exec(text)
+        assert(`result card ${name}${outcome.summary?.levelUp?.to === 3 ? ' + level up' : ''} tanpa teks rusak`, !bad, bad ? text.slice(Math.max(0, bad.index - 40), bad.index + 40) : '')
+      }
+    }
   }
   assert('error server → AppError i18n', (await code(() => Gm.playDice({ bet: 1.5, target: 50, over: true }))) === 'play.errors.wholeBet')
   await sleep(1100)
@@ -400,7 +413,22 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   auth.setState({ session: null })
   const authMarkup = Server.renderToString(h(L('src/pages/AuthPage.jsx').default))
   assert('halaman masuk menyebut penyimpanan server', authMarkup.includes('server'))
+  for (const [name, el] of [
+    ['forgot', h(L('src/components/auth/ForgotPassword.jsx').default, { initialEmail: 'a@b.co', onBack() {} })],
+    ['reset-page', h(L('src/pages/AccountLinkPages.jsx').ResetPasswordPage)],
+    ['verify-page', h(L('src/pages/AccountLinkPages.jsx').VerifyEmailPage)],
+  ]) {
+    try {
+      const markup = Server.renderToString(el)
+      dump(`sm-${name}`, markup)
+      const bad = /NaN|undefined|\[object Object\]|\{\w+\}/.exec(markup.replace(/<[^>]+>/g, ' '))
+      assert(`render ${name}`, !bad, bad ? bad[0] : '')
+    } catch (e) {
+      assert(`render ${name}`, false, e.stack.split('\n').slice(0, 3).join(' | '))
+    }
+  }
 
+  assert('tidak ada objek mentah di teks terjemahan', !(globalThis.window?.__objectI18n?.size), [...(globalThis.window?.__objectI18n ?? [])].join(', '))
   console.log(failures ? `\n${failures} test(s) failed` : '\nAll server-mode tests passed')
   process.exitCode = failures ? 1 : 0
 })().catch((e) => { console.error(e); process.exitCode = 1 })

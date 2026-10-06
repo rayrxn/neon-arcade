@@ -37,7 +37,7 @@ const lang = () => usePrefsStore.getState().language
  * sebelum itu dibuang, supaya polling yang masih berjalan tidak "memasukkan" user lagi.
  */
 let authGen = 0
-const AUTH_PATHS = new Set(['auth/login', 'auth/register', 'auth/logout'])
+const AUTH_PATHS = new Set(['auth/login', 'auth/register', 'auth/logout', 'auth/forgot', 'auth/reset/check', 'auth/reset', 'auth/verify'])
 export const LOGOUT_KEY = 'neon-arcade:logout'
 
 /** Panggil API. Error server → AppError dengan kode i18n yang sama seperti mode lokal. */

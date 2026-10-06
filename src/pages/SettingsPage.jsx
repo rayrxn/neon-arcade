@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, Globe, Volume2, VolumeX, KeyRound, Lock, LogOut, Monitor, Moon, Palette, Pencil, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react'
+import { Bell, Check, Globe, Volume2, VolumeX, KeyRound, Lock, LogOut, Mail, MailCheck, Monitor, Moon, Palette, Pencil, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react'
 import clsx from 'clsx'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -14,6 +14,8 @@ import { passwordRules } from '@/utils/validation'
 import { errorKey } from '@/utils/errors'
 import { formatDateTime } from '@/utils/format'
 import { play } from '@/services/sound'
+import { sendVerificationEmail } from '@/services/account'
+import { SERVER_MODE } from '@/config/runtime'
 import { useT } from '@/i18n'
 
 const SECTIONS = [
@@ -169,6 +171,52 @@ function ChangePassword() {
   )
 }
 
+/** Email address with its verification status; sends the verification link (server mode). */
+function EmailStatus({ user }) {
+  const { t } = useT()
+  const [busy, setBusy] = useState(false)
+  const [sentTo, setSentTo] = useState(null)
+  const [wait, setWait] = useState(0)
+  useEffect(() => {
+    if (wait <= 0) return
+    const id = setTimeout(() => setWait((w) => w - 1), 1000)
+    return () => clearTimeout(id)
+  }, [wait])
+  if (!SERVER_MODE || !user?.email) return null
+  const verified = !!user.emailVerified
+  const send = async () => {
+    setBusy(true)
+    try {
+      const r = await sendVerificationEmail()
+      setSentTo(r.email)
+      setWait(r.resendIn ?? 60)
+      toast({ tone: 'success', title: t('account.verify.sentToast'), body: t('account.verify.sentBody', { email: r.email }) })
+    } catch (err) {
+      if (err?.vars?.seconds) setWait(Number(err.vars.seconds))
+      toast({ tone: 'error', title: t(errorKey(err), err?.vars) })
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className={clsx('mt-5 flex flex-col gap-3 rounded-xl p-3.5 ring-1 ring-inset sm:flex-row sm:items-center', verified ? 'bg-neon-green/[0.05] ring-neon-green/20' : 'bg-neon-gold/[0.05] ring-neon-gold/20')}>
+      <span className={clsx('grid h-10 w-10 shrink-0 place-items-center rounded-xl', verified ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-gold/10 text-neon-gold')}>{verified ? <MailCheck className="h-5 w-5" /> : <Mail className="h-5 w-5" />}</span>
+      <div className="min-w-0 flex-1">
+        <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-white">
+          <span className="truncate">{user.email}</span>
+          <span className={clsx('rounded-md px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider', verified ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-gold/10 text-neon-gold')}>{verified ? t('account.verify.verified') : t('account.verify.unverified')}</span>
+        </p>
+        <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{verified ? t('account.verify.verifiedHint') : sentTo ? t('account.verify.sentBody', { email: sentTo }) : t('account.verify.unverifiedHint')}</p>
+      </div>
+      {!verified && (
+        <Button size="sm" variant={sentTo ? 'ghost' : 'gold'} loading={busy} disabled={wait > 0} onClick={send} className="shrink-0">
+          {wait > 0 ? t('account.verify.resendIn', { seconds: wait }) : sentTo ? t('account.verify.resend') : t('account.verify.send')}
+        </Button>
+      )}
+    </div>
+  )
+}
+
 export default function SettingsPage() {
   const { t } = useT()
   const navigate = useNavigate()
@@ -207,6 +255,7 @@ export default function SettingsPage() {
             </div>
             <Button size="sm" variant="ghost" onClick={() => openModal('editProfile')}><Pencil className="h-4 w-4" /> {t('settings.account.edit')}</Button>
           </div>
+          <EmailStatus user={user} />
         </Section>
 
         <Section id="appearance" title={t('settings.appearance.title')} description={t('settings.appearance.description')}>

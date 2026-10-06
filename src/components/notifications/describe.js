@@ -5,7 +5,14 @@ import { getGameName } from '@/config/games'
 import { pick } from '@/i18n'
 
 export const rewardsText = (rewards, lang) =>
-  rewards.map((r) => (r.kind === 'item' ? pick(ITEMS[r.id]?.name, lang) : `${formatCoins(r.amount)} ${r.kind}`)).join(' + ')
+  (rewards ?? [])
+    .map((r) => {
+      if (!r || typeof r !== 'object') return r == null ? '' : String(r)
+      if (r.kind === 'item') return pick(ITEMS[r.id]?.name ?? r.name, lang) ?? r.id ?? ''
+      return r.amount != null ? `${formatCoins(r.amount)} ${r.kind ?? ''}`.trim() : pick(r.name ?? r.label, lang) ?? r.kind ?? ''
+    })
+    .filter(Boolean)
+    .join(' + ')
 
 const META = {
   transferIn: { icon: ArrowDownLeft, tone: 'text-neon-green bg-neon-green/10' },
@@ -39,7 +46,7 @@ export function describeNotification(t, lang, n) {
   if (n.kind === 'redeem' || n.kind === 'daily') vars.reward = rewardsText((d.rewards ?? []).filter((r) => r.kind !== 'XP'), lang) || '—'
   if (n.kind === 'levelUp') {
     vars.level = d.level
-    vars.reward = (d.rewards ?? []).map((r) => `${formatCoins(r.amount)} ${r.kind}`).join(' + ')
+    vars.reward = rewardsText(d.rewards, lang)
   }
   if (n.kind === 'reportUpdate') vars.status = t(`moderation.status.${d.status ?? 'new'}`)
   if (n.kind === 'ticket') {

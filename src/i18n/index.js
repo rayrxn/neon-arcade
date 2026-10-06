@@ -59,8 +59,26 @@ export function translate(lang, key, vars) {
     return key
   }
   if (typeof value === 'function') return value(vars ?? {})
+  if (typeof value === 'object') {
+    // Key points at a namespace, not a sentence: never render "[object Object]".
+    if (typeof window !== 'undefined') (window.__objectI18n ??= new Set()).add(`key:${key}`)
+    return value.title ?? value.label ?? value.name ?? key
+  }
   if (!vars) return value
-  return value.replace(/\{(\w+)\}/g, (_, name) => (vars[name] ?? `{${name}}`))
+  return value.replace(/\{(\w+)\}/g, (_, name) => {
+    const v = vars[name]
+    return v == null ? `{${name}}` : textOf(v, lang, key)
+  })
+}
+
+/** Turn an interpolation value into text: localized {id, en}, level-up {from, to}, arrays, numbers. */
+function textOf(v, lang, key) {
+  if (typeof v !== 'object') return String(v)
+  if (Array.isArray(v)) return v.map((x) => textOf(x, lang, key)).join(', ')
+  const out = v[lang] ?? v.en ?? v.id ?? v.to ?? v.level ?? v.name ?? v.title ?? v.label ?? v.value ?? v.amount
+  if (out != null && typeof out !== 'object') return String(out)
+  if (typeof window !== 'undefined') (window.__objectI18n ??= new Set()).add(`var:${key}`)
+  return ''
 }
 
 /** Untuk kode di luar komponen (services, toast). */

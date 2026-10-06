@@ -6,7 +6,7 @@ declare(strict_types=1);
 // Bisa jalan lewat php CLI atau php-cgi (cron hosting), tapi tidak pernah lewat web.
 if (isset($_SERVER['REQUEST_METHOD']) || isset($_SERVER['HTTP_HOST'])) exit(1);
 $api = dirname(__DIR__, 2) . '/api/lib';
-foreach (['core', 'rng', 'progression', 'state', 'auth', 'games', 'platform', 'admin', 'platform2', 'admin2', 'platform3'] as $f) require "$api/$f.php";
+foreach (['core', 'rng', 'progression', 'state', 'auth', 'games', 'platform', 'admin', 'platform2', 'admin2', 'platform3', 'mail', 'account'] as $f) require "$api/$f.php";
 $argv = $argv ?? [];
 $scope = (string) ($argv[1] ?? getenv('NEON_RESET_SCOPE') ?: '');
 $reason = trim((string) ($argv[2] ?? getenv('NEON_RESET_REASON') ?: '')) ?: 'Rilis update';

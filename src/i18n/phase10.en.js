@@ -107,4 +107,35 @@ export default {
     loyalty: { dailyBonus: 'Daily bonus', perkDailyAc: 'Daily bonus AC', perkDailyAg: 'Daily bonus AG', perkConvert: 'Converter bonus %', perkDiscount: 'Shop discount %', perkLxp: 'Loyalty XP bonus %' },
     members: { manager: 'Private manager', setManager: 'Set the private manager for @{user}?', grantPass: 'Give @{user} the premium pass for this season?', grantPassBtn: 'Give premium pass' },
   },
+  account: {
+    forgot: {
+      link: 'Forgot password?', title: 'Reset your password', subtitle: 'Enter the email on your account and we’ll send you a link to choose a new password.',
+      submit: 'Send reset link', backToLogin: 'Back to sign in',
+      sentTitle: 'Check your inbox', sentBody: 'If {email} has a Neon Arcade account, a reset link is on its way. It works for {minutes} minutes.',
+      tipSpam: 'Nothing after a few minutes? Check your Spam or Promotions folder.', tipNoAccount: 'No email at all usually means that address isn’t registered. Try the one you signed up with.',
+      tryAnother: 'Use a different email',
+    },
+    reset: {
+      title: 'Choose a new password', subtitle: 'For @{user} ({email}). Use at least 8 characters.', newPassword: 'New password', submit: 'Save new password',
+      signOutNote: 'Saving signs you out on every device. Sign in again with the new password.',
+      doneTitle: 'Password changed', doneBody: 'Your new password is ready. All devices were signed out, so sign in again to continue.', signIn: 'Sign in',
+      invalidTitle: 'This link doesn’t work anymore', invalidBody: 'Reset links work once and expire after 30 minutes. A newer link also replaces older ones. Request a fresh link to try again.', newLink: 'Send a new link',
+    },
+    verify: {
+      verified: 'Verified', unverified: 'Not verified', verifiedHint: 'You can use this email to reset your password.',
+      unverifiedHint: 'Verify your email so you can reset your password if you ever forget it.',
+      send: 'Send verification email', resend: 'Send again', resendIn: 'Send again in {seconds}s',
+      sentToast: 'Verification email sent', sentBody: 'We sent a link to {email}. Open it within 24 hours.',
+      doneTitle: 'Email verified', doneBody: 'Thanks! Your email is confirmed. You can now reset your password with it any time.', toSettings: 'Back to Settings',
+      invalidTitle: 'This link doesn’t work anymore', invalidBody: 'Verification links expire after 24 hours and a newer link replaces older ones. Send a new one from Settings.',
+    },
+  },
+  auth: {
+    errors: {
+      linkInvalid: 'This link is invalid or has expired.', alreadyVerified: 'Your email is already verified.',
+      waitResend: 'Wait {seconds} seconds before sending another email.', tooManyEmails: 'Too many emails requested. Try again in {minutes} minutes.',
+      mailFailed: 'We couldn’t send the email right now. Try again in a few minutes.',
+    },
+  },
+  notifications: { securityEvents: { passwordReset: { title: 'Password was reset', body: 'Your password was changed with an email link and every device was signed out. Not you? Contact Support right away.' } } },
 }

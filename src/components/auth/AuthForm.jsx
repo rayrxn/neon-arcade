@@ -5,6 +5,7 @@ import { AlertCircle, ArrowRight, AtSign, Check, Eye, EyeOff, Lock, Mail } from 
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import Field from '@/components/ui/Field'
+import ForgotPassword from '@/components/auth/ForgotPassword'
 import { CurrencyIcon } from '@/components/ui/Currency'
 import { useAuthStore } from '@/store/useAuthStore'
 import { SERVER_MODE } from '@/config/runtime'
@@ -63,6 +64,7 @@ export default function AuthForm() {
   const [status, setStatus] = useState('idle') // idle | loading | success
   const [serverError, setServerError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [forgot, setForgot] = useState(() => SERVER_MODE && new URLSearchParams(location.search).get('forgot') === '1')
 
   const errors = useMemo(() => validateAuth(mode, values), [mode, values])
   const errorFor = (name) => (touched[name] || submitted) && errors[name] ? t(errors[name]) : undefined
@@ -106,7 +108,7 @@ export default function AuthForm() {
       setTimeout(() => navigate(destination, { replace: true }), 480)
     } catch (err) {
       setStatus('idle')
-      setServerError(errorKey(err))
+      setServerError({ code: errorKey(err), vars: err?.vars })
       rattle()
     }
   }
@@ -121,6 +123,10 @@ export default function AuthForm() {
     <motion.div animate={shake} className="w-full max-w-[420px]">
       <motion.div initial={{ opacity: 0, y: 20, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.6, ease: EASE }} className="glass-strong relative overflow-hidden rounded-2xl p-6 sm:p-8">
         <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-neon-cyan/70 to-transparent" />
+        {forgot ? (
+          <ForgotPassword initialEmail={values.email} onBack={() => setForgot(false)} />
+        ) : (
+        <>
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={mode} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
@@ -173,6 +179,11 @@ export default function AuthForm() {
               {...bind('password')}
             />
             {isRegister && values.password && <StrengthMeter password={values.password} />}
+            {!isRegister && SERVER_MODE && (
+              <div className="mt-2 flex justify-end">
+                <button type="button" onClick={() => setForgot(true)} disabled={busy} className="text-xs font-semibold text-neon-cyan/90 transition hover:text-neon-cyan">{t('account.forgot.link')}</button>
+              </div>
+            )}
           </div>
 
           <Collapsible show={isRegister}>
@@ -184,7 +195,7 @@ export default function AuthForm() {
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden" role="alert">
                 <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-neon-red/30 bg-neon-red/10 px-3.5 py-3 text-sm text-neon-red">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  {t(serverError)}
+                  {t(serverError.code, serverError.vars)}
                 </div>
               </motion.div>
             )}
@@ -206,6 +217,8 @@ export default function AuthForm() {
 
         <p className="mt-6 text-center text-xs leading-relaxed text-slate-500">{t(SERVER_MODE ? 'auth.serverNote' : 'auth.localNote')}</p>
         {mode === 'register' && <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-600">{t('auth.ownerNote')}</p>}
+        </>
+        )}
       </motion.div>
     </motion.div>
   )

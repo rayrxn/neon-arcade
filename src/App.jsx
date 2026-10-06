@@ -22,6 +22,7 @@ import PublicProfilePage from '@/pages/PublicProfilePage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import SupportPage from '@/pages/SupportPage'
 import StatusPage from '@/pages/StatusPage'
+import { ResetPasswordPage, VerifyEmailPage } from '@/pages/AccountLinkPages'
 import { ModerationQueue } from '@/admin/pages/Moderation'
 import { SupportAdmin } from '@/admin/pages/Support'
 import { SystemAdmin } from '@/admin/pages/System'
@@ -60,6 +61,8 @@ export default function App() {
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/status" element={<StatusPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
