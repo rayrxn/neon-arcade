@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Siapkan branch `deploy` (isi: index.html, api/, .htaccess) dari build standalone, lalu push.
-# Cron di hosting (~/bin/neon-sync.sh) menarik branch ini ke public_html dalam ±2 menit.
+# Cron di hosting (~/bin/neon-sync.sh) menarik branch ini ke public_html dalam ±7 menit.
 #
 # Pemakaian:
 #   bash tools/deploy.sh                  # build + push branch deploy
@@ -90,4 +90,4 @@ git commit -q -m "Deploy: build ${MAIN_SHA}${DEPLOY_COMMIT_TRAILER:+
 
 $DEPLOY_COMMIT_TRAILER}"
 git push -q origin deploy
-echo "Branch deploy dipush (build ${MAIN_SHA}). Hosting menarik otomatis dalam ±2 menit."
+echo "Branch deploy dipush (build ${MAIN_SHA}). Hosting menarik otomatis dalam ±7 menit."

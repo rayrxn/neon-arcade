@@ -1,5 +1,5 @@
 #!/bin/bash
-# Dipasang di hosting sebagai ~/bin/neon-sync.sh, dijalankan cron tiap 2 menit.
+# Dipasang di hosting sebagai ~/bin/neon-sync.sh, dijalankan cron tiap 7 menit (batas minimum Domainesia).
 # 1) public_html  ← branch `deploy` (website)
 # 2) ~/neon-src   ← branch `main`   (kode + SQL, di luar web root)
 # 3) jalankan ~/neon-src/tools/hosting/after-sync.sh (migrasi DB) kalau main berubah

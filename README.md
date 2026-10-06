@@ -125,7 +125,7 @@ tetap memakai service layer di browser seperti sebelumnya.
 1. Commit ke `main` → push ke GitHub.
 2. `bash tools/deploy.sh` (butuh `TAILWIND_BIN` untuk build ulang CSS) menyusun branch `deploy`
    (`index.html`, `api/`, `.htaccess`) dan mem-push-nya.
-3. Cron di hosting (`~/bin/neon-sync.sh`, salinan di `tools/hosting/`) tiap 2 menit menarik `deploy` ke `public_html`,
+3. Cron di hosting (`~/bin/neon-sync.sh`, salinan di `tools/hosting/`) tiap 7 menit (batas minimum Domainesia) menarik `deploy` ke `public_html`,
    `main` ke `~/neon-src`, lalu menjalankan migrasi baru di `db/migrations/` (sekali per file). Log: `~/logs/neon-sync.log`.
 
 Rahasia tidak pernah masuk repo: kredensial database ada di `~/neon-config.php` (API) dan `~/.pgpass` (cron),
