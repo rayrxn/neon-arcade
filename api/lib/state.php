@@ -204,6 +204,7 @@ function state_view(string $userId, array $p, array $meta): array
         'open' => (object) open_rounds_view($userId),
         'notifications' => notifications_view($userId),
         'extras' => extras_view($userId, $meta),
+        'pass' => pass_view($userId, $p),
         'serverTime' => now_ms(),
     ];
 }

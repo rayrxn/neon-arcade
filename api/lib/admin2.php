@@ -18,20 +18,48 @@ function admin_v2_view(array $me): array
     }
     if (has_perm($me, 'memberships.manage')) {
         $out['memberships'] = array_map(fn($m) => ['id' => $m['id'], 'userId' => $m['user_id'], 'username' => $m['username'], 'tier' => $m['tier'], 'active' => (bool) $m['active'] && (!$m['ends_at'] || strtotime($m['ends_at']) > time()),
-            'startsAt' => iso_to_ms($m['starts_at']), 'endsAt' => iso_to_ms($m['ends_at']), 'by' => $m['admin_name'], 'note' => $m['note']],
-            q('SELECT m.*, u.username, a.username AS admin_name FROM memberships m JOIN users u ON u.id = m.user_id LEFT JOIN users a ON a.id = m.activated_by ORDER BY m.created_at DESC LIMIT 300')->fetchAll());
+            'startsAt' => iso_to_ms($m['starts_at']), 'endsAt' => iso_to_ms($m['ends_at']), 'by' => $m['admin_name'], 'note' => $m['note'],
+            'managerId' => $m['manager_id'], 'manager' => $m['manager_name']],
+            q('SELECT m.*, u.username, a.username AS admin_name, mg.username AS manager_name FROM memberships m JOIN users u ON u.id = m.user_id LEFT JOIN users a ON a.id = m.activated_by LEFT JOIN users mg ON mg.id = m.manager_id ORDER BY m.created_at DESC LIMIT 300')->fetchAll());
     }
     if (has_perm($me, 'economy.manage') || has_perm($me, 'shop.manage')) {
         $out['purchases'] = array_map(fn($p) => ['id' => $p['id'], 'userId' => $p['user_id'], 'username' => $p['username'], 'item' => $p['item_id'], 'price' => num($p['price_ag']), 'at' => iso_to_ms($p['created_at'])],
             q('SELECT p.*, u.username FROM shop_purchases p JOIN users u ON u.id = p.user_id ORDER BY p.created_at DESC LIMIT 200')->fetchAll());
     }
     if (has_perm($me, 'economy.manage')) {
-        // Large or unusual movements in the last 7 days.
-        $out['suspicious'] = array_map(fn($t) => ['id' => $t['id'], 'userId' => $t['user_id'], 'username' => $t['username'], 'currency' => $t['currency'], 'amount' => num($t['amount']),
-            'type' => $t['type'], 'category' => $t['category'], 'reason' => $t['reason'], 'at' => iso_to_ms($t['created_at'])],
-            q("SELECT t.*, u.username FROM wallet_transactions t JOIN users u ON u.id = t.user_id
-               WHERE t.created_at > now() - interval '7 days' AND ((t.currency = 'AC' AND abs(t.amount) >= 1000000) OR (t.currency = 'AG' AND abs(t.amount) >= 100) OR t.category = 'admin')
-               ORDER BY t.created_at DESC LIMIT 200")->fetchAll());
+        $out['suspicious'] = suspicious_transactions();
+    }
+    return $out;
+}
+
+/**
+ * Transactions worth a look (last 7 days, test accounts excluded), each with the reason it was picked:
+ * a staff member crediting their own account, a game payout far above the player's normal bet limit,
+ * a very large transfer, or a large redeem.
+ */
+function suspicious_transactions(): array
+{
+    $rows = q("SELECT t.*, u.username, u.role, u.loyalty_xp, u.loyalty_floor, u.loyalty_override, u.id AS uid FROM wallet_transactions t JOIN users u ON u.id = t.user_id
+               WHERE t.created_at > now() - interval '7 days' AND NOT u.is_test AND t.status = 'success'
+                 AND ((t.category = 'admin' AND t.admin_id = t.user_id)
+                   OR (t.category = 'game' AND t.amount > 0)
+                   OR (t.category = 'transfer' AND ((t.currency = 'AC' AND abs(t.amount) >= 10000000) OR (t.currency = 'AG' AND abs(t.amount) >= 500)))
+                   OR (t.category = 'redeem' AND ((t.currency = 'AC' AND t.amount >= 1000000) OR (t.currency = 'AG' AND t.amount >= 50))))
+               ORDER BY t.created_at DESC LIMIT 1500")->fetchAll();
+    $out = [];
+    foreach ($rows as $t) {
+        $why = null;
+        if ($t['category'] === 'admin') $why = 'selfCredit';
+        elseif ($t['category'] === 'transfer') $why = 'bigTransfer';
+        elseif ($t['category'] === 'redeem') $why = 'bigRedeem';
+        else {
+            $limit = bet_limits(['id' => $t['uid'], 'loyalty_xp' => $t['loyalty_xp'], 'loyalty_floor' => $t['loyalty_floor'], 'loyalty_override' => $t['loyalty_override']])[$t['currency'] === 'AG' ? 'AG' : 'AC'];
+            if ((float) $t['amount'] >= 100 * $limit) $why = 'hugeWin';
+        }
+        if (!$why) continue;
+        $out[] = ['id' => $t['id'], 'userId' => $t['user_id'], 'username' => $t['username'], 'currency' => $t['currency'], 'amount' => num($t['amount']),
+            'type' => $t['type'], 'category' => $t['category'], 'reason' => $t['reason'], 'why' => $why, 'at' => iso_to_ms($t['created_at'])];
+        if (count($out) >= 200) break;
     }
     return $out;
 }
@@ -163,10 +191,13 @@ function admin_v2_action(array $me, string $name, array $a): ?array
                 'xp_required' => $slug === 'none' ? 0 : (isset($p['xpRequired']) ? v_int($p['xpRequired'], 1, 1000000000) : (int) $c['xp_required']),
                 'max_bet_ac' => isset($p['maxBetAC']) ? v_num($p['maxBetAC'], 1, 100000000) : (float) $c['max_bet_ac'],
                 'max_bet_ag' => isset($p['maxBetAG']) ? v_num($p['maxBetAG'], 1, 1000000) : (float) $c['max_bet_ag'],
-                'unlock_ac' => $slug === 'none' ? null : (array_key_exists('unlockAC', $p) ? ($p['unlockAC'] === null ? null : v_num($p['unlockAC'], 0, 1000000000)) : $c['unlock_ac']),
-                'unlock_ag' => $slug === 'none' ? null : (array_key_exists('unlockAG', $p) ? ($p['unlockAG'] === null ? null : v_num($p['unlockAG'], 0, 1000000)) : $c['unlock_ag']),
                 'color' => isset($p['color']) ? v_color($p['color']) : $c['color'],
                 'benefits' => isset($p['benefits']) ? v_list($p['benefits']) : jdec($c['benefits'], []),
+                'perks' => array_replace(card_perks($slug), is_array($p['perks'] ?? null) ? [
+                    'dailyAc' => v_int($p['perks']['dailyAc'] ?? 0, 0, 100000000), 'dailyAg' => v_int($p['perks']['dailyAg'] ?? 0, 0, 100000),
+                    'convertPct' => v_int($p['perks']['convertPct'] ?? 0, 0, 10000), 'shopDiscount' => v_int($p['perks']['shopDiscount'] ?? 0, 0, 90),
+                    'lxpPct' => v_int($p['perks']['lxpPct'] ?? 0, 0, 500),
+                ] : []),
             ];
             // XP thresholds must keep the card order.
             foreach (cards_all() as $o) {
@@ -174,8 +205,8 @@ function admin_v2_action(array $me, string $name, array $a): ?array
                 if (((int) $o['rank'] < (int) $c['rank'] && (int) $o['xp_required'] >= $next['xp_required'] && $slug !== 'none')
                     || ((int) $o['rank'] > (int) $c['rank'] && (int) $o['xp_required'] <= $next['xp_required'])) fail('admin.errors.cardOrder');
             }
-            q('UPDATE loyalty_cards SET name = ?, xp_required = ?, max_bet_ac = ?, max_bet_ag = ?, unlock_ac = ?, unlock_ag = ?, color = ?, benefits = ?::jsonb, updated_at = now() WHERE slug = ?',
-                [$next['name'], $next['xp_required'], (string) $next['max_bet_ac'], (string) $next['max_bet_ag'], $next['unlock_ac'] === null ? null : (string) $next['unlock_ac'], $next['unlock_ag'] === null ? null : (string) $next['unlock_ag'], $next['color'], jenc($next['benefits']), $slug]);
+            q('UPDATE loyalty_cards SET name = ?, xp_required = ?, max_bet_ac = ?, max_bet_ag = ?, unlock_ac = NULL, unlock_ag = NULL, color = ?, benefits = ?::jsonb, perks = ?::jsonb, updated_at = now() WHERE slug = ?',
+                [$next['name'], $next['xp_required'], (string) $next['max_bet_ac'], (string) $next['max_bet_ag'], $next['color'], jenc($next['benefits']), jenc($next['perks']), $slug]);
             $GLOBALS['NEON_CARDS_DIRTY'] = true;
             audit_log($me, 'loyalty.cardConfig', null, $c['name'], $slug, card_view($c), $next, $r);
             return ['ok' => true];
@@ -353,6 +384,27 @@ function admin_v2_action(array $me, string $name, array $a): ?array
             $t = target_user((string) ($a['userId'] ?? ''));
             $tier = $a['tier'] ?? null;
             return membership_set($me, $t['id'], $tier === null || $tier === '' ? null : (string) $tier, (int) ($a['days'] ?? 30), $r);
+        }
+        case 'setManager': {
+            require_user_perm($me, 'memberships.manage');
+            $t = target_user((string) ($a['userId'] ?? ''));
+            $mid = (string) ($a['managerId'] ?? '');
+            $m = q1('SELECT id, manager_id FROM memberships WHERE user_id = ? AND active', [$t['id']]);
+            if (!$m) fail('perks.errors.members');
+            $manager = $mid === '' ? null : q1("SELECT id, username, role FROM users WHERE id = ? AND role <> 'user'", [$mid]);
+            if ($mid !== '' && !$manager) fail('admin.errors.invalid');
+            q('UPDATE memberships SET manager_id = ? WHERE id = ?', [$manager['id'] ?? null, $m['id']]);
+            if ($manager) notify($t['id'], 'announcement', ['title' => 'Your private manager', 'message' => '@' . $manager['username'] . ' is now your private manager.']);
+            audit_log($me, 'membership.manager', $t['id'], null, $m['id'], $m['manager_id'], $manager['id'] ?? null, adm_reason($a['reason'] ?? ''));
+            return ['ok' => true];
+        }
+        case 'grantPass': {
+            require_user_perm($me, 'memberships.manage');
+            $t = target_user((string) ($a['userId'] ?? ''));
+            $season = current_season(now_ms());
+            q("INSERT INTO season_passes (user_id, season_id, source) VALUES (?, ?, 'admin') ON CONFLICT DO NOTHING", [$t['id'], $season['id']]);
+            audit_log($me, 'pass.grant', $t['id'], null, (string) $season['id'], null, ['season' => $season['id']], adm_reason($a['reason'] ?? ''));
+            return ['ok' => true];
         }
         case 'setMembershipConfig': {
             require_user_perm($me, 'memberships.manage');

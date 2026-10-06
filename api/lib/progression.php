@@ -65,7 +65,8 @@ const ACHIEVEMENT_ITEMS = [
     'high-score' => ['crimson-frame', 'chat-bolt'],
 ];
 
-const SEASON_TIER_XP = 500;
+const SEASON_TIER_XP = 1000;
+const SEASON_MAX_TIER = 50;
 const SEASON_LENGTH_DAYS = 28;
 const SEASON_TIERS = [
     ['tier' => 1, 'item' => 'emote-gem'],
@@ -202,7 +203,7 @@ function current_season(int $now): array
 
 function season_tier($xp): int
 {
-    return (int) floor(((float) ($xp ?? 0)) / SEASON_TIER_XP);
+    return (int) min(SEASON_MAX_TIER, floor(((float) ($xp ?? 0)) / SEASON_TIER_XP));
 }
 
 // ───────────────────────────── Mesin progres ─────────────────────────────
@@ -387,7 +388,9 @@ function record_game(string $userId, array &$p, array &$meta, array &$session, i
         if ($win) $s['wins']++;
         elseif ($session['result'] === 'push') $s['pushes']++;
         else $s['losses']++;
-        $s['biggestWin'] = max($s['biggestWin'], $session['payout']);
+        $isAg = ($session['currency'] ?? 'AC') === 'AG';
+        if ($isAg) $s['biggestWinAG'] = max((float) ($s['biggestWinAG'] ?? 0), $session['payout']);
+        else $s['biggestWin'] = max($s['biggestWin'], $session['payout']);
         $s['bestMultiplier'] = max($s['bestMultiplier'], $win ? $session['multiplier'] : 0);
         $gk = $session['game'];
         if (!isset($s['perGame'][$gk])) $s['perGame'][$gk] = ['played' => 0, 'wins' => 0, 'best' => 0, 'bestPayout' => 0, 'lastAt' => 0];
@@ -396,7 +399,8 @@ function record_game(string $userId, array &$p, array &$meta, array &$session, i
         $g['lastAt'] = $session['at'];
         if ($win) $g['wins']++;
         $g['best'] = max($g['best'], $win ? $session['multiplier'] : 0);
-        $g['bestPayout'] = max($g['bestPayout'], $session['payout']);
+        if ($isAg) $g['bestPayoutAG'] = max((float) ($g['bestPayoutAG'] ?? 0), $session['payout']);
+        else $g['bestPayout'] = max($g['bestPayout'], $session['payout']);
         $best = $g['best'];
         unset($g, $s);
         period_bump($p, 'games', 1, $now);

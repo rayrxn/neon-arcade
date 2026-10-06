@@ -12,6 +12,7 @@ require __DIR__ . '/lib/platform.php';
 require __DIR__ . '/lib/admin.php';
 require __DIR__ . '/lib/platform2.php';
 require __DIR__ . '/lib/admin2.php';
+require __DIR__ . '/lib/platform3.php';
 
 /** Jalankan aksi yang mengubah progres user dalam satu transaksi, lalu kirim snapshot state. */
 function with_user(callable $fn, bool $lightWhenOpen = false): array
@@ -41,6 +42,14 @@ function route(string $method, string $path): array
     if ($method === 'GET' && $path === 'sync') {
         $u = current_user();
         return tx(fn() => sync_view($u));
+    }
+    if ($method === 'GET' && $path === 'crash/state') {
+        $u = current_user(false);
+        return tx(fn() => crash_state($u));
+    }
+    if ($method === 'GET' && $path === 'stats/pnl') {
+        $u = current_user();
+        return tx(fn() => pnl_stats($u, (int) ($_GET['days'] ?? 7)));
     }
     if ($method === 'GET' && $path === 'admin/snapshot') {
         $u = current_user();
@@ -113,7 +122,7 @@ function route(string $method, string $path): array
             }
             return tx(function () use ($u, $verdict) {
                 [$p, $meta, $profile] = load_docs($u['id']);
-                $res = chat_send($u, $p, $meta, $profile, $verdict['text'], $verdict);
+                $res = chat_send($u, $p, $meta, $profile, $verdict['text'], $verdict, (string) arg('room', 'global'));
                 save_docs($u['id'], $p, $meta, $profile);
                 return ['result' => $res, 'state' => state_view($u['id'], $p, $meta)];
             });
@@ -127,7 +136,13 @@ function route(string $method, string $path): array
         case 'shop/equip':
         case 'emotes/favorite':
         case 'missions/claim':
-        case 'membership/request': {
+        case 'membership/request':
+        case 'perk/claim':
+        case 'profile/affix':
+        case 'profile/banner':
+        case 'pass/buy':
+        case 'pass/claim':
+        case 'manager/contact': {
             $u = current_user();
             return tx(function () use ($u, $path) {
                 $res = match ($path) {
@@ -139,6 +154,12 @@ function route(string $method, string $path): array
                     'emotes/favorite' => emote_favorite($u, (string) arg('code', ''), (bool) arg('on', true)),
                     'missions/claim' => mission_claim($u, (string) arg('missionId', ''), arg('proof', '')),
                     'membership/request' => membership_request($u, (string) arg('tier', '')),
+                    'perk/claim' => perk_claim($u, (string) arg('kind', '')),
+                    'profile/affix' => set_name_affix($u, arg('prefix', null), arg('suffix', null)),
+                    'profile/banner' => banner_upload($u, arg('image', null)),
+                    'pass/buy' => pass_buy($u),
+                    'pass/claim' => pass_claim($u, (string) arg('track', 'all'), (int) arg('tier', 0)),
+                    'manager/contact' => member_contact_manager($u, arg('text', '')),
                 };
                 [$p, $meta] = load_docs($u['id']);
                 $fresh = q1('SELECT * FROM users WHERE id = ?', [$u['id']]);
@@ -213,6 +234,11 @@ function main(): void
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     $path = trim(preg_replace('#^.*?/api/?#', '', $uri), '/');
     if ($path === '' || $path === 'index.php') $path = (string) ($_GET['r'] ?? 'health');
+    // Banner images are served as files, not JSON.
+    if ($method === 'GET' && preg_match('#^banner/([0-9a-f-]{36})$#', $path, $bm)) {
+        try { banner_serve($bm[1]); } catch (Throwable $e) { http_response_code(500); }
+        return;
+    }
     try {
         // CSRF: request yang mengubah data wajib membawa header khusus (form lintas situs tidak bisa).
         if ($method === 'POST' && ($_SERVER['HTTP_X_NEON'] ?? '') !== '1') fail('errors.generic', [], 403);

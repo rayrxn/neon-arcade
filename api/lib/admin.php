@@ -27,9 +27,9 @@ function audit_log(array $admin, string $action, ?string $targetUser, ?string $l
 
 function adm_reason($reason): string
 {
+    // Reason is optional: staff can act fast; an empty reason is stored as "—".
     $r = trim((string) $reason);
-    if (mb_strlen($r) < 5) fail('admin.errors.reason');
-    return mb_substr($r, 0, 300);
+    return $r === '' ? '—' : mb_substr($r, 0, 300);
 }
 
 function adm_target(array $admin, $userId, bool $allowSelf = false): array
@@ -417,8 +417,9 @@ function admin_action(array $me, string $name, array $a)
             $max = (int) ($a['maxUses'] ?? 0);
             $per = max(1, min(10, (int) ($a['perUser'] ?? 1)));
             $exp = !empty($a['expiresAt']) ? (is_numeric($a['expiresAt']) ? date('c', (int) ($a['expiresAt'] / 1000)) : date('c', strtotime((string) $a['expiresAt']))) : null;
-            q('INSERT INTO redeem_codes (code, rewards, max_uses, per_user, expires_at, active, created_by) VALUES (?, ?::jsonb, ?, ?, ?, ?, ?)',
-                [$key, jenc([$reward]), $max > 0 ? $max : null, $per, $exp, !empty($a['active']), $me['id']]);
+            $members = in_array($a['membersOnly'] ?? null, ['vip', 'vvip'], true) ? $a['membersOnly'] : null;
+            q('INSERT INTO redeem_codes (code, rewards, max_uses, per_user, expires_at, active, created_by, members_only) VALUES (?, ?::jsonb, ?, ?, ?, ?, ?, ?)',
+                [$key, jenc([$reward]), $max > 0 ? $max : null, $per, $exp, !empty($a['active']), $me['id'], $members]);
             audit_log($me, 'code.create', null, $key, $key, null, ['reward' => $reward, 'maxUses' => $max ?: null, 'perUser' => $per, 'expiresAt' => $exp], $r);
             return ['code' => $key];
         }
