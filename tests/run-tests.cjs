@@ -58,7 +58,11 @@ const LucideReact = new Proxy({}, {
   get: (_, name) => {
     usedIcons.add(name)
     const Icon = LU['Lu' + name] || LU['Lu' + (ALIAS[name] || '')]
-    return (p) => (Icon ? h(Icon, { className: p.className, 'aria-hidden': true }) : h('svg', { className: p.className }))
+    // Sama seperti lucide-react asli: komponen forwardRef (objek), bukan fungsi biasa —
+    // supaya bug "ikon dirender sebagai objek" (React error #31) ikut tertangkap tes.
+    const C = React.forwardRef((p, ref) => (Icon ? h(Icon, { className: p.className, 'aria-hidden': true }) : h('svg', { className: p.className, ref })))
+    C.displayName = name
+    return C
   },
 })
 

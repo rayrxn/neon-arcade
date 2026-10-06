@@ -31,6 +31,7 @@ import RequireAuth from '@/components/routing/RequireAuth'
 import ThemeController from '@/components/runtime/ThemeController'
 import PlatformRuntime from '@/components/runtime/PlatformRuntime'
 import ServerGate from '@/components/runtime/ServerGate'
+import RootBoundary from '@/components/runtime/RootBoundary'
 import Toaster from '@/components/ui/Toaster'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { can } from '@/config/roles'
@@ -46,6 +47,7 @@ export default function App() {
     <>
       <div className="arcade-bg" aria-hidden />
       <ThemeController />
+      <RootBoundary>
       <ServerGate>
       <PlatformRuntime />
       <Routes>
@@ -107,6 +109,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </ServerGate>
+      </RootBoundary>
       <Toaster />
     </>
   )

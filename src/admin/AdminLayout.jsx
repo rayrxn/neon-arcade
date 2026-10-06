@@ -11,6 +11,7 @@ import { Badge, ROLE_TONE } from '@/components/admin/AdminKit'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { can } from '@/config/roles'
 import { SERVER_MODE } from '@/config/runtime'
+import { ErrorBoundary } from '@/components/ui/PageKit'
 import { logAdminLogin } from '@/services/admin'
 import { useT } from '@/i18n'
 
@@ -123,7 +124,9 @@ export default function AdminLayout() {
           {SERVER_MODE && (
             <p className="mb-4 rounded-xl border border-neon-gold/30 bg-neon-gold/10 px-4 py-3 text-xs leading-relaxed text-neon-gold">{t('server.adminBanner')}</p>
           )}
-          <Outlet />
+          <ErrorBoundary resetKey={pathname} name={`admin${pathname}`}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

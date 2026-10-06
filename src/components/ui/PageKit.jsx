@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { errorKey } from '@/utils/errors'
 import { logError } from '@/services/errorLog'
 import { t as translate, useT } from '@/i18n'
+import { reportClientError } from '@/components/runtime/RootBoundary'
 
 /** Judul halaman standar. */
 export function PageHeader({ title, subtitle, actions, icon: Icon }) {
@@ -118,6 +119,7 @@ export class ErrorBoundary extends Component {
     return { error }
   }
   componentDidCatch(error, info) {
+    reportClientError(error, info?.componentStack, this.props.name ?? 'page')
     logError(`ui:${this.props.name ?? 'page'}`, Object.assign(error, { componentStack: info?.componentStack?.slice(0, 600) }))
   }
   componentDidUpdate(prev) {

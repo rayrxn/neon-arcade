@@ -41,13 +41,20 @@ const ReactRouterDOM = {
   NavLink: ({ to, children, className, end, ...p }) => h('a', { href: to, className: typeof className === 'function' ? className({ isActive: false }) : className, ...p }, typeof children === 'function' ? children({ isActive: false }) : children),
   Navigate: ({ to }) => h('meta', { 'data-navigate': to }),
   Outlet: () => outlet, useLocation: () => ({ pathname: currentPath, state: null }), useNavigate: () => () => {},
-  useParams: () => ({ slug: currentPath.split('/').pop(), username: currentPath.split('/').pop() }),
+  useParams: () => ({ slug: currentPath.split('/').pop(), username: currentPath.split('/').pop(), id: currentPath.split('/').pop() }),
   matchPath: (pattern, p) => (p.startsWith('/games/') ? { params: { slug: p.split('/').pop() } } : null),
 }
 const LU = need('react-icons/lu')
+// Seperti lucide-react asli: ikon = komponen forwardRef (objek).
+const iconCache = {}
 const LucideReact = new Proxy({}, {
   has: () => true,
-  get: (_, name) => (p) => { const I = LU['Lu' + name]; return I ? h(I, { className: p.className }) : h('svg', { className: p.className }) },
+  get: (_, name) => {
+    if (iconCache[name]) return iconCache[name]
+    const C = React.forwardRef((p, ref) => { const I = LU['Lu' + name]; return I ? h(I, { className: p.className }) : h('svg', { className: p.className, ref }) })
+    C.displayName = name
+    return (iconCache[name] = C)
+  },
 })
 
 /** fetch dengan cookie jar per "perangkat" (browser asli mengurus cookie sendiri). */
@@ -244,6 +251,33 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
       assert(`render ${name} (mode server)`, false, e.stack.split('\n').slice(0, 3).join(' | '))
     }
   }
+  // Halaman admin dalam mode server (data user dari server).
+  const AdminLayout = L('src/admin/AdminLayout.jsx').default
+  const adminPages = {
+    dash: 'src/admin/pages/Dashboard.jsx', users: 'src/admin/pages/Users.jsx#UserList', user: 'src/admin/pages/Users.jsx#UserDetail',
+    wallets: 'src/admin/pages/Operations.jsx#Wallets', games: 'src/admin/pages/Operations.jsx#GamesAdmin', sessions: 'src/admin/pages/Operations.jsx#Sessions',
+    anticheat: 'src/admin/pages/Operations.jsx#AntiCheat', moderation: 'src/admin/pages/Moderation.jsx#ModerationQueue', restrictions: 'src/admin/pages/Content.jsx#Moderation',
+    support: 'src/admin/pages/Support.jsx#SupportAdmin', system: 'src/admin/pages/System.jsx#SystemAdmin', chat: 'src/admin/pages/Content.jsx#ChatAdmin',
+    rewards: 'src/admin/pages/Content.jsx#RewardsOverview', daily: 'src/admin/pages/Content.jsx#DailyAdmin', quests: 'src/admin/pages/Content.jsx#QuestsAdmin',
+    achievements: 'src/admin/pages/Content.jsx#AchievementsAdmin', codes: 'src/admin/pages/Content.jsx#CodesAdmin', announcements: 'src/admin/pages/Content.jsx#AnnouncementsAdmin',
+    logs: 'src/admin/pages/Content.jsx#LogsAdmin', testmode: 'src/admin/pages/Content.jsx#TestModeAdmin', settings: 'src/admin/pages/Content.jsx#SettingsAdmin',
+  }
+  const myId = me()
+  auth.setState((s) => ({ users: { ...s.users, [email]: { ...s.users[email], role: 'super_admin' } } }))
+  for (const [name, spec] of Object.entries(adminPages)) {
+    const [file, exp] = spec.split('#')
+    currentPath = name === 'user' ? `/admin/users/${myId}` : `/admin/${name}`
+    const Page = exp ? L(file)[exp] : L(file).default
+    outlet = h(Page, name === 'user' ? { id: myId } : {})
+    try {
+      const markup = Server.renderToString(h(AdminLayout))
+      const bad = /NaN|undefined|\[object Object\]/.exec(markup.replace(/<[^>]+>/g, ' '))
+      assert(`render admin ${name} (mode server)`, !bad, bad ? bad[0] : '')
+    } catch (e) {
+      assert(`render admin ${name} (mode server)`, false, e.message.slice(0, 300))
+    }
+  }
+
   currentPath = '/auth'
   auth.setState({ session: null })
   const authMarkup = Server.renderToString(h(L('src/pages/AuthPage.jsx').default))

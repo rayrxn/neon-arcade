@@ -26,11 +26,14 @@ assemble() {
     printf '<!doctype html>\n<html lang="id">\n<head>\n<meta charset="utf-8">\n'
     printf '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
     printf '<meta name="build" content="%s">\n' "$MAIN_SHA"
+    printf '<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<link rel="icon" href="/favicon.ico" sizes="any">\n'
+    printf '<link rel="apple-touch-icon" href="/apple-touch-icon.png">\n<link rel="manifest" href="/site.webmanifest">\n'
     printf '<script>window.NEON_API = "/api";</script>\n'
     cat "$SRC"
     printf '\n</html>\n'
   } > "$dir/index.html"
 
+  cp "$ROOT"/public/* "$dir/"
   rm -rf "$dir/api"
   mkdir -p "$dir/api"
   cp -r "$ROOT/api/index.php" "$ROOT/api/.htaccess" "$ROOT/api/lib" "$dir/api/"
