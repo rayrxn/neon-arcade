@@ -78,6 +78,7 @@ function user_view(array $u, array $profile = []): array
         'username' => $u['username'],
         'displayName' => $u['display_name'],
         'email' => $u['email'],
+        'emailVerified' => !empty($u['email_verified_at']),
         'avatar' => $avatar ?: ['kind' => 'preset', 'id' => preset_for($u['username'])],
         'avatarSet' => !empty($profile['avatarSet']),
         'frame' => $profile['frame'] ?? null,
