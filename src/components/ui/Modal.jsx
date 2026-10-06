@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react'
+import { createElement, isValidElement, useEffect, useId } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import clsx from 'clsx'
@@ -11,6 +11,8 @@ import { useT } from '@/i18n'
 export default function Modal({ open, onClose, title, description, icon, children, footer, size = 'md', locked = false }) {
   const { t } = useT()
   const titleId = useId()
+  // `icon` boleh berupa elemen (<Bell />) atau komponen ikon (Bell) — komponen dirender di sini.
+  const iconNode = !icon ? null : isValidElement(icon) ? icon : createElement(icon, { className: 'h-5 w-5 text-neon-gold' })
 
   useEffect(() => {
     if (!open) return
@@ -51,7 +53,7 @@ export default function Modal({ open, onClose, title, description, icon, childre
           >
             <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
             <div className="flex items-start gap-3 px-5 pb-2 pt-4 sm:px-6 sm:pt-6">
-              {icon && <div className="mt-0.5 shrink-0">{icon}</div>}
+              {iconNode && <div className="mt-0.5 shrink-0">{iconNode}</div>}
               <div className="min-w-0 flex-1">
                 <h2 id={titleId} className="font-display text-lg font-bold tracking-tight text-white">{title}</h2>
                 {description && <p className="mt-1 text-sm text-slate-400">{description}</p>}

@@ -726,6 +726,14 @@ const assert = (label, cond, extra = '') => { if (!cond) failures++; console.log
         console.log(`✗ render ${name}.${lang}:`, e.stack.split('\n').slice(0, 5).join('\n'))
       }
     }
+    // Dialog konfirmasi admin dalam keadaan TERBUKA (isi Modal hanya dirender saat open).
+    try {
+      const RD = L('src/components/admin/ReasonDialog.jsx').default
+      const markup = Server.renderToString(h(RD, { open: true, onClose() {}, title: 'Ban', description: 'x', onConfirm() {}, adminName: 'a' }, h('p', null, 'detail')))
+      assert(`render ReasonDialog open (${lang})`, markup.includes('detail'))
+    } catch (e) {
+      assert(`render ReasonDialog open (${lang})`, false, e.message.slice(0, 200))
+    }
     // Modal terbuka
     for (const [mod, props] of [['SendModal', {}], ['TopUpModal', { currency: 'AG' }], ['ReceiveModal', {}], ['EditProfileModal', {}], ['TxDetailModal', { txId: w()[A].transactions[0].id }]]) {
       const M = L(`${ModalHostModule}${mod}.jsx`).default
