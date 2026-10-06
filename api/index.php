@@ -61,6 +61,16 @@ function route(string $method, string $path): array
             }
             return with_user(fn(Ctx $c) => track_metric($c->user['id'], $c->p, $c->meta, $metric, 1, $c->now));
 
+        case 'client-error':
+            // Laporan error UI dari browser (tanpa login pun boleh), dibatasi ukuran & frekuensi per IP.
+            $u = current_user(false);
+            $ip = client_ip();
+            if ((int) qv("SELECT count(*) FROM error_log WHERE context LIKE 'client:%' AND at > now() - interval '10 minutes' AND code = ?", [(string) $ip]) >= 20) return ['ok' => true];
+            $msg = mb_substr((string) arg('message', ''), 0, 1000);
+            $detail = jenc(['path' => mb_substr((string) arg('path', ''), 0, 200), 'componentStack' => mb_substr((string) arg('componentStack', ''), 0, 2000), 'stack' => mb_substr((string) arg('stack', ''), 0, 2000), 'ua' => mb_substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 200)]);
+            q('INSERT INTO error_log (context, code, message, stack, user_id) VALUES (?, ?, ?, ?, ?)', ['client:' . mb_substr((string) arg('where', 'root'), 0, 50), (string) $ip, $msg ?: '(kosong)', $detail, $u['id'] ?? null]);
+            return ['ok' => true];
+
         case 'fairness/rotate':
             $u = current_user();
             return tx(function () use ($u) {
