@@ -3,11 +3,13 @@
 //   php tools/hosting/release-reset.php testers "Rilis v1.2"
 //   php tools/hosting/release-reset.php global  "Rilis v2.0"
 declare(strict_types=1);
-if (PHP_SAPI !== 'cli') exit(1);
+// Bisa jalan lewat php CLI atau php-cgi (cron hosting), tapi tidak pernah lewat web.
+if (isset($_SERVER['REQUEST_METHOD']) || isset($_SERVER['HTTP_HOST'])) exit(1);
 $api = dirname(__DIR__, 2) . '/api/lib';
 foreach (['core', 'rng', 'progression', 'state', 'auth', 'games', 'platform', 'admin'] as $f) require "$api/$f.php";
-$scope = (string) ($argv[1] ?? '');
-$reason = trim((string) ($argv[2] ?? '')) ?: 'Rilis update';
+$argv = $argv ?? [];
+$scope = (string) ($argv[1] ?? getenv('NEON_RESET_SCOPE') ?: '');
+$reason = trim((string) ($argv[2] ?? getenv('NEON_RESET_REASON') ?: '')) ?: 'Rilis update';
 if (!in_array($scope, ['testers', 'global'], true)) {
     fwrite(STDERR, "scope harus testers atau global\n");
     exit(2);

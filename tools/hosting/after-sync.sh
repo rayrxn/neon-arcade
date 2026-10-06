@@ -36,7 +36,10 @@ for f in "$SRC"/resets/*.testers "$SRC"/resets/*.global; do
   if [ "$(q -tAc "select count(*) from neon_migrations where name = '$n'")" = "0" ]; then
     [ -n "$PHP" ] || { echo "$(date '+%F %T') php tidak ditemukan, reset $n dilewati"; break; }
     scope="${f##*.}"
-    "$PHP" "$HOME/neon-src/tools/hosting/release-reset.php" "$scope" "$(head -c 300 "$f")"
+    # php di cron hosting bisa berupa php-cgi: -q tanpa header, argumen lewat env.
+    out=$(NEON_RESET_SCOPE="$scope" NEON_RESET_REASON="$(head -c 300 "$f")" "$PHP" -q "$HOME/neon-src/tools/hosting/release-reset.php" 2>&1) || true
+    echo "$out"
+    case "$out" in *'"ok":true'*) ;; *) echo "$(date '+%F %T') reset $n gagal"; continue ;; esac
     q -c "INSERT INTO neon_migrations(name) VALUES ('$n')"
     echo "$(date '+%F %T') $n selesai"
   fi
