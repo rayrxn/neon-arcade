@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 DB=${TEST_DB:-neon_arcade_test}
 dropdb --if-exists "$DB" && createdb "$DB"
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -c "SET neon.no_ext = '${NO_EXT:-off}'" -f compat.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f schema.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f functions.sql
 psql -q -d "$DB" -f functions_test.sql 2>&1 | sed 's/^psql:[^ ]* NOTICE:  //' | tee /tmp/neon-db-tests.log | grep -E 'PASS|FAIL|SUMMARY'

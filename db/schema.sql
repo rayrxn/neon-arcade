@@ -8,8 +8,7 @@
 --   * audit log tidak bisa diubah/dihapus           → trigger + REVOKE
 -- AC/AG adalah mata uang virtual tanpa nilai uang; tidak ada cash-out.
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS citext;
+-- Extension pgcrypto & citext (atau penggantinya) dipasang lewat compat.sql.
 
 CREATE TYPE user_role       AS ENUM ('super_admin', 'admin', 'moderator', 'support', 'developer', 'user');
 CREATE TYPE account_status  AS ENUM ('active', 'frozen', 'banned');
@@ -25,7 +24,7 @@ CREATE TYPE flag_risk       AS ENUM ('low', 'medium', 'high', 'critical');
 -- ───────────────────────────── Users & auth ─────────────────────────────
 CREATE TABLE users (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username       CITEXT NOT NULL UNIQUE CHECK (username ~ '^[A-Za-z0-9_]{3,16}$'),
+  username       CITEXT NOT NULL UNIQUE CHECK (username::text COLLATE "C" ~ '^[A-Za-z0-9_]{3,16}$'),
   display_name   VARCHAR(24) NOT NULL,
   email          CITEXT NOT NULL UNIQUE,
   password_hash  TEXT NOT NULL,                      -- argon2id/bcrypt di server (lokal: PBKDF2-SHA256)
