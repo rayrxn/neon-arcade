@@ -31,6 +31,7 @@ function with_user(callable $fn, bool $lightWhenOpen = false): array
 
 function route(string $method, string $path): array
 {
+    $GLOBALS['NEON_PATH'] = $path;
     if ($method === 'GET' && $path === 'health') {
         return ['status' => 'ok', 'db' => (bool) qv('SELECT 1'), 'serverTime' => now_ms(), 'version' => 1];
     }
