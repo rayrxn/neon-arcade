@@ -31,9 +31,18 @@ export const serverOpenRound = (game) => openRounds[game] ?? null
 
 const lang = () => usePrefsStore.getState().language
 
+/**
+ * Naik setiap kali sesi di browser dihapus (logout / sesi habis). Jawaban API yang dikirim
+ * sebelum itu dibuang, supaya polling yang masih berjalan tidak "memasukkan" user lagi.
+ */
+let authGen = 0
+const AUTH_PATHS = new Set(['auth/login', 'auth/register', 'auth/logout'])
+export const LOGOUT_KEY = 'neon-arcade:logout'
+
 /** Panggil API. Error server → AppError dengan kode i18n yang sama seperti mode lokal. */
 export async function api(path, body, { method } = {}) {
   const m = method ?? (body === undefined ? 'GET' : 'POST')
+  const gen = authGen
   let res
   try {
     res = await fetch(`${SERVER_API}/${path}`, {
@@ -52,6 +61,7 @@ export async function api(path, body, { method } = {}) {
   } catch {
     throw new AppError(res.ok ? 'errors.generic' : 'errors.network')
   }
+  if (gen !== authGen && !AUTH_PATHS.has(path)) throw new AppError('errors.sessionExpired')
   if (json?.ok) return json.data
   const code = json?.error?.code ?? 'errors.generic'
   const vars = json?.error?.vars ?? {}
@@ -235,6 +245,7 @@ export function applyUser(user) {
 }
 
 export function clearSession() {
+  authGen++
   useWalletStore.setState({ activeUserId: null, lastDelta: null })
   useAuthStore.setState({ session: null })
   openRounds = {}

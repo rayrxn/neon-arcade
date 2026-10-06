@@ -97,8 +97,8 @@ export default function UserMenu() {
         title={t('logout.title')}
         body={t('logout.body')}
         confirmLabel={t('common.logout')}
-        onConfirm={() => {
-          logout()
+        onConfirm={async () => {
+          await logout()
           navigate('/auth', { replace: true })
         }}
       />

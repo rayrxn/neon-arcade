@@ -10,6 +10,8 @@ require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/games.php';
 require __DIR__ . '/lib/platform.php';
 require __DIR__ . '/lib/admin.php';
+require __DIR__ . '/lib/platform2.php';
+require __DIR__ . '/lib/admin2.php';
 
 /** Jalankan aksi yang mengubah progres user dalam satu transaksi, lalu kirim snapshot state. */
 function with_user(callable $fn, bool $lightWhenOpen = false): array
@@ -100,11 +102,48 @@ function route(string $method, string $path): array
         }
         case 'chat/send': {
             $u = current_user();
-            return tx(function () use ($u) {
+            // Moderation first: a blocked message is logged (and may auto-mute) even though the send fails.
+            $raw = trim((string) preg_replace('/\s+/u', ' ', (string) arg('text', '')));
+            $muted = ($u['muted_until'] ?? null) === 'infinity' || (!empty($u['muted_until']) && strtotime($u['muted_until']) > time());
+            $verdict = $muted || $raw === '' || mb_strlen($raw) > 200 ? ['action' => 'allow', 'text' => $raw, 'matched' => []] : mod_check($raw);
+            if (in_array($verdict['action'], ['block', 'spam'], true)) {
+                $muted = mod_strike($u, $verdict, $raw);
+                if ($muted) fail('chat.errors.autoMuted', ['minutes' => $muted]);
+                fail($verdict['action'] === 'spam' ? ($verdict['reason'] === 'caps' ? 'chat.errors.caps' : 'chat.errors.spam') : 'chat.errors.blocked');
+            }
+            return tx(function () use ($u, $verdict) {
                 [$p, $meta, $profile] = load_docs($u['id']);
-                $res = chat_send($u, $p, $meta, $profile, arg('text', ''));
-                save_docs($u['id'], $p, $meta);
+                $res = chat_send($u, $p, $meta, $profile, $verdict['text'], $verdict);
+                save_docs($u['id'], $p, $meta, $profile);
                 return ['result' => $res, 'state' => state_view($u['id'], $p, $meta)];
+            });
+        }
+
+        // ── Platform v2: economy, loyalty, shop, emotes, missions, memberships → { result, state } ──
+        case 'convert':
+        case 'loyalty/unlock':
+        case 'shop/buy':
+        case 'shop/use':
+        case 'shop/equip':
+        case 'emotes/favorite':
+        case 'missions/claim':
+        case 'membership/request': {
+            $u = current_user();
+            return tx(function () use ($u, $path) {
+                $res = match ($path) {
+                    'convert' => convert_ac_to_ag($u, arg('amount', 0), request_id(arg('requestId', ''))),
+                    'loyalty/unlock' => loyalty_unlock($u),
+                    'shop/buy' => shop_buy($u, (string) arg('itemId', ''), request_id(arg('requestId', ''))),
+                    'shop/use' => shop_use($u, (string) arg('itemId', '')),
+                    'shop/equip' => shop_equip($u, (string) arg('slot', ''), ($i = arg('itemId', null)) === null ? null : (string) $i),
+                    'emotes/favorite' => emote_favorite($u, (string) arg('code', ''), (bool) arg('on', true)),
+                    'missions/claim' => mission_claim($u, (string) arg('missionId', ''), arg('proof', '')),
+                    'membership/request' => membership_request($u, (string) arg('tier', '')),
+                };
+                [$p, $meta] = load_docs($u['id']);
+                $fresh = q1('SELECT * FROM users WHERE id = ?', [$u['id']]);
+                $profile = jdec((string) qv('SELECT profile FROM user_docs WHERE user_id = ?', [$u['id']]), []);
+                return ['result' => $res, 'state' => state_view($u['id'], $p, $meta), 'user' => user_view($fresh, $profile)];
             });
         }
 
@@ -147,7 +186,12 @@ function route(string $method, string $path): array
         $fn = GAME_ACTIONS[$action] ?? null;
         if (!$fn) fail('errors.notFound', [], 404);
         $light = in_array($action, ['crash-tick', 'mines-reveal', 'blackjack-action'], true);
-        return with_user(fn(Ctx $c) => $fn($c, body()), $light);
+        $cur = (string) (body()['currency'] ?? 'AC');
+        if (!in_array($cur, ['AC', 'AG'], true)) fail('play.errors.invalid');
+        return with_user(function (Ctx $c) use ($fn, $cur) {
+            $c->currency = $cur;
+            return $fn($c, body());
+        }, $light);
     }
     fail('errors.notFound', [], 404);
 }

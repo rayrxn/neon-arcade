@@ -89,7 +89,7 @@ $betTx = array_values(array_filter(array_slice($txs, 0, 2), fn($x) => $x['type']
 check('dice: transaksi bet tercatat + game', $betTx && $betTx['game'] === 'dice', array_slice($txs, 0, 2));
 expect_error('bet pecahan ditolak', call('POST', 'game/dice', ['bet' => 1.5, 'target' => 50, 'over' => true], 'a'), 'play.errors.wholeBet');
 expect_error('bet 0 ditolak', call('POST', 'game/dice', ['bet' => 0, 'target' => 50, 'over' => true], 'a'), 'play.errors.minBet');
-expect_error('bet > batas ditolak', call('POST', 'game/dice', ['bet' => 100001, 'target' => 50, 'over' => true], 'a'), 'play.errors.maxBet');
+expect_error('bet > batas loyalty ditolak', call('POST', 'game/dice', ['bet' => 250001, 'target' => 50, 'over' => true], 'a'), 'play.errors.loyaltyMax');
 expect_error('saldo kurang ditolak', call('POST', 'game/dice', ['bet' => 99999, 'target' => 50, 'over' => true], 'b') + ['code' => null] , 'errors.insufficient');
 // Spam: ronde ke-9 dalam satu detik ditolak dan dicatat walau request gagal.
 cool();

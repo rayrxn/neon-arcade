@@ -18,4 +18,5 @@ node api/tests/rng_compare.mjs
 NEON_CONFIG="$CFG" php api/tests/api_test.php
 NEON_CONFIG="$CFG" php api/tests/stage2_test.php
 NEON_CONFIG="$CFG" php api/tests/stage3_test.php
+NEON_CONFIG="$CFG" php api/tests/stage4_test.php
 rm -f "$CFG"

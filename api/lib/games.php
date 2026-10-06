@@ -3,7 +3,7 @@
 // UI hanya mengirim pilihan (taruhan, target, petak, aksi). Payout tidak pernah diterima dari UI.
 declare(strict_types=1);
 
-const LIMITS = ['minBet' => 1, 'maxBet' => 100000];
+const LIMITS = ['minBet' => 1, 'maxBet' => 100000000];
 const MAX_MULTIPLIER = [
     'dice' => 49.5, 'limbo' => 1000000, 'coinflip' => 1.98, 'plinko' => 1000, 'roulette' => 36, 'case-opening' => 20,
     'case-battle' => 40, 'crash' => 1000000000, 'mines' => 6000000, 'blackjack' => 2.5,
@@ -46,6 +46,8 @@ final class Ctx
     public array $p;
     public array $meta;
     public int $now;
+    /** Currency of new rounds started in this request (AC or AG). */
+    public string $currency = 'AC';
     public function __construct(array $user, array $p, array $meta, int $now)
     {
         $this->user = $user;
@@ -62,6 +64,7 @@ function check_bet($bet): int
     if (!is_int($bet) && !(is_float($bet) && floor($bet) == $bet)) fail('play.errors.wholeBet');
     $bet = (int) $bet;
     if ($bet < LIMITS['minBet']) fail('play.errors.minBet', ['min' => LIMITS['minBet']]);
+    // Upper limit comes from the player's Loyalty Card (check_loyalty_bet).
     if ($bet > LIMITS['maxBet']) fail('play.errors.maxBet', ['max' => number_format(LIMITS['maxBet'])]);
     return $bet;
 }
@@ -70,8 +73,10 @@ function check_bet($bet): int
 function begin(Ctx $c, string $game, $bet, int $floatCount, array $extra = []): array
 {
     $bet = check_bet($bet);
+    $currency = $c->currency;
+    check_loyalty_bet($c->user, $currency, $bet);
     try {
-        $st = jdec((string) qv('SELECT game_start(?::uuid, ?, ?::numeric)', [$c->user['id'], $game, (string) $bet]));
+        $st = jdec((string) qv('SELECT game_start(?::uuid, ?, ?::numeric, ?::currency_code)', [$c->user['id'], $game, (string) $bet, $currency]));
     } catch (Throwable $e) {
         $e = map_db_error($e);
         if ($e instanceof ApiError && $e->getMessage() === 'play.errors.tooFast') queue_flag($c->user['id'], 'rapidRequests', 'medium', null, '≤ 8 ronde/detik', '> 8 ronde/detik');
@@ -80,7 +85,7 @@ function begin(Ctx $c, string $game, $bet, int $floatCount, array $extra = []): 
     $seed = q1('SELECT server_seed, client_seed FROM fairness_seeds WHERE id = ?', [$st['seed_id']]);
     $floats = generate_floats($seed['server_seed'], $seed['client_seed'], (int) $st['nonce'], $floatCount);
     if (empty($st['is_test'])) {
-        $c->meta['totalWagered'] = round2($c->meta['totalWagered'] + $bet);
+        if ($currency === 'AC') $c->meta['totalWagered'] = round2($c->meta['totalWagered'] + $bet);
         $c->meta['rounds']++;
     }
     return $extra + [
@@ -88,6 +93,7 @@ function begin(Ctx $c, string $game, $bet, int $floatCount, array $extra = []): 
         'userId' => $c->user['id'],
         'game' => $game,
         'bet' => $bet,
+        'currency' => $currency,
         'floats' => $floats,
         'proof' => ['serverSeedHash' => $st['server_seed_hash'], 'clientSeed' => $st['client_seed'], 'nonce' => (int) $st['nonce']],
         'betTxId' => $st['bet_tx'] ?? null,
@@ -148,7 +154,7 @@ function session_from_row(array $r): array
         'id' => $r['id'], 'game' => $r['game'], 'bet' => num($r['bet']), 'payout' => num($r['payout']), 'multiplier' => num($r['multiplier']),
         'result' => ['WON' => 'win', 'DRAW' => 'push', 'CANCELLED' => 'push'][$r['status']] ?? 'loss', 'status' => $r['status'],
         'verification' => $r['verification'], 'detail' => jdec($r['detail'], []), 'at' => iso_to_ms($r['finished_at'] ?? $r['started_at']),
-        'nonce' => (int) $r['nonce'], 'xp' => (int) $r['xp'], 'isTest' => (bool) $r['is_test'],
+        'nonce' => (int) $r['nonce'], 'xp' => (int) $r['xp'], 'isTest' => (bool) $r['is_test'], 'currency' => $r['currency'] ?? 'AC',
     ];
 }
 
@@ -156,7 +162,7 @@ function session_from_row(array $r): array
 function detect(Ctx $c, array $round, array $session): void
 {
     $uid = $round['userId'];
-    if ($session['payout'] >= 250000 || $session['multiplier'] >= 1000) {
+    if ((($session['currency'] ?? 'AC') === 'AC' && $session['payout'] >= 250000) || $session['multiplier'] >= 1000) {
         raise_flag($uid, 'abnormalReward', $session['payout'] >= 1000000 ? 'critical' : 'high', $session['id'], '≤ 1000×', $session['multiplier'] . '× · ' . $session['payout'] . ' AC');
     }
     $detail = (array) $session['detail'];
@@ -167,7 +173,7 @@ function detect(Ctx $c, array $round, array $session): void
     $wins = count(array_filter($recent, fn($s) => $s['result'] === 'win'));
     if (count($recent) >= 20 && $wins >= 18) raise_flag($uid, 'suspiciousPattern', 'medium', $session['id'], '≈ 50% win', "$wins/20 win");
     $net = 0;
-    foreach (array_slice($c->p['sessions'], 0, 50) as $s) $net += $s['payout'] - $s['bet'];
+    foreach (array_slice($c->p['sessions'], 0, 50) as $s) if (($s['currency'] ?? 'AC') === 'AC') $net += $s['payout'] - $s['bet'];
     if ($net >= 500000) raise_flag($uid, 'abnormalCurrency', 'high', $session['id'], '< 500.000 AC / 50 ronde', '+' . round($net) . ' AC');
 }
 
@@ -180,6 +186,7 @@ function finish(Ctx $c, array $round, $multiplier, string $result, array $detail
         foreach ($c->p['sessions'] as $s) if ($s['id'] === $round['id']) { persist_pending_flags(); return ['session' => $s, 'summary' => null, 'duplicate' => true]; }
         fail('play.errors.settled');
     }
+    $cur = $round['currency'] ?? 'AC';
     $payout = $result === 'push' ? $round['bet'] : round2($round['bet'] * $multiplier);
     $max = MAX_MULTIPLIER[$round['game']] ?? 1;
     $valid = is_finite((float) $multiplier) && $multiplier >= 0 && in_array($result, ['win', 'loss', 'push'], true)
@@ -201,21 +208,26 @@ function finish(Ctx $c, array $round, $multiplier, string $result, array $detail
         'betTxId' => $round['betTxId'] ?? null,
         'payoutTxId' => null,
         'isTest' => !empty($round['isTest']),
+        'currency' => $cur,
+        // Value in AC (AG at the converter rate) — XP, Loyalty XP and stats use this.
+        'valueAc' => $cur === 'AG' ? round2($round['bet'] * (int) kv_get('economy')['acPerAg']) : $round['bet'],
     ];
     if (!$valid) raise_flag($round['userId'], 'invalidState', 'critical', $round['id'], "≤ {$max}×", "{$multiplier}× ($result)");
     if ($valid && empty($round['isTest']) && $payout > 0) {
-        $session['payoutTxId'] = wallet_post($round['userId'], 'AC', $payout, 'win', 'game', 'game', null, $round['id'], 'game:' . $round['id'] . ':payout');
-        $c->meta['totalWon'] = round2($c->meta['totalWon'] + $payout);
+        $session['payoutTxId'] = wallet_post($round['userId'], $cur, $payout, 'win', 'game', 'game', null, $round['id'], 'game:' . $round['id'] . ':payout');
+        if ($cur === 'AC') $c->meta['totalWon'] = round2($c->meta['totalWon'] + $payout);
         $c->meta['wins'] = ($c->meta['wins'] ?? 0) + 1;
         if (empty($c->meta['biggestWin']) || $payout > $c->meta['biggestWin']['amount']) {
             $c->meta['biggestWin'] = ['amount' => $payout, 'game' => $round['game'], 'at' => $c->now];
         }
-        if ($result === 'win') record_jackpot($round['userId'], (float) $payout, $round['game']);
+        if ($result === 'win' && $cur === 'AC') record_jackpot($round['userId'], (float) $payout, $round['game']);
     }
     $sessionArr = $session;
     $sessionArr['detail'] = $detail;
     $summary = record_game($round['userId'], $c->p, $c->meta, $sessionArr, $c->now);
     $session['xp'] = $sessionArr['xp'];
+    unset($session['valueAc']);
+    if ($valid && empty($round['isTest'])) $summary['loyaltyXp'] = add_loyalty_xp($round['userId'], game_lxp((float) $sessionArr['valueAc']), 'game', $round['id']);
     $summary['questsState'] = $c->p['quests'];
     q("UPDATE game_sessions SET status = ?::session_status, payout = ?, multiplier = ?, verification = ?, detail = ?::jsonb, xp = ?,
          finished_at = now(), payout_tx_id = ?::uuid WHERE id = ?",
@@ -379,6 +391,8 @@ function crash_multiplier_at(float $ms): float
     return floor(exp((CRASH_K * $ms) / 1000) * 100) / 100;
 }
 
+const CRASH_MIN_CASHOUT = 1.05;
+
 function crash_time_of(float $point): float
 {
     return (log($point) / CRASH_K) * 1000;
@@ -387,7 +401,7 @@ function crash_time_of(float $point): float
 function crash_start(Ctx $c, array $a): array
 {
     $auto = !empty($a['autoCashout']) ? floor(((float) $a['autoCashout']) * 100) / 100 : null;
-    if ($auto !== null && !($auto >= 1.01 && $auto <= 10000)) fail('play.errors.invalid');
+    if ($auto !== null && !($auto >= CRASH_MIN_CASHOUT && $auto <= 10000)) fail('play.crash.minCashout', ['min' => number_format(CRASH_MIN_CASHOUT, 2)]);
     $round = begin($c, 'crash', $a['bet'] ?? null, 1, ['autoCashout' => $auto]);
     $round['point'] = $round['control'] === 'win' ? 1000 : ($round['control'] === 'loss' ? 1 : crash_point($round['floats'][0]));
     save_open($round);
@@ -421,6 +435,8 @@ function crash_cashout(Ctx $c, array $a): array
     if ($client !== null && $client <= $elapsed && $client >= $elapsed - CRASH_GRACE_MS) $elapsed = $client;
     if ($elapsed >= crash_time_of($round['point'])) return crash_tick($c, ['id' => $id]);
     $at = max(1, crash_multiplier_at($elapsed));
+    // Cash out paling cepat di 1.05× (cegah "cash out 1.01×" untuk farming XP/statistik).
+    if ($at < CRASH_MIN_CASHOUT) fail('play.crash.minCashout', ['min' => number_format(CRASH_MIN_CASHOUT, 2)]);
     return ['done' => true, 'crashed' => false, 'point' => $round['point'], 'cashedAt' => $at]
         + finish($c, $round, $at, $at > 1 ? 'win' : 'push', ['point' => $round['point'], 'cashedAt' => $at]);
 }
@@ -586,8 +602,8 @@ function blackjack_action(Ctx $c, array $a): array
     if ($action === 'double') {
         if (count($r['player']) !== 2 || !empty($r['doubled'])) fail('play.errors.invalid');
         if (empty($r['isTest'])) {
-            wallet_post($c->user['id'], 'AC', -$r['bet'], 'bet', 'game', 'game', null, $r['id'], 'game:' . $r['id'] . ':double');
-            $c->meta['totalWagered'] = round2($c->meta['totalWagered'] + $r['bet']);
+            wallet_post($c->user['id'], $r['currency'] ?? 'AC', -$r['bet'], 'bet', 'game', 'game', null, $r['id'], 'game:' . $r['id'] . ':double');
+            if (($r['currency'] ?? 'AC') === 'AC') $c->meta['totalWagered'] = round2($c->meta['totalWagered'] + $r['bet']);
         }
         $r['bet'] *= 2;
         $r['doubled'] = true;

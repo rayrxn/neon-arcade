@@ -7,7 +7,7 @@ import { AppError } from '@/utils/errors'
 import { USERNAME_RE } from '@/utils/validation'
 import { useWalletStore } from './useWalletStore'
 import { SERVER_MODE } from '@/config/runtime'
-import { api, applyPayload, clearSession } from '@/services/server'
+import { api, applyPayload, clearSession, LOGOUT_KEY } from '@/services/server'
 
 /**
  * Mock authentication + profil user.
@@ -89,6 +89,11 @@ export const useAuthStore = create(
       login: async ({ email, password }) => {
         if (SERVER_MODE) {
           const user = applyPayload(await api('auth/login', { email: normalizeEmail(email), password }))
+          try {
+            localStorage.setItem('neon-arcade:login', String(Date.now()))
+          } catch {
+            // diabaikan
+          }
           emit('USER_LOGIN', { userId: user.id })
           return user
         }
@@ -134,10 +139,23 @@ export const useAuthStore = create(
       logout: (reason = 'manual') => {
         if (SERVER_MODE) {
           const userId = get().session?.userId
-          clearSession()
-          if (reason !== 'expired' && reason !== 'blocked') api('auth/logout', {}).catch(() => {})
-          if (userId) emit(reason === 'expired' ? 'SESSION_EXPIRED' : 'USER_LOGOUT', { userId, reason })
-          return
+          const finish = () => {
+            clearSession()
+            if (userId) emit(reason === 'expired' ? 'SESSION_EXPIRED' : 'USER_LOGOUT', { userId, reason })
+            // Tab lain ikut keluar (event storage).
+            try {
+              localStorage.setItem(LOGOUT_KEY, String(Date.now()))
+            } catch {
+              // diabaikan
+            }
+          }
+          if (reason === 'expired' || reason === 'blocked' || reason === 'remote') {
+            finish()
+            return Promise.resolve()
+          }
+          // Cookie sesi dihapus server dulu (maks. 4 detik), baru status di browser — refresh setelah ini tetap keluar.
+          const call = api('auth/logout', {}).catch(() => {})
+          return Promise.race([call, new Promise((r) => setTimeout(r, 4000))]).then(finish)
         }
         const userId = get().session?.userId
         useWalletStore.getState().deactivate()

@@ -23,7 +23,7 @@ assemble() {
   # Build standalone dibuat untuk artifact (tanpa kerangka dokumen) → tambahkan doctype, charset,
   # viewport, dan flag mode server (window.NEON_API) sebelum bundle dimuat.
   {
-    printf '<!doctype html>\n<html lang="id">\n<head>\n<meta charset="utf-8">\n'
+    printf '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
     printf '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
     printf '<meta name="build" content="%s">\n' "$MAIN_SHA"
     printf '<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<link rel="icon" href="/favicon.ico" sizes="any">\n'

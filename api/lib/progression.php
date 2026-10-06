@@ -372,7 +372,8 @@ function record_game(string $userId, array &$p, array &$meta, array &$session, i
     $out = new_out();
     $best = 0;
     $counts = empty($session['isTest']) && $session['status'] !== 'INVALID';
-    $xp = $counts ? game_xp($session['bet'], $session['result'] === 'win') : 0;
+    $value = (float) ($session['valueAc'] ?? $session['bet']);
+    $xp = $counts ? (int) floor(game_xp($value, $session['result'] === 'win') * boost_mult($userId, 'xp')) : 0;
     $session['xp'] = $xp;
     roll_periods($p, $now);
     array_unshift($p['sessions'], $session);
@@ -381,8 +382,8 @@ function record_game(string $userId, array &$p, array &$meta, array &$session, i
         $s = &$p['stats'];
         $win = $session['result'] === 'win';
         $s['games']++;
-        $s['wagered'] += $session['bet'];
-        $s['won'] += $session['payout'];
+        $s['wagered'] += $value;
+        $s['won'] += ($session['currency'] ?? 'AC') === 'AG' ? $session['payout'] * ($value / max(1, $session['bet'])) : $session['payout'];
         if ($win) $s['wins']++;
         elseif ($session['result'] === 'push') $s['pushes']++;
         else $s['losses']++;
@@ -402,7 +403,7 @@ function record_game(string $userId, array &$p, array &$meta, array &$session, i
         if ($win) period_bump($p, 'wins', 1, $now);
         bump($p, 'games', 1, $out);
         if ($win) bump($p, 'wins', 1, $out);
-        bump($p, 'wagered', $session['bet'], $out);
+        bump($p, 'wagered', $value, $out);
         if ($win) bump($p, 'bestMultiplier', $session['multiplier'], $out);
         apply_xp($p, $xp, $out, 'game', $now);
         unlock_achievements($p, $out, $now);
@@ -450,6 +451,13 @@ function claim_daily_reward(string $userId, array &$p, array &$meta, int $now): 
     $def = DAILY_REWARDS[$state['nextDay'] - 1];
     $out = new_out();
     $granted = [];
+    // Progression role bonus (+x%) and a Double Daily boost multiply AC/AG rewards.
+    $u = q1('SELECT * FROM users WHERE id = ?', [$userId]);
+    $bonus = (1 + role_daily_bonus(player_role_of($u, level_from_xp($p['xp'])['level'])) / 100) * boost_mult($userId, 'daily');
+    if ($bonus > 1) {
+        consume_daily_boost($userId);
+        $def['rewards'] = array_map(fn($r) => in_array($r['kind'], ['AC', 'AG'], true) ? ['kind' => $r['kind'], 'amount' => $r['kind'] === 'AG' ? max($r['amount'], (int) floor($r['amount'] * $bonus)) : (int) round($r['amount'] * $bonus)] : $r, $def['rewards']);
+    }
     foreach ($def['rewards'] as $r) {
         if ($r['kind'] === 'item') {
             if (in_array($r['id'], $meta['inventory'] ?? [], true) && !empty($def['fallback'])) {
@@ -473,8 +481,9 @@ function claim_daily_reward(string $userId, array &$p, array &$meta, int $now): 
     q('INSERT INTO daily_claims (user_id, claim_day, streak_day, streak) VALUES (?, ?, ?, ?)', [$userId, local_dt($now)->format('Y-m-d'), $def['day'], $state['streak'] + 1]);
     log_event('DAILY_CLAIMED', $userId, ['day' => $def['day'], 'streak' => $state['streak'] + 1]);
     notify($userId, 'daily', ['day' => $def['day'], 'rewards' => $granted]);
+    add_loyalty_xp($userId, 20, 'daily', $today);
     commit_out($userId, $p, $meta, $out, false, $now);
-    return ['day' => $def['day'], 'rewards' => $granted] + $out;
+    return ['day' => $def['day'], 'rewards' => $granted, 'bonus' => round($bonus, 3)] + $out;
 }
 
 function claim_quest(string $userId, array &$p, array &$meta, string $scope, string $questId, int $now): array
@@ -498,6 +507,7 @@ function claim_quest(string $userId, array &$p, array &$meta, string $scope, str
         wallet_post($userId, 'AC', $def['reward']['AC'], 'reward', 'quest', 'quest', "$scope:$questId", null, "quest:$scope:{$bucket['period']}:$questId");
     }
     log_event('QUEST_CLAIMED', $userId, ['scope' => $scope, 'quest' => $questId]);
+    add_loyalty_xp($userId, $scope === 'weekly' ? 60 : 15, 'quest', "$scope:$questId");
     commit_out($userId, $p, $meta, $out, false, $now);
     return ['reward' => $def['reward']] + $out;
 }

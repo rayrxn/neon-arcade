@@ -450,6 +450,7 @@ export function playCaseBattle({ caseId, rounds }) {
 
 /** Kurva multiplier: m(t) = e^(k·detik). 2× ≈ 5,8 dtk, 10× ≈ 19 dtk. */
 export const CRASH_K = 0.12
+export const CRASH_MIN_CASHOUT = 1.05
 export const crashMultiplierAt = (ms) => Math.floor(Math.exp((CRASH_K * ms) / 1000) * 100) / 100
 const crashTimeOf = (point) => (Math.log(point) / CRASH_K) * 1000
 
@@ -462,7 +463,7 @@ export function crashStart({ bet, autoCashout }) {
     })
   }
   const auto = autoCashout ? Math.floor(Number(autoCashout) * 100) / 100 : null
-  if (auto !== null && !(auto >= 1.01 && auto <= 10_000)) throw new AppError('play.errors.invalid')
+  if (auto !== null && !(auto >= CRASH_MIN_CASHOUT && auto <= 10_000)) throw new AppError('play.crash.minCashout', { min: CRASH_MIN_CASHOUT.toFixed(2) })
   const round = begin('crash', bet, 1, { autoCashout: auto })
   round.point = round.control === 'win' ? 1_000 : round.control === 'loss' ? 1 : crashPoint(round.floats[0], HOUSE_EDGE)
   saveOpen(round)
@@ -498,6 +499,7 @@ export function crashCashout(id) {
   const elapsed = Date.now() - round.startedAt
   if (elapsed >= crashTimeOf(round.point)) return crashTick(id) // terlambat → sudah crash
   const at = Math.max(1, crashMultiplierAt(elapsed))
+  if (at < CRASH_MIN_CASHOUT) throw new AppError('play.crash.minCashout', { min: CRASH_MIN_CASHOUT.toFixed(2) })
   clearOpen(round)
   return { done: true, crashed: false, point: round.point, cashedAt: at, ...finish(round, { multiplier: at, result: at > 1 ? 'win' : 'push', detail: { point: round.point, cashedAt: at } }) }
 }

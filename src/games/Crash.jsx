@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import { BetInput, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
-import { CRASH_K, crashCashout, crashMultiplierAt, crashStart, crashTick, openRound } from '@/services/games'
+import { CRASH_K, CRASH_MIN_CASHOUT, crashCashout, crashMultiplierAt, crashStart, crashTick, openRound } from '@/services/games'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { useProgress } from '@/store/useProgressStore'
 import { play } from '@/services/sound'
@@ -274,7 +274,7 @@ export default function Crash({ game }) {
   }
 
   const cashout = async () => {
-    if (!round) return
+    if (!round || state.current.multiplier < CRASH_MIN_CASHOUT) return
     const res = await run(() => crashCashout(round.id))
     if (res) {
       play('reward')
@@ -313,9 +313,9 @@ export default function Crash({ game }) {
       </Field>
       {round ? (
         <motion.div initial={{ scale: 0.98 }} animate={{ scale: 1 }}>
-          <Button size="lg" variant="gold" className="w-full" onClick={cashout}>
+          <Button size="lg" variant="gold" className="w-full" onClick={cashout} disabled={live < CRASH_MIN_CASHOUT}>
             <span className="flex w-full items-center justify-between">
-              <span>{t('play.crash.cashout')}</span>
+              <span>{live < CRASH_MIN_CASHOUT ? t('play.crash.cashoutFrom', { min: CRASH_MIN_CASHOUT.toFixed(2) }) : t('play.crash.cashout')}</span>
               <span className="num font-mono">{formatCoins(potential)} AC</span>
             </span>
           </Button>

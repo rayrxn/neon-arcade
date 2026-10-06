@@ -663,8 +663,8 @@ export function setGameMaxBet(slug, maxBet, reason) {
   if (SERVER_MODE) return adminCall('setGameMaxBet', { slug, maxBet, reason })
   const admin = requirePerm('games.manage')
   const r = requireReason(reason)
-  if (!Number.isInteger(maxBet) || maxBet < 10 || maxBet > 100_000) throw new AppError('admin.errors.invalid')
-  const before = useAdminStore.getState().gameConfig[slug]?.maxBet ?? 100_000
+  if (!Number.isInteger(maxBet) || maxBet < 10 || maxBet > 100_000_000) throw new AppError('admin.errors.invalid')
+  const before = useAdminStore.getState().gameConfig[slug]?.maxBet ?? 20_000_000
   useAdminStore.getState().setGameConfig(slug, { maxBet })
   log(admin, 'game.maxBet', slug, r, before, maxBet)
 }

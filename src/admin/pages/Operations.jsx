@@ -108,7 +108,7 @@ export function GamesAdmin() {
   const config = useAdminStore((s) => s.gameConfig)
   const progress = useProgressStore((s) => s.byUser)
   const [dialog, setDialog] = useState(null)
-  const [maxBet, setMaxBet] = useState(100000)
+  const [maxBet, setMaxBet] = useState(20000000)
   const played = (slug) => Object.values(progress).reduce((s, p) => s + (p.stats.perGame[slug]?.played ?? 0), 0)
 
   return (
@@ -120,7 +120,7 @@ export function GamesAdmin() {
             { key: 'n', label: t('admin.cols.game'), render: (g) => <span className="font-semibold text-white">{g.name}</span> },
             { key: 't', label: t('admin.cols.type'), render: (g) => t(`games.categories.${g.category}`) },
             { key: 'p', label: t('admin.kpi.gamesPlayed'), align: 'right', mono: true, render: (g) => formatCoins(played(g.slug)) },
-            { key: 'mb', label: t('admin.maxBet'), align: 'right', mono: true, render: (g) => formatCoins(config[g.slug]?.maxBet ?? 100000) },
+            { key: 'mb', label: t('admin.maxBet'), align: 'right', mono: true, render: (g) => formatCoins(config[g.slug]?.maxBet ?? 20000000) },
             { key: 's', label: t('admin.cols.status'), render: (g) => {
               const st = !g.load ? 'soon' : config[g.slug]?.status ?? 'live'
               return <Badge tone={st === 'live' ? 'green' : st === 'soon' ? 'slate' : st === 'maintenance' ? 'gold' : 'red'}>{t(`admin.gameStatus.${st}`)}</Badge>
@@ -128,7 +128,7 @@ export function GamesAdmin() {
             { key: 'a', label: '', align: 'right', render: (g) => g.load && can(me.role, 'games.manage') && (
               <span className="flex justify-end gap-1.5">
                 {['live', 'maintenance', 'disabled'].filter((s) => s !== (config[g.slug]?.status ?? 'live')).map((s) => <Button key={s} size="sm" variant="ghost" onClick={() => setDialog({ kind: 'status', game: g, status: s })}>{t(`admin.gameStatus.${s}`)}</Button>)}
-                <Button size="sm" variant="ghost" onClick={() => { setMaxBet(config[g.slug]?.maxBet ?? 100000); setDialog({ kind: 'maxBet', game: g }) }}>{t('admin.maxBet')}</Button>
+                <Button size="sm" variant="ghost" onClick={() => { setMaxBet(config[g.slug]?.maxBet ?? 20000000); setDialog({ kind: 'maxBet', game: g }) }}>{t('admin.maxBet')}</Button>
               </span>
             ) },
           ]}

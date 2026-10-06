@@ -3,7 +3,7 @@ import { Loader2, RefreshCw, WifiOff } from 'lucide-react'
 import Logo from '@/components/ui/Logo'
 import Button from '@/components/ui/Button'
 import { SERVER_MODE } from '@/config/runtime'
-import { hydrate, sync } from '@/services/server'
+import { hydrate, sync, LOGOUT_KEY } from '@/services/server'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useT } from '@/i18n'
 
@@ -46,9 +46,16 @@ export default function ServerGate({ children }) {
       if (document.visibilityState === 'visible' && useAuthStore.getState().session) hydrate().then(() => sync())
     }
     document.addEventListener('visibilitychange', onVisible)
+    // Logout / login di tab lain → samakan status tab ini.
+    const onStorage = (e) => {
+      if (e.key === LOGOUT_KEY && useAuthStore.getState().session) useAuthStore.getState().logout('remote')
+      if (e.key === 'neon-arcade:login' && !useAuthStore.getState().session) hydrate().then(() => sync())
+    }
+    window.addEventListener('storage', onStorage)
     return () => {
       clearInterval(id)
       document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('storage', onStorage)
     }
   }, [status])
 

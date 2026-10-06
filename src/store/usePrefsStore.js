@@ -15,7 +15,7 @@ const clamp01 = (v) => Math.min(1, Math.max(0, Number(v) || 0))
 export const usePrefsStore = create(
   persist(
     (set) => ({
-      language: 'id',
+      language: 'en',
       appearance: 'dark',
       notifications: { transfers: true, redeem: true, jackpots: true, mentions: true, progress: true, friends: true },
       sound: DEFAULT_SOUND,
@@ -33,11 +33,13 @@ export const usePrefsStore = create(
     }),
     {
       name: 'neon-arcade:prefs',
-      version: 4,
+      version: 5,
       storage: createJSONStorage(() => localStorage),
       // v1 → v2: pengaturan suara & notifikasi progres. v2 → v3: musik lobby aktif (dulu default 0).
+      // v4 → v5: bahasa bawaan jadi English (pemain tetap bisa ganti ke Indonesia di Settings).
       migrate: (state, version) => ({
         ...state,
+        ...(version < 5 ? { language: 'en' } : {}),
         sound: { ...DEFAULT_SOUND, ...(state?.sound ?? {}), ...(version < 3 && !(state?.sound?.music > 0) ? { music: 0.4 } : {}) },
         notifications: { progress: true, friends: true, ...(state?.notifications ?? {}) },
       }),

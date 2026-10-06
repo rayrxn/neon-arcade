@@ -115,16 +115,16 @@ check('pemain lain dapat notifikasi jackpot', count(notifs('p2', 'jackpot')) >= 
 
 // ── Chat ──
 $m = call('POST', 'chat/send', ['text' => "halo @bravo_$tag :gg:"], 'p1');
-check('kirim chat + emote gratis', $m['ok'] && str_contains($m['data']['result']['message']['text'], 'GG'), $m);
+check('kirim chat + emote gratis (token :gg: disimpan)', $m['ok'] && str_contains($m['data']['result']['message']['text'], ':gg:'), $m);
 check('mention → notifikasi', count(notifs('p2', 'mention')) === 1);
 check('chat menambah quest chat3', ($m['data']['state']['progress']['quests']['daily']['progress']['chat3'] ?? 0) == 1);
 expect_error('jeda 3 detik', call('POST', 'chat/send', ['text' => 'lagi'], 'p1'), 'chat.errors.slowDown');
 q("UPDATE chat_messages SET created_at = created_at - interval '5 seconds' WHERE user_id = ?", [$P1]);
 expect_error('link diblokir', call('POST', 'chat/send', ['text' => 'cek www.scam.com'], 'p1'), 'chat.errors.noLinks');
-$bad = call('POST', 'chat/send', ['text' => 'dasar goblok'], 'p1');
-check('kata kasar disensor & ditandai', $bad['ok'] && $bad['data']['result']['message']['text'] === 'dasar g*****' && $bad['data']['result']['message']['flagged']);
+$bad = call('POST', 'chat/send', ['text' => 'dasar bego'], 'p1');
+check('kata ringan disensor & ditandai', $bad['ok'] && $bad['data']['result']['message']['text'] === 'dasar b***' && $bad['data']['result']['message']['flagged'], $bad);
 q("UPDATE chat_messages SET created_at = created_at - interval '5 seconds' WHERE user_id = ?", [$P1]);
-expect_error('pesan sama berulang', call('POST', 'chat/send', ['text' => 'dasar goblok'], 'p1'), 'chat.errors.duplicate');
+expect_error('pesan sama berulang', call('POST', 'chat/send', ['text' => 'dasar bego'], 'p1'), 'chat.errors.duplicate');
 expect_error('pesan kosong', call('POST', 'chat/send', ['text' => '   '], 'p2'), 'chat.errors.empty');
 $msgId = $bad['data']['result']['message']['id'];
 check('sembunyikan pesan', call('POST', 'chat/hide', ['messageId' => $msgId], 'p2')['ok'] && in_array($msgId, sync('p2')['platform']['hidden'][$P2], true));
@@ -292,7 +292,7 @@ expect_error('game maintenance tidak bisa dimainkan', call('POST', 'game/limbo',
 admin('own', 'setGameStatus', ['slug' => 'limbo', 'status' => 'live', 'reason' => 'cek selesai']);
 check('batas taruhan game', admin('own', 'setGameMaxBet', ['slug' => 'dice', 'maxBet' => 50, 'reason' => 'batasi risiko'])['ok']);
 expect_error('taruhan di atas batas game', call('POST', 'game/dice', ['bet' => 60, 'target' => 50, 'over' => true], 'p1'), 'play.errors.maxBet');
-admin('own', 'setGameMaxBet', ['slug' => 'dice', 'maxBet' => 100000, 'reason' => 'kembali normal']);
+admin('own', 'setGameMaxBet', ['slug' => 'dice', 'maxBet' => 20000000, 'reason' => 'kembali normal']);
 check('buat kode', admin('own', 'createCode', ['code' => "TES$tag", 'kind' => 'AC', 'amount' => 300, 'maxUses' => 10, 'perUser' => 1, 'active' => true, 'reason' => 'event komunitas'])['ok']);
 $b = bal('p2');
 check('kode buatan admin bisa diklaim', call('POST', 'redeem/claim', ['code' => "TES$tag"], 'p2')['ok'] && bal('p2') == $b + 300);

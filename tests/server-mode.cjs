@@ -306,7 +306,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   assert('aksi tanpa alasan ditolak server', (await code(() => ADM.setGameStatus('dice', 'maintenance', 'x'))) === 'admin.errors.reason')
   await ADM.setGameMaxBet('dice', 5000, 'batasi taruhan')
   assert('konfigurasi game dari server', L('src/store/useAdminStore.js').useAdminStore.getState().gameConfig.dice.maxBet === 5000)
-  await ADM.setGameMaxBet('dice', 100000, 'kembali normal')
+  await ADM.setGameMaxBet('dice', 20000000, 'kembali normal')
   assert('audit log terisi', L('src/store/useAdminStore.js').useAdminStore.getState().logs.some((l) => l.code === 'ADMIN_AC_ADJUSTMENT') && L('src/store/useAdminStore.js').useAdminStore.getState().logs.some((l) => l.code === 'ADMIN_TEMP_BAN'))
   assert('analitik admin dari data server', L('src/services/admin.js').analytics().totalUsers >= 2)
 

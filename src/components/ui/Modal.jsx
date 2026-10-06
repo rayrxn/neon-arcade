@@ -1,4 +1,5 @@
 import { createElement, isValidElement, useEffect, useId } from 'react'
+import * as ReactDOM from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import clsx from 'clsx'
@@ -26,7 +27,7 @@ export default function Modal({ open, onClose, title, description, icon, childre
     }
   }, [open, locked, onClose])
 
-  return (
+  const tree = (
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6">
@@ -74,4 +75,8 @@ export default function Modal({ open, onClose, title, description, icon, childre
       )}
     </AnimatePresence>
   )
+  // Dirender langsung di <body>: modal yang dibuka dari header/kartu dengan backdrop-filter
+  // atau transform tidak lagi terpotong / bergeser (bug dialog logout).
+  const portal = ReactDOM.createPortal
+  return typeof portal === 'function' && typeof document !== 'undefined' && document.body ? portal(tree, document.body) : tree
 }
