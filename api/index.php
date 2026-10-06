@@ -8,6 +8,8 @@ require __DIR__ . '/lib/progression.php';
 require __DIR__ . '/lib/state.php';
 require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/games.php';
+require __DIR__ . '/lib/platform.php';
+require __DIR__ . '/lib/admin.php';
 
 /** Jalankan aksi yang mengubah progres user dalam satu transaksi, lalu kirim snapshot state. */
 function with_user(callable $fn, bool $lightWhenOpen = false): array
@@ -33,6 +35,14 @@ function route(string $method, string $path): array
         return ['status' => 'ok', 'db' => (bool) qv('SELECT 1'), 'serverTime' => now_ms(), 'version' => 1];
     }
     if ($method === 'GET' && $path === 'me') return api_me();
+    if ($method === 'GET' && $path === 'sync') {
+        $u = current_user();
+        return tx(fn() => sync_view($u));
+    }
+    if ($method === 'GET' && $path === 'admin/snapshot') {
+        $u = current_user();
+        return tx(fn() => admin_snapshot($u));
+    }
 
     if ($method !== 'POST') fail('errors.notFound', [], 404);
     switch ($path) {
@@ -70,6 +80,52 @@ function route(string $method, string $path): array
             $detail = jenc(['path' => mb_substr((string) arg('path', ''), 0, 200), 'componentStack' => mb_substr((string) arg('componentStack', ''), 0, 2000), 'stack' => mb_substr((string) arg('stack', ''), 0, 2000), 'ua' => mb_substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 200)]);
             q('INSERT INTO error_log (context, code, message, stack, user_id) VALUES (?, ?, ?, ?, ?)', ['client:' . mb_substr((string) arg('where', 'root'), 0, 50), (string) $ip, $msg ?: '(kosong)', $detail, $u['id'] ?? null]);
             return ['ok' => true];
+
+        // ── Tahap 2: aksi yang mengubah saldo/progres → { result, state } ──
+        case 'transfer':
+            return with_user(fn(Ctx $c) => transfer_send($c->user, body()));
+        case 'redeem/check': {
+            $u = current_user();
+            return ['result' => tx(fn() => redeem_resolve($u, arg('code', '')))];
+        }
+        case 'redeem/claim': {
+            $u = current_user();
+            return tx(function () use ($u) {
+                [$p, $meta, $profile] = load_docs($u['id']);
+                $info = redeem_claim($u, $meta, $profile, arg('code', ''));
+                save_docs($u['id'], $p, $meta, $profile);
+                return ['result' => $info, 'state' => state_view($u['id'], $p, $meta), 'user' => me_payload($u['id'], $p, $meta)['user']];
+            });
+        }
+        case 'chat/send': {
+            $u = current_user();
+            return tx(function () use ($u) {
+                [$p, $meta, $profile] = load_docs($u['id']);
+                $res = chat_send($u, $p, $meta, $profile, arg('text', ''));
+                save_docs($u['id'], $p, $meta);
+                return ['result' => $res, 'state' => state_view($u['id'], $p, $meta)];
+            });
+        }
+
+        // ── Tahap 2: aksi sosial → { result } (frontend lalu memanggil /sync) ──
+        case 'chat/hide': $u = current_user(); return ['result' => tx(fn() => chat_hide($u, (string) arg('messageId', '')))];
+        case 'friends/request': $u = current_user(); return ['result' => tx(fn() => friend_request($u, arg('username', '')))];
+        case 'friends/accept': $u = current_user(); return ['result' => tx(fn() => friend_accept($u, (string) arg('id', '')))];
+        case 'friends/decline': $u = current_user(); return ['result' => tx(fn() => friend_decline($u, (string) arg('id', '')))];
+        case 'friends/remove': $u = current_user(); return ['result' => tx(fn() => friend_remove($u, (string) arg('friendId', '')))];
+        case 'block': $u = current_user(); return ['result' => tx(fn() => user_block($u, (string) arg('userId', ''), (bool) arg('on', true)))];
+        case 'favorite': $u = current_user(); return ['result' => tx(fn() => favorite_toggle($u, (string) arg('slug', '')))];
+        case 'notifications': $u = current_user(); return ['result' => tx(fn() => notif_action($u, (string) arg('action', ''), arg('id')))];
+        case 'report': $u = current_user(); return ['result' => tx(fn() => report_create($u, body()))];
+        case 'ticket/create': $u = current_user(); return ['result' => tx(fn() => ticket_create($u, body()))];
+        case 'ticket/reply': $u = current_user(); return ['result' => tx(fn() => ticket_reply($u, (string) arg('ticketId', ''), arg('text', '')))];
+        case 'ticket/reopen': $u = current_user(); return ['result' => tx(fn() => ticket_reopen($u, (string) arg('ticketId', '')))];
+        case 'admin/action': {
+            $u = current_user();
+            $name = (string) arg('name', '');
+            $args = is_array(arg('args')) ? arg('args') : [];
+            return ['result' => tx(fn() => admin_action($u, $name, $args))];
+        }
 
         case 'fairness/rotate':
             $u = current_user();

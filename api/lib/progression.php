@@ -340,7 +340,19 @@ function commit_out(string $userId, array &$p, array &$meta, array &$out, bool $
     }
     foreach ($out['suspicious'] as $s) raise_flag($userId, $s['type'], 'high', null, $s['expected'], $s['submitted']);
     if ($out['xp'] > 0) log_event('XP_GAINED', $userId, ['xp' => $out['xp']]);
-    if ($out['levelUp']) log_event('LEVEL_UP', $userId, $out['levelUp']);
+    // Notifikasi dibuat server → muncul di semua perangkat pemain.
+    foreach ($out['quests'] as $q) {
+        notify($userId, 'quest', ['scope' => $q['scope'], 'quest' => $q['id']]);
+        log_event('QUEST_COMPLETED', $userId, ['quest' => $q['id'], 'scope' => $q['scope']]);
+    }
+    foreach ($out['achievements'] as $a) {
+        notify($userId, 'achievement', ['achievement' => $a]);
+        log_event('ACHIEVEMENT_UNLOCKED', $userId, ['achievement' => $a]);
+    }
+    if ($out['levelUp']) {
+        notify($userId, 'levelUp', ['level' => $out['levelUp']['to'], 'from' => $out['levelUp']['from'], 'rewards' => array_values(array_filter($out['rewards'], fn($r) => isset($r['level'])))]);
+        log_event('LEVEL_UP', $userId, $out['levelUp']);
+    }
 }
 
 function grant_item(array &$meta, string $itemId): bool
@@ -460,6 +472,7 @@ function claim_daily_reward(string $userId, array &$p, array &$meta, int $now): 
     unlock_achievements($p, $out, $now);
     q('INSERT INTO daily_claims (user_id, claim_day, streak_day, streak) VALUES (?, ?, ?, ?)', [$userId, local_dt($now)->format('Y-m-d'), $def['day'], $state['streak'] + 1]);
     log_event('DAILY_CLAIMED', $userId, ['day' => $def['day'], 'streak' => $state['streak'] + 1]);
+    notify($userId, 'daily', ['day' => $def['day'], 'rewards' => $granted]);
     commit_out($userId, $p, $meta, $out, false, $now);
     return ['day' => $def['day'], 'rewards' => $granted] + $out;
 }

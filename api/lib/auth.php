@@ -65,6 +65,7 @@ function current_user(bool $required = true): ?array
             fail($block, ['reason' => $u['ban_reason'] ?? '—', 'until' => iso_to_ms($u['ban_until'])], 403);
         }
     }
+    if ($u) touch_presence($u);
     $GLOBALS['NEON_USER'] = $u ?: null;
     if (!$u && $required) fail('errors.sessionExpired', [], 401);
     return $u;
@@ -152,6 +153,7 @@ function api_me(): array
     $u = current_user(false);
     if (!$u) return ['user' => null, 'serverTime' => now_ms()];
     return tx(function () use ($u) {
+        settle_transfers();
         [$p, $meta] = load_docs($u['id']);
         $out = mark_login($u['id'], $p, $meta, now_ms());
         save_docs($u['id'], $p, $meta);
