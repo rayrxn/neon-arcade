@@ -226,7 +226,7 @@ function sync_view(array $me): array
         'platform' => [
             'chat' => $chat, 'hidden' => (object) [$me['id'] => $hidden], 'presence' => (object) $presence, 'jackpots' => $jackpots,
             'friendships' => $friendships, 'blocks' => (object) $blocks, 'favorites' => (object) $favorites, 'chatSettings' => ['slowMode' => $slow],
-            'codeUsage' => (object) code_usage_view(), 'seededAt' => 1,
+            'codeUsage' => (object) code_usage_view(), 'seededAt' => 1, 'catalog' => catalog_view(),
         ],
         'admin' => [
             'announcements' => array_map('announcement_view', q('SELECT * FROM announcements ORDER BY created_at DESC LIMIT 100')->fetchAll()),
@@ -370,7 +370,7 @@ function chat_moderate(string $text): array
     return [$masked, $flagged];
 }
 
-function chat_send(array $me, array &$p, array &$meta, array $profile, $raw): array
+function chat_send(array $me, array &$p, array &$meta, array &$profile, $raw, ?array $verdict = null): array
 {
     $now = now_ms();
     if (($me['muted_until'] ?? null) === 'infinity') fail('chat.errors.mutedPermanent');
@@ -390,12 +390,19 @@ function chat_send(array $me, array &$p, array &$meta, array $profile, $raw): ar
         if ($since < $gap) fail($slow > 3000 ? 'chat.errors.slowMode' : 'chat.errors.slowDown', ['seconds' => (int) ceil(($gap - $since) / 1000)]);
     }
     if (count(array_filter($mine, fn($m) => $now - iso_to_ms($m['created_at']) < 30000)) >= 5) fail('chat.errors.slowDown');
-    [$text, $flagged] = chat_moderate($clean);
-    $owned = array_merge(FREE_EMOTES, $meta['inventory']);
-    $text = preg_replace_callback('/:([a-z]{2,12}):/', function ($m) use ($owned) {
-        foreach (EMOTES as $id => [$code, $glyph]) if ($code === $m[1] && in_array($id, $owned, true)) return $glyph;
-        return $m[0];
+    $verdict ??= mod_check($clean);
+    if (in_array($verdict['action'], ['block', 'spam'], true)) fail('chat.errors.blocked');
+    $text = $verdict['text'];
+    $flagged = $verdict['action'] === 'mask';
+    if ($flagged) mod_log($me['id'], 'masked', 'language', $clean, $verdict['matched']);
+    // Emotes stay as :code: (the client draws/animates them) — only codes the user owns; others are plain text.
+    $owned = owned_emotes($me, $meta);
+    $used = [];
+    $text = preg_replace_callback('/:([a-z]{2,12}):/', function ($m) use ($owned, &$used) {
+        if (in_array($m[1], $owned, true)) { $used[] = $m[1]; return $m[0]; }
+        return $m[1];
     }, $text);
+    if ($used) $profile['emoteRecent'] = array_slice(array_values(array_unique(array_merge(array_reverse($used), (array) ($profile['emoteRecent'] ?? [])))), 0, 16);
     if ($mine && $now - iso_to_ms($mine[0]['created_at']) < 60000 && mb_strtolower($mine[0]['body']) === mb_strtolower($text)) fail('chat.errors.duplicate');
     $badge = $profile['equipped']['chatBadge'] ?? null;
     $badge = in_array($badge, CHAT_BADGES, true) && in_array($badge, $meta['inventory'], true) ? $badge : null;

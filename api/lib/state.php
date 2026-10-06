@@ -95,7 +95,7 @@ function user_view(array $u, array $profile = []): array
         'warnings' => [],
         'equipped' => (object) ($profile['equipped'] ?? []),
         'server' => true,
-    ];
+    ] + (array_key_exists('loyalty_xp', $u) ? user_extra_fields($u, $profile) : []);
 }
 
 const AVATAR_PRESETS = ['cyan', 'violet', 'sunset', 'mint', 'rose', 'steel'];
@@ -203,6 +203,7 @@ function state_view(string $userId, array $p, array $meta): array
         'season' => current_season(now_ms()),
         'open' => (object) open_rounds_view($userId),
         'notifications' => notifications_view($userId),
+        'extras' => extras_view($userId, $meta),
         'serverTime' => now_ms(),
     ];
 }

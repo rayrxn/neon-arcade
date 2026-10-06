@@ -59,6 +59,8 @@ function admin_user_view(array $u, array $profile, bool $sensitive): array
     if (!$sensitive) $v['email'] = '';
     $v['key'] = $sensitive ? $u['email'] : 'u:' . $u['id'];
     $v['muteReason'] = $u['mute_reason'] ?? null;
+    $v['loyaltyFloor'] = $u['loyalty_floor'] ?? 'none';
+    $v['loyaltyOverride'] = $u['loyalty_override'] ?? null;
     $v['lastSeenAt'] = iso_to_ms($u['last_seen_at'] ?? null);
     $v['loginHistory'] = array_map(fn($a) => ['at' => iso_to_ms($a['at']), 'ok' => (bool) $a['ok'], 'kind' => $a['ok'] ? 'login' : 'password'],
         q('SELECT ok, at FROM login_attempts WHERE email = ? ORDER BY at DESC LIMIT 30', [$u['email']])->fetchAll());
@@ -103,7 +105,7 @@ function admin_snapshot(array $me): array
         has_perm($me, 'system.manage') ? q('SELECT * FROM error_log ORDER BY at DESC LIMIT 200')->fetchAll() : []);
     return [
         'users' => $users, 'wallets' => (object) $wallets, 'progress' => (object) $progress,
-        'admin' => ['logs' => $logs, 'events' => $events, 'errors' => $errors, 'codes' => (object) code_defs_view()],
+        'admin' => ['logs' => $logs, 'events' => $events, 'errors' => $errors, 'codes' => (object) code_defs_view(), 'v2' => admin_v2_view($me)],
         'serverTime' => now_ms(),
     ];
 }
@@ -124,6 +126,8 @@ function lock_docs(string $userId): array
 function admin_action(array $me, string $name, array $a)
 {
     $uid = $a['userId'] ?? null;
+    $v2 = admin_v2_action($me, $name, $a);
+    if ($v2 !== null) return $v2;
     switch ($name) {
         case 'releaseReset': {
             require_user_perm($me, 'release.reset');
@@ -278,6 +282,7 @@ function admin_action(array $me, string $name, array $a)
             if (!$m) fail('admin.errors.invalid');
             q('UPDATE chat_messages SET deleted_by = ?, deleted_at = now(), delete_reason = ? WHERE id = ?', [$me['id'], $r, $m['id']]);
             audit_log($me, 'chat.delete', $m['user_id'], null, $m['id'], $m['body'], null, $r);
+            mod_log($m['user_id'], 'deleted', mb_substr($r, 0, 40), $m['body'], [], $me['id']);
             log_event('MESSAGE_DELETED', $m['user_id'], ['messageId' => $m['id'], 'adminId' => $me['id']]);
             return ['ok' => true];
         }
@@ -287,6 +292,7 @@ function admin_action(array $me, string $name, array $a)
             sql_admin('SELECT admin_mute(?::uuid, ?::uuid, ?::int, ?)', [$me['id'], $uid, $min === null ? null : (int) $min, $r]);
             q('UPDATE users SET mute_reason = ? WHERE id = ?', [$min === 0 ? null : $r, $uid]);
             log_event($min === 0 ? 'USER_UNMUTED' : 'USER_MUTED', $uid, ['adminId' => $me['id']]);
+            mod_log((string) $uid, $min === 0 ? 'unmuted' : 'muted', mb_substr($r, 0, 40), null, [], $me['id']);
             return ['ok' => true];
         }
         case 'warnUser':
@@ -466,7 +472,7 @@ function admin_action(array $me, string $name, array $a)
             $slug = (string) ($a['slug'] ?? '');
             $mb = $a['maxBet'] ?? null;
             $before = qv('SELECT max_bet FROM games WHERE slug = ?', [$slug]);
-            if (!$before || !is_int($mb) || $mb < 10 || $mb > 100000) fail('admin.errors.invalid');
+            if (!$before || !is_int($mb) || $mb < 10 || $mb > 100000000) fail('admin.errors.invalid');
             q('UPDATE games SET max_bet = ? WHERE slug = ?', [$mb, $slug]);
             audit_log($me, 'game.maxBet', null, $slug, $slug, (int) $before, $mb, $r);
             return ['ok' => true];
@@ -556,6 +562,9 @@ function release_reset(string $scope, string $reason, ?array $me = null): array
         }
         q("UPDATE game_sessions SET status = 'CANCELLED', finished_at = coalesce(finished_at, now()) WHERE user_id = ? AND status = 'OPEN'", [$id]);
         q('DELETE FROM user_achievements WHERE user_id = ?', [$id]);
+        // Loyalty XP & boosts start over; a card bought with AC+AG (floor) and owned items stay.
+        q('UPDATE users SET loyalty_xp = 0 WHERE id = ?', [$id]);
+        q('DELETE FROM user_boosts WHERE user_id = ?', [$id]);
         $meta = ['inventory' => $meta['inventory'], 'redeemed' => $meta['redeemed']];
         save_docs($id, empty_progress(), $meta + ['totalWagered' => 0, 'totalWon' => 0, 'rounds' => 0, 'wins' => 0, 'biggestWin' => null, 'lastBonusAt' => null], $profile);
         notify($id, 'releaseReset', ['scope' => $scope]);
