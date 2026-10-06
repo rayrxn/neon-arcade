@@ -103,6 +103,34 @@ sesi berlaku 7 hari, RBAC SUPER ADMIN / ADMIN / MODERATOR / SUPPORT, rate limit 
   game start/settle + dice provably fair (hasil identik dengan JS), XP/level/milestone, daily, admin (RBAC + audit), report.
 - `functions_test.sql`, `constraints_test.sql`, `run-tests.sh` — sudah dijalankan di PostgreSQL 16: 83/83 lulus.
 
+## Produksi: arcadebet.my.id (mode server, Tahap 1)
+
+Website live di **https://arcadebet.my.id** memakai API PHP di hosting Domainesia + PostgreSQL 16.
+`index.html` produksi men-set `window.NEON_API = "/api"`; tanpa flag itu (artifact, file lokal, tes) website
+tetap memakai service layer di browser seperti sebelumnya.
+
+- **Diputuskan server:** registrasi & login (argon2id, cookie httpOnly 7 hari, rate limit 5 gagal/15 menit),
+  saldo AC/AG (ledger `wallet_post`, idempoten, tidak bisa minus), 10 game (port 1:1 dari `services/games.js`,
+  RNG provably fair identik — `api/tests/rng_compare.mjs`), daily reward, quest, XP/level/milestone L15/L50,
+  achievement, season, seed provably fair, profil & kosmetik. Flag anti-cheat tetap tersimpan walau request ditolak.
+- **Masih di browser (Tahap 2):** transfer antar pemain & redeem kode (sementara dinonaktifkan di mode server),
+  panel admin (membaca data lokal; aksi admin dinonaktifkan), teman, chat, notifikasi, laporan, tiket support.
+- **Kode:** `api/` (router `index.php`, aturan di `api/lib/*.php`), `db/migrations/*.sql`, `src/services/server.js`,
+  `src/config/runtime.js`, `src/components/runtime/ServerGate.jsx`.
+- **Tes:** `bash api/tests/run.sh` (API + RNG vs JS), `node tests/server-mode.cjs` (bundle frontend asli ↔ API lokal),
+  ditambah `npm test` & `npm run test:db` untuk mode lokal dan database.
+
+### Alur deploy
+
+1. Commit ke `main` → push ke GitHub.
+2. `bash tools/deploy.sh` (butuh `TAILWIND_BIN` untuk build ulang CSS) menyusun branch `deploy`
+   (`index.html`, `api/`, `.htaccess`) dan mem-push-nya.
+3. Cron di hosting (`~/bin/neon-sync.sh`, salinan di `tools/hosting/`) tiap 2 menit menarik `deploy` ke `public_html`,
+   `main` ke `~/neon-src`, lalu menjalankan migrasi baru di `db/migrations/` (sekali per file). Log: `~/logs/neon-sync.log`.
+
+Rahasia tidak pernah masuk repo: kredensial database ada di `~/neon-config.php` (API) dan `~/.pgpass` (cron),
+keduanya di luar `public_html`.
+
 ## Batas mode lokal (jujur)
 
 Website live memakai `localStorage` (tidak ada server yang bisa di-host dari artifact). Semua aturan berjalan di

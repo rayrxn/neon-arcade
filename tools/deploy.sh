@@ -40,8 +40,11 @@ DirectoryIndex index.html
 Options -Indexes
 AddDefaultCharset UTF-8
 
-# Jangan tampilkan folder/file git
+# Jangan tampilkan folder/file git, log, dan konfigurasi PHP
 RedirectMatch 404 /\.git
+<FilesMatch "^(error_log|php\.ini|\.user\.ini)$">
+  Require all denied
+</FilesMatch>
 
 # index.html selalu dicek ulang supaya update langsung terlihat
 <FilesMatch "^(index\.html)?$">
