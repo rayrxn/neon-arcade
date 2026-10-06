@@ -775,3 +775,11 @@ export function analytics(now = Date.now()) {
     days,
   }
 }
+
+/** Reset saat rilis update (Owner). scope: 'testers' | 'global'. Hanya di mode server. */
+export async function releaseReset(scope, confirm, reason) {
+  if (!['testers', 'global'].includes(scope)) throw new AppError('admin.errors.invalid')
+  if (confirm !== (scope === 'global' ? 'RESET GLOBAL' : 'RESET TESTER')) throw new AppError('admin.errors.confirmPhrase')
+  if (!SERVER_MODE) throw new AppError('admin.errors.serverOnly')
+  return adminCall('releaseReset', { scope, confirm, reason })
+}

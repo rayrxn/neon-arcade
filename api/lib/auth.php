@@ -67,6 +67,11 @@ function current_user(bool $required = true): ?array
     }
     if ($u) touch_presence($u);
     $GLOBALS['NEON_USER'] = $u ?: null;
+    // Akun yang wajib ganti password hanya boleh membaca data diri, ganti password, atau logout.
+    if ($u && !empty($u['must_change_password']) && $u['must_change_password'] !== 'f'
+        && !in_array($GLOBALS['NEON_PATH'] ?? '', ['me', 'sync', 'auth/password', 'auth/logout', 'client-error'], true)) {
+        fail('errors.mustChangePassword', [], 403);
+    }
     if (!$u && $required) fail('errors.sessionExpired', [], 401);
     return $u;
 }
@@ -98,9 +103,14 @@ function api_register(): array
 
 function api_login(): array
 {
+    // Login boleh pakai email atau username.
     $email = normalize_email(arg('email', ''));
     $password = (string) arg('password', '');
     return tx(function () use ($email, $password) {
+        if (!str_contains($email, '@')) {
+            $byName = qv('SELECT email FROM users WHERE username = ?', [$email]);
+            if ($byName) $email = (string) $byName;
+        }
         if (!qv('SELECT api_login_allowed(?)', [$email])) {
             $first = qv("SELECT min(at) FROM (SELECT at FROM login_attempts WHERE email = ? AND NOT ok AND at > now() - interval '15 minutes' ORDER BY at DESC LIMIT 5) x", [$email]);
             $minutes = max(1, (int) ceil((strtotime((string) $first) + 900 - time()) / 60));
@@ -235,7 +245,7 @@ function api_password(): array
     if (!password_verify($current, $u['password_hash'])) fail('errors.wrongPassword');
     if (strlen($next) < 8 || strlen($next) > 200) fail('validation.passwordLength');
     return tx(function () use ($u, $next) {
-        q('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($next, PASSWORD_ARGON2ID), $u['id']]);
+        q('UPDATE users SET password_hash = ?, must_change_password = FALSE WHERE id = ?', [password_hash($next, PASSWORD_ARGON2ID), $u['id']]);
         // Keluarkan perangkat lain, pertahankan sesi ini.
         q('DELETE FROM sessions WHERE user_id = ? AND id <> ?', [$u['id'], $u['session_id']]);
         log_event('PASSWORD_CHANGED', $u['id']);

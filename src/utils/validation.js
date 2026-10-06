@@ -6,8 +6,8 @@ export function validateAuth(mode, values) {
   const errors = {}
   const email = values.email.trim()
 
-  if (!email) errors.email = 'validation.emailRequired'
-  else if (!EMAIL_RE.test(email)) errors.email = 'validation.emailFormat'
+  if (!email) errors.email = mode === 'login' ? 'validation.loginRequired' : 'validation.emailRequired'
+  else if (mode === 'login' ? !EMAIL_RE.test(email) && !USERNAME_RE.test(email) : !EMAIL_RE.test(email)) errors.email = mode === 'login' ? 'validation.loginFormat' : 'validation.emailFormat'
 
   if (!values.password) errors.password = 'validation.passwordRequired'
   else if (mode === 'register') Object.assign(errors, passwordRules(values.password, 'password'))

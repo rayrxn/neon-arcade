@@ -93,7 +93,9 @@ export const useAuthStore = create(
           return user
         }
         await wait(NETWORK_LATENCY)
-        const key = normalizeEmail(email)
+        // Boleh masuk pakai username juga.
+        const raw = normalizeEmail(email)
+        const key = raw.includes('@') ? raw : Object.keys(get().users).find((k) => get().users[k].username?.toLowerCase() === raw) ?? raw
         const user = get().users[key]
         const record = (ok, kind) =>
           user && set((s) => ({ users: { ...s.users, [key]: { ...s.users[key], loginHistory: [{ at: Date.now(), ok, kind }, ...(s.users[key].loginHistory ?? [])].slice(0, 30) } } }))
@@ -189,6 +191,7 @@ export const useAuthStore = create(
       changePassword: async ({ current, next }) => {
         if (SERVER_MODE) {
           await api('auth/password', { current, next })
+          applyPayload(await api('me'))
           return
         }
         await wait(NETWORK_LATENCY)

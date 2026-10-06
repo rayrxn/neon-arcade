@@ -32,6 +32,7 @@ import ThemeController from '@/components/runtime/ThemeController'
 import PlatformRuntime from '@/components/runtime/PlatformRuntime'
 import ServerGate from '@/components/runtime/ServerGate'
 import RootBoundary from '@/components/runtime/RootBoundary'
+import PasswordGate from '@/components/runtime/PasswordGate'
 import Toaster from '@/components/ui/Toaster'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { can } from '@/config/roles'
@@ -50,6 +51,7 @@ export default function App() {
       <RootBoundary>
       <ServerGate>
       <PlatformRuntime />
+      <PasswordGate />
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/status" element={<StatusPage />} />

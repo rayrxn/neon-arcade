@@ -21,6 +21,7 @@ import { useNow } from '@/hooks/useNow'
 import { formatCoins, formatTime, timeAgo } from '@/utils/format'
 import { errorKey } from '@/utils/errors'
 import { useT } from '@/i18n'
+import RoleTag from '@/components/ui/RoleTag'
 
 const EMPTY = []
 
@@ -62,6 +63,7 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
         {!grouped && (
           <p className="flex flex-wrap items-baseline gap-x-1.5">
             <Link to={author ? `/u/${author.username}` : '#'} className={clsx('text-sm font-bold hover:underline', mine ? 'text-neon-cyan' : 'text-white')}>{author?.displayName ?? '—'}</Link>
+            {author && <RoleTag role={author.role} className="self-center" />}
             {message.badge && COSMETICS[message.badge] && <span className="rounded bg-white/[0.06] px-1 text-[10px] font-bold text-neon-gold" title={COSMETICS[message.badge].name?.en}>{COSMETICS[message.badge].glyph}</span>}
             {!compact && <span className="text-xs text-slate-500">@{author?.username}</span>}
             {author?.isDemo && <DemoTag />}
@@ -308,7 +310,7 @@ export function OnlineList({ className }) {
         <li key={user.id} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
           <Avatar user={user} size="sm" online={online} />
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-slate-200">{user.displayName} {user.isDemo && <DemoTag />}</p>
+            <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-slate-200">{user.displayName} <RoleTag role={user.role} /> {user.isDemo && <DemoTag />}</p>
             <p className="truncate text-[11px] text-slate-500">{online ? t('chat.online') : seen ? t('chat.lastSeen', { time: timeAgo(seen, now) }) : t('chat.offline')}</p>
           </div>
         </li>

@@ -15,6 +15,7 @@ import { useNow } from '@/hooks/useNow'
 import { timeAgo } from '@/utils/format'
 import { errorKey } from '@/utils/errors'
 import { useT } from '@/i18n'
+import RoleTag from '@/components/ui/RoleTag'
 
 export default function FriendsPage() {
   const { t } = useT()
@@ -106,7 +107,7 @@ export default function FriendsPage() {
                 <li key={f.user.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
                   <Avatar user={f.user} size="md" online={f.online} />
                   <Link to={`/u/${f.user.username}`} className="min-w-0 flex-1 hover:underline">
-                    <p className="flex items-center gap-1.5 truncate text-sm font-bold text-white">{f.user.displayName} {f.user.isDemo && <DemoTag />}</p>
+                    <p className="flex items-center gap-1.5 truncate text-sm font-bold text-white">{f.user.displayName} <RoleTag role={f.user.role} /> {f.user.isDemo && <DemoTag />}</p>
                     <p className="truncate text-[11px] text-slate-500">
                       {f.online ? t('chat.online') : t('chat.lastSeen', { time: timeAgo(f.lastSeen ?? 0, now) })}
                       {f.recentGame && ` · ${t('friends.recent', { game: getGameName(f.recentGame) })}`}

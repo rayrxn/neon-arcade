@@ -14,6 +14,7 @@ import { openModal } from '@/store/useUiStore'
 import { GAMES } from '@/config/games'
 import { useNow } from '@/hooks/useNow'
 import { useT } from '@/i18n'
+import RoleTag from '@/components/ui/RoleTag'
 
 function greetingKey(hour) {
   if (hour < 11) return 'home.greeting.morning'
@@ -75,7 +76,7 @@ export default function HomePage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="label-caps">{t(greetingKey(new Date(now).getHours()))}</p>
-          <h1 className="mt-1.5 truncate font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">{user?.displayName}</h1>
+          <h1 className="mt-1.5 flex min-w-0 items-center gap-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl"><span className="truncate">{user?.displayName}</span> <RoleTag role={user?.role} className="translate-y-px" /></h1>
         </div>
         <div className="w-full sm:w-72">
           <LevelBar compact />

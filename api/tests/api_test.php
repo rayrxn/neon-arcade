@@ -52,7 +52,9 @@ echo "Neon Arcade API tests\n";
 check('health', call('GET', 'health')['data']['status'] === 'ok');
 $r = call('POST', 'auth/register', ['username' => 'owner_1', 'email' => 'Owner@Test.id', 'password' => 'rahasia123'], 'a');
 check('register ok', $r['ok'], $r);
-check('akun pertama = super_admin', ($r['data']['user']['role'] ?? '') === 'super_admin');
+// DB tes sudah berisi akun staf awal (migrasi 003) → pendaftar baru = user; owner_1 dijadikan Owner untuk tes admin.
+check('pendaftar baru = user (staf awal sudah ada)', ($r['data']['user']['role'] ?? '') === 'user');
+q("UPDATE users SET role = 'super_admin' WHERE username = 'owner_1'");
 check('saldo awal 10.000 AC', ($r['data']['wallet']['balance'] ?? 0) == 10000);
 check('saldo awal 1 AG', ($r['data']['wallet']['gems'] ?? 0) == 1);
 check('email dinormalisasi', ($r['data']['user']['email'] ?? '') === 'owner@test.id');
@@ -83,7 +85,8 @@ check('dice: saldo = sebelum − bet + payout', abs($after - ($before - 100 + $s
 check('dice: XP diberikan', $s['xp'] === 11 || $s['xp'] === 16, $s['xp']);
 check('dice: sesi tersimpan di progres', ($d['data']['state']['progress']['sessions'][0]['id'] ?? '') === $s['id']);
 $txs = $d['data']['state']['wallet']['transactions'];
-check('dice: transaksi bet tercatat + game', $txs[$s['result'] === 'win' ? 1 : 0]['type'] === 'bet' && $txs[$s['result'] === 'win' ? 1 : 0]['game'] === 'dice');
+$betTx = array_values(array_filter(array_slice($txs, 0, 2), fn($x) => $x['type'] === 'bet'))[0] ?? null;
+check('dice: transaksi bet tercatat + game', $betTx && $betTx['game'] === 'dice', array_slice($txs, 0, 2));
 expect_error('bet pecahan ditolak', call('POST', 'game/dice', ['bet' => 1.5, 'target' => 50, 'over' => true], 'a'), 'play.errors.wholeBet');
 expect_error('bet 0 ditolak', call('POST', 'game/dice', ['bet' => 0, 'target' => 50, 'over' => true], 'a'), 'play.errors.minBet');
 expect_error('bet > batas ditolak', call('POST', 'game/dice', ['bet' => 100001, 'target' => 50, 'over' => true], 'a'), 'play.errors.maxBet');

@@ -33,21 +33,26 @@ export const PERMISSIONS = [
   'support.manage', // tiket support
   'wallet.reverse', // reversal transaksi
   'system.manage', // maintenance, status layanan, season, slow mode
+  'release.reset', // reset saldo & progres saat rilis update (Owner)
 ]
 
 const ALL = new Set(PERMISSIONS)
 
+/**
+ * Label di UI: super_admin = Owner, admin = Admin, moderator = Moderator, support = Helper, developer = Tester.
+ * Harus sama dengan tabel role_permissions di database (db/functions.sql + migrasi 003).
+ */
 export const ROLE_PERMISSIONS = {
   super_admin: ALL,
-  admin: new Set(PERMISSIONS.filter((p) => !['roles.manage', 'testmode'].includes(p))),
+  admin: new Set(PERMISSIONS.filter((p) => !['roles.manage', 'testmode', 'release.reset'].includes(p))),
   moderator: new Set(['dashboard', 'users.view', 'users.ban', 'users.warn', 'moderation', 'reports.view', 'reports.manage', 'sessions.view', 'logs.view']),
-  support: new Set(['dashboard', 'users.view', 'sessions.view', 'rewards.view', 'reports.view', 'support.manage']),
-  developer: new Set(['dashboard', 'testmode', 'sessions.view', 'games.manage']), // khusus test mode
+  support: new Set(['dashboard', 'users.view', 'users.warn', 'sessions.view', 'rewards.view', 'reports.view', 'support.manage']),
+  developer: new Set(['dashboard', 'testmode', 'sessions.view']),
   user: new Set(),
 }
 
-/** Urutan kekuatan role: admin tidak boleh menindak role yang setara/lebih tinggi. */
-export const ROLE_RANK = { super_admin: 5, admin: 4, moderator: 3, support: 2, developer: 2, user: 0 }
+/** Urutan kekuatan role: staf tidak boleh menindak role yang setara/lebih tinggi. */
+export const ROLE_RANK = { super_admin: 5, admin: 4, moderator: 3, support: 2, developer: 1, user: 0 }
 
 export const can = (role, permission) => !!ROLE_PERMISSIONS[role ?? 'user']?.has(permission)
 export const isStaff = (role) => STAFF_ROLES.has(role)

@@ -83,6 +83,7 @@ const BADGE = {
   gold: 'bg-neon-gold/10 text-neon-gold',
   cyan: 'bg-neon-cyan/10 text-neon-cyan',
   purple: 'bg-neon-purple/10 text-neon-purple',
+  orange: 'bg-orange-400/10 text-orange-400',
   slate: 'bg-white/[0.06] text-slate-400',
 }
 export function Badge({ tone = 'slate', children }) {
@@ -91,7 +92,7 @@ export function Badge({ tone = 'slate', children }) {
 
 export const RISK_TONE = { low: 'slate', medium: 'gold', high: 'red', critical: 'red' }
 export const STATUS_TONE = { active: 'green', frozen: 'cyan', banned: 'red' }
-export const ROLE_TONE = { super_admin: 'purple', admin: 'cyan', moderator: 'gold', support: 'green', developer: 'slate', user: 'slate' }
+export const ROLE_TONE = { super_admin: 'green', admin: 'red', moderator: 'gold', support: 'cyan', developer: 'orange', user: 'slate' }
 
 export function Tabs({ value, onChange, options }) {
   return (

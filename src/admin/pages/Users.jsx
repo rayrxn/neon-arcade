@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowLeft, Ban, Coins, Gem, KeyRound, Lock, MicOff, Mic,
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import ReasonDialog from '@/components/admin/ReasonDialog'
-import { AdminPage, Badge, Card, FormField, Kpi, ROLE_TONE, RISK_TONE, STATUS_TONE, SearchInput, Table, Tabs, inputCls } from '@/components/admin/AdminKit'
+import { AdminPage, Badge, Card, FormField, Kpi, RISK_TONE, STATUS_TONE, SearchInput, Table, Tabs, inputCls } from '@/components/admin/AdminKit'
 import TransactionList from '@/components/wallet/TransactionList'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { useWalletStore } from '@/store/useWalletStore'
@@ -20,6 +20,7 @@ import { TX_META, txDetail } from '@/components/wallet/TransactionList'
 import { Amount } from '@/components/ui/Currency'
 import { formatCoins, formatDateTime, timeAgo } from '@/utils/format'
 import { useT } from '@/i18n'
+import RoleTag from '@/components/ui/RoleTag'
 
 export function StatusBadge({ user }) {
   const { t } = useT()
@@ -52,7 +53,7 @@ export function UserList() {
 
   const columns = [
     { key: 'user', label: t('admin.cols.user'), render: (u) => <span className="flex items-center gap-2.5"><Avatar user={u} size="sm" /><span className="min-w-0"><span className="block truncate font-semibold text-white">{u.displayName}</span><span className="block truncate text-xs text-slate-500">@{u.username}</span></span></span> },
-    { key: 'role', label: t('admin.cols.role'), render: (u) => <Badge tone={ROLE_TONE[u.role]}>{t(`admin.roles.${u.role ?? 'user'}`)}</Badge> },
+    { key: 'role', label: t('admin.cols.role'), render: (u) => (u.role && u.role !== 'user' ? <RoleTag role={u.role} /> : <Badge>{t('admin.roles.user')}</Badge>) },
     { key: 'status', label: t('admin.cols.status'), render: (u) => <StatusBadge user={u} /> },
     { key: 'ac', label: 'AC', align: 'right', mono: true, render: (u) => formatCoins(wallets[u.id]?.balance ?? 0) },
     { key: 'ag', label: 'AG', align: 'right', mono: true, render: (u) => formatCoins(wallets[u.id]?.gems ?? 0) },
@@ -242,7 +243,7 @@ export function UserDetail() {
         <Avatar user={user} size="lg" />
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={ROLE_TONE[user.role]}>{t(`admin.roles.${user.role ?? 'user'}`)}</Badge>
+            {user.role && user.role !== 'user' ? <RoleTag role={user.role} /> : <Badge>{t('admin.roles.user')}</Badge>}
             <StatusBadge user={user} />
           </div>
           <p className="text-xs text-slate-500">

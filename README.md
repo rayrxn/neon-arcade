@@ -134,6 +134,24 @@ tetap memakai service layer di browser seperti sebelumnya.
 Rahasia tidak pernah masuk repo: kredensial database ada di `~/neon-config.php` (API) dan `~/.pgpass` (cron),
 keduanya di luar `public_html`.
 
+## Role staf & reset rilis
+
+| Role (enum DB) | Label | Warna tag | Akses panel |
+| --- | --- | --- | --- |
+| `super_admin` | Owner | hijau | semua, termasuk ganti role & reset rilis |
+| `admin` | Admin | merah | semua kecuali ganti role, test mode, reset rilis |
+| `moderator` | Moderator | kuning | moderasi, laporan, ban/mute/warning, log |
+| `support` | Helper | biru | tiket support, lihat user, warning |
+| `developer` | Tester | oranye | test mode saja (akun test, tidak masuk jackpot/transfer) |
+
+Akun staf awal (migrasi 003): `neon_owner`, `neon_admin`, `neon_mod`, `neon_helper`, `neon_tester`,
+password `admin`. Login boleh pakai username atau email. Server menolak semua aksi (panel admin,
+main game, dll.) sampai password diganti; layar ganti password muncul otomatis saat login pertama.
+
+Reset rilis (Owner): panel → Pengaturan → Reset rilis, atau file `db/resets/<tanggal>-<label>.testers|global`
+yang dijalankan sekali saat deploy. Saldo kembali ke 10.000 AC + 1 AG, progres dihapus; akun, role,
+avatar, kosmetik, dan audit log tetap. Sebelum tiap rilis ditanyakan dulu: reset global, reset tester dulu, atau tanpa reset.
+
 ## Batas mode lokal (jujur)
 
 Website live memakai `localStorage` (tidak ada server yang bisa di-host dari artifact). Semua aturan berjalan di

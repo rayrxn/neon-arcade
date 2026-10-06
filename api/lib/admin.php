@@ -3,7 +3,7 @@
 // Port dari src/services/admin.js. Aksi yang sudah punya fungsi SQL teruji (functions.sql) memakai fungsi itu.
 declare(strict_types=1);
 
-const ROLE_RANK = ['super_admin' => 5, 'admin' => 4, 'moderator' => 3, 'support' => 2, 'developer' => 2, 'user' => 0];
+const ROLE_RANK = ['super_admin' => 5, 'admin' => 4, 'moderator' => 3, 'support' => 2, 'developer' => 1, 'user' => 0];
 const AUDIT_CODES = [
     'user.ban' => 'ADMIN_BAN', 'user.tempban' => 'ADMIN_TEMP_BAN', 'user.unban' => 'ADMIN_UNBAN', 'user.warn' => 'ADMIN_WARN',
     'user.unwarn' => 'ADMIN_REMOVE_WARNING', 'user.freeze' => 'ADMIN_FREEZE_ACCOUNT', 'user.unfreeze' => 'ADMIN_UNFREEZE_ACCOUNT',
@@ -125,6 +125,13 @@ function admin_action(array $me, string $name, array $a)
 {
     $uid = $a['userId'] ?? null;
     switch ($name) {
+        case 'releaseReset': {
+            require_user_perm($me, 'release.reset');
+            $r = adm_reason($a['reason'] ?? '');
+            $scope = (string) ($a['scope'] ?? '');
+            if (($a['confirm'] ?? '') !== ($scope === 'global' ? 'RESET GLOBAL' : 'RESET TESTER')) fail('admin.errors.invalid');
+            return release_reset($scope, $r, $me);
+        }
         case 'editUser': {
             require_user_perm($me, 'users.edit');
             $r = adm_reason($a['reason'] ?? '');
@@ -521,6 +528,44 @@ function admin_action(array $me, string $name, array $a)
         case 'addTicketNote': return ticket_note($me, (string) ($a['ticketId'] ?? ''), $a['text'] ?? '');
     }
     fail('errors.notFound', [], 404);
+}
+
+/**
+ * Reset saat rilis update. scope: 'testers' (role Tester / akun test) atau 'global' (semua akun).
+ * Yang direset: saldo kembali ke modal awal, level/XP, quest, daily, statistik, achievement, sesi terbuka.
+ * Yang tetap: akun, role, nama, avatar, inventory/kosmetik, riwayat kode redeem, audit log.
+ */
+const RELEASE_START = ['AC' => 10000, 'AG' => 1];
+function release_reset(string $scope, string $reason, ?array $me = null): array
+{
+    if (!in_array($scope, ['testers', 'global'], true)) fail('admin.errors.invalid');
+    $ids = $scope === 'global'
+        ? q('SELECT id FROM users ORDER BY created_at')->fetchAll()
+        : q("SELECT id FROM users WHERE role = 'developer' OR is_test ORDER BY created_at")->fetchAll();
+    $tag = 'release:' . gmdate('YmdHis') . ':' . rand_hex(4);
+    foreach ($ids as $row) {
+        $id = $row['id'];
+        [$p, $meta, $profile] = load_docs($id);
+        $w = q1('SELECT ac_balance, ag_balance FROM wallets WHERE user_id = ? FOR UPDATE', [$id]);
+        foreach (RELEASE_START as $c => $start) {
+            $diff = round($start - (float) ($c === 'AC' ? $w['ac_balance'] : $w['ag_balance']), 2);
+            if (abs($diff) >= 0.01) {
+                qv("SELECT wallet_post(?::uuid, ?::currency_code, ?::numeric, 'adjust', 'system', 'release_reset', ?, NULL, NULL, NULL, ?)",
+                    [$id, $c, (string) $diff, $reason, "$tag:$id:$c"]);
+            }
+        }
+        q("UPDATE game_sessions SET status = 'CANCELLED', finished_at = coalesce(finished_at, now()) WHERE user_id = ? AND status = 'OPEN'", [$id]);
+        q('DELETE FROM user_achievements WHERE user_id = ?', [$id]);
+        $meta = ['inventory' => $meta['inventory'], 'redeemed' => $meta['redeemed']];
+        save_docs($id, empty_progress(), $meta + ['totalWagered' => 0, 'totalWon' => 0, 'rounds' => 0, 'wins' => 0, 'biggestWin' => null, 'lastBonusAt' => null], $profile);
+        notify($id, 'releaseReset', ['scope' => $scope]);
+    }
+    $admin = $me ?? ['id' => null, 'role' => 'super_admin'];
+    q('INSERT INTO admin_audit_log (code, admin_id, admin_role, action, target_label, entity_id, next, reason, ip, user_agent)
+       VALUES (?, ?, ?::user_role, ?, ?, ?, ?::jsonb, ?, ?::inet, ?)',
+        ['RELEASE_RESET', $admin['id'], $admin['role'], 'release.reset', $scope === 'global' ? 'Semua akun' : 'Akun tester', $tag,
+         jenc(['scope' => $scope, 'accounts' => count($ids)]), $reason, $me ? client_ip() : null, $me ? substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 300) : 'release-reset']);
+    return ['ok' => true, 'scope' => $scope, 'accounts' => count($ids)];
 }
 
 /** Debit/kredit admin langsung lewat ledger (dipakai reset saldo). */

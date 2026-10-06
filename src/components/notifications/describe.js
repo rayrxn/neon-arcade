@@ -28,6 +28,7 @@ const META = {
   reportUpdate: { icon: Flag, tone: 'text-neon-gold bg-neon-gold/10' },
   ticket: { icon: LifeBuoy, tone: 'text-neon-purple bg-neon-purple/10' },
   reward: { icon: Gift, tone: 'text-neon-gold bg-neon-gold/10' },
+  releaseReset: { icon: Sparkles, tone: 'text-neon-cyan bg-neon-cyan/10' },
 }
 
 /** Judul & isi notifikasi dalam bahasa aktif. */

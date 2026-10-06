@@ -266,7 +266,24 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   const tk = await LB('src/services/support.js').createTicket({ category: 'bug', subject: 'Tombol macet', message: 'tombol main tidak merespons' })
   assert('laporan & tiket dibuat lewat server', !!tk.id)
 
-  // Admin (A = akun pertama = super admin)
+  // Akun staf awal (migrasi 003): login username + password "admin" → wajib ganti password.
+  const jarO = {}
+  const ctxO = makeContext(jarO)
+  const LO = (p) => ctxO.__load(p)
+  const authO = LO('src/store/useAuthStore.js').useAuthStore
+  assert('A pendaftar biasa (staf awal sudah ada)', auth.getState().users[email].role === 'user')
+  await authO.getState().login({ email: 'neon_owner', password: 'admin' })
+  const owner = Object.values(authO.getState().users).find((u) => u.username === 'neon_owner')
+  assert('login Owner pakai username', owner?.role === 'super_admin' && owner.mustChangePassword === true)
+  assert('Owner belum ganti password → panel admin ditolak', (await code(() => LO('src/services/server.js').api('admin/snapshot'))) === 'errors.mustChangePassword')
+  await authO.getState().changePassword({ current: 'admin', next: 'OwnerBaru123' })
+  assert('setelah ganti password → flag hilang', Object.values(authO.getState().users).find((u) => u.username === 'neon_owner').mustChangePassword === false)
+  await LO('src/services/server.js').adminSync()
+  await LO('src/services/admin.js').setRole(me(), 'super_admin', 'jadikan owner kedua')
+  assert('Owner mengangkat A jadi Owner', true)
+  await S.hydrate()
+
+  // Admin (A sekarang Owner)
   const ADM = L('src/services/admin.js')
   assert('A super admin', auth.getState().users[email].role === 'super_admin')
   await S.adminSync()

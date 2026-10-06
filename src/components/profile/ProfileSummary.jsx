@@ -11,6 +11,7 @@ import { equippedOf } from '@/services/cosmetics'
 import { currentSeason, seasonTier, seasonXpOf } from '@/services/seasons'
 import { formatCoins, formatDate, timeAgo } from '@/utils/format'
 import { pick, useT } from '@/i18n'
+import RoleTag from '@/components/ui/RoleTag'
 
 /** Header profil: banner, avatar + bingkai, nama, title, badge, level, tanggal gabung. */
 export function ProfileHero({ user, progress, actions, online }) {
@@ -26,7 +27,7 @@ export function ProfileHero({ user, progress, actions, online }) {
           <Avatar user={user} size="xl" online={online} className="rounded-2xl ring-4 ring-ink-900" />
           <div className="min-w-0 pb-1">
             <h1 className="flex items-center gap-2 truncate font-display text-xl font-bold text-white sm:text-2xl">
-              {user.displayName} {user.isDemo && <DemoTag />}
+              {user.displayName} <RoleTag role={user.role} /> {user.isDemo && <DemoTag />}
               {user.isTest && <span className="rounded bg-neon-gold/15 px-1.5 py-0.5 text-[10px] font-extrabold text-neon-gold">TEST</span>}
             </h1>
             <p className="truncate text-sm text-slate-400">

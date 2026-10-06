@@ -7,7 +7,6 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import Avatar from '@/components/ui/Avatar'
-import { Badge, ROLE_TONE } from '@/components/admin/AdminKit'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { can } from '@/config/roles'
 import { SERVER_MODE } from '@/config/runtime'
@@ -15,6 +14,7 @@ import { ErrorBoundary } from '@/components/ui/PageKit'
 import { adminSync } from '@/services/server'
 import { logAdminLogin } from '@/services/admin'
 import { useT } from '@/i18n'
+import RoleTag from '@/components/ui/RoleTag'
 
 /** Menu admin + permission yang dibutuhkan. Menu yang tidak boleh diakses tidak ditampilkan. */
 export const ADMIN_SECTIONS = [
@@ -119,9 +119,9 @@ export default function AdminLayout() {
       <div className="lg:pl-60">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b hairline bg-ink-950/90 px-4 backdrop-blur sm:px-6" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
           <button onClick={() => setOpen(true)} className="grid h-9 w-9 place-items-center rounded-lg text-slate-300 lg:hidden" aria-label={t('nav.openMenu')}><Menu className="h-5 w-5" /></button>
-          <span className="text-xs text-slate-500">{t('admin.localMode')}</span>
+          <span className="text-xs text-slate-500">{t(SERVER_MODE ? 'admin.serverMode' : 'admin.localMode')}</span>
           <div className="ml-auto flex items-center gap-2.5">
-            <Badge tone={ROLE_TONE[user?.role]}>{t(`admin.roles.${user?.role ?? 'user'}`)}</Badge>
+            <RoleTag role={user?.role} />
             <span className="hidden text-sm font-semibold text-slate-300 sm:block">{user?.username}</span>
             <Avatar user={user} size="sm" />
           </div>

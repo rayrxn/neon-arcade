@@ -233,3 +233,102 @@
     animation: none;
   }
 }
+
+/* ───────── Tag role staf (Owner, Admin, Moderator, Helper, Tester) ───────── */
+.role-tag {
+  --rt-a: #94a3b8;
+  --rt-b: #ffffff;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 3px;
+  height: 17px;
+  padding: 0 6px 0 5px;
+  border-radius: 6px;
+  overflow: hidden;
+  vertical-align: middle;
+  white-space: nowrap;
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--rt-a);
+  background: color-mix(in srgb, var(--rt-a) 13%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--rt-a) 40%, transparent),
+    0 0 12px -3px color-mix(in srgb, var(--rt-a) 55%, transparent);
+}
+.role-tag__icon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+.role-tag__text {
+  background: linear-gradient(100deg, var(--rt-a) 0%, var(--rt-a) 38%, var(--rt-b) 50%, var(--rt-a) 62%, var(--rt-a) 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: role-shimmer 2.6s linear infinite;
+}
+.role-tag::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--rt-b) 22%, transparent) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: role-sweep 2.6s ease-in-out infinite;
+}
+@keyframes role-shimmer {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -130% 0;
+  }
+}
+@keyframes role-sweep {
+  0% {
+    transform: translateX(-130%);
+  }
+  55%,
+  100% {
+    transform: translateX(130%);
+  }
+}
+.role-tag--super_admin {
+  --rt-a: #2ef59a;
+  --rt-b: #e9fff4;
+}
+.role-tag--admin {
+  --rt-a: #ff4d6a;
+  --rt-b: #ffe3e8;
+}
+.role-tag--moderator {
+  --rt-a: #ffd23a;
+  --rt-b: #fff8dc;
+}
+.role-tag--support {
+  --rt-a: #3ea8ff;
+  --rt-b: #e3f2ff;
+}
+.role-tag--developer {
+  --rt-a: #ff8b2c;
+  --rt-b: #ffeadb;
+}
+:root[data-appearance='light'] .role-tag--super_admin { --rt-a: #059a5c; --rt-b: #7dffc4; }
+:root[data-appearance='light'] .role-tag--admin { --rt-a: #d7193a; --rt-b: #ff9aab; }
+:root[data-appearance='light'] .role-tag--moderator { --rt-a: #a57700; --rt-b: #ffd84d; }
+:root[data-appearance='light'] .role-tag--support { --rt-a: #0b6fd0; --rt-b: #8fcbff; }
+:root[data-appearance='light'] .role-tag--developer { --rt-a: #c75a00; --rt-b: #ffb77a; }
+@media (prefers-reduced-motion: reduce) {
+  .role-tag__text,
+  .role-tag::after {
+    animation: none;
+  }
+}

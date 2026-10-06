@@ -59,7 +59,7 @@ function public_user_view(array $u, array $profile): array
     $v['email'] = '';
     $v['key'] = 'u:' . $u['id'];
     $v['lastSeenAt'] = iso_to_ms($u['last_seen_at'] ?? null);
-    unset($v['testControl']);
+    unset($v['testControl'], $v['mustChangePassword']);
     return $v;
 }
 

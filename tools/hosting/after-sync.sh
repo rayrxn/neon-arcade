@@ -13,6 +13,10 @@ if [ "$(q -tAc "select to_regclass('public.neon_migrations') is not null")" != "
   echo "$(date '+%F %T') pasang database awal…"
   q -1 -f "$SRC/compat.sql" -f "$SRC/schema.sql" -f "$SRC/functions.sql" \
     -c "CREATE TABLE neon_migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+  # Database baru: reset rilis lama tidak perlu dijalankan.
+  for f in "$SRC"/resets/*.testers "$SRC"/resets/*.global; do
+    [ -e "$f" ] && q -c "INSERT INTO neon_migrations(name) VALUES ('reset:$(basename "$f")') ON CONFLICT DO NOTHING"
+  done
   echo "$(date '+%F %T') database awal terpasang"
 fi
 
@@ -22,6 +26,19 @@ for f in "$SRC"/migrations/*.sql; do
   if [ "$(q -tAc "select count(*) from neon_migrations where name = '$n'")" = "0" ]; then
     q -1 -f "$f" -c "INSERT INTO neon_migrations(name) VALUES ('$n')"
     echo "$(date '+%F %T') migrasi $n selesai"
+  fi
+done
+# Reset rilis (db/resets/<tanggal>-<label>.<testers|global>), masing-masing sekali.
+PHP=$(command -v php || ls /opt/alt/php81/usr/bin/php /usr/local/bin/php 2>/dev/null | head -1 || true)
+for f in "$SRC"/resets/*.testers "$SRC"/resets/*.global; do
+  [ -e "$f" ] || continue
+  n="reset:$(basename "$f")"
+  if [ "$(q -tAc "select count(*) from neon_migrations where name = '$n'")" = "0" ]; then
+    [ -n "$PHP" ] || { echo "$(date '+%F %T') php tidak ditemukan, reset $n dilewati"; break; }
+    scope="${f##*.}"
+    "$PHP" "$HOME/neon-src/tools/hosting/release-reset.php" "$scope" "$(head -c 300 "$f")"
+    q -c "INSERT INTO neon_migrations(name) VALUES ('$n')"
+    echo "$(date '+%F %T') $n selesai"
   fi
 done
 touch "$HOME/.neon-db-ready"

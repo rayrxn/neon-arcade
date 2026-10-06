@@ -153,7 +153,11 @@ export default function AuthForm() {
           </Collapsible>
 
           <div className="pb-4">
-            <Field id="auth-email" label={t('auth.email')} icon={Mail} type="email" inputMode="email" placeholder={t('auth.emailPlaceholder')} autoComplete="email" error={errorFor('email')} {...bind('email')} />
+            {isRegister ? (
+              <Field id="auth-email" label={t('auth.email')} icon={Mail} type="email" inputMode="email" placeholder={t('auth.emailPlaceholder')} autoComplete="email" error={errorFor('email')} {...bind('email')} />
+            ) : (
+              <Field id="auth-email" label={t('auth.emailOrUsername')} icon={Mail} type="text" autoCapitalize="none" spellCheck={false} placeholder={t('auth.emailOrUsernamePlaceholder')} autoComplete="username" error={errorFor('email')} {...bind('email')} />
+            )}
           </div>
 
           <div className="pb-4">

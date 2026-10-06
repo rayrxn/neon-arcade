@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FlaskConical, MicOff, Plus, Trash2 } from 'lucide-react'
+import { FlaskConical, MicOff, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import ReasonDialog from '@/components/admin/ReasonDialog'
@@ -14,6 +14,7 @@ import { ACHIEVEMENTS, DAILY_QUESTS, DAILY_REWARDS, WEEKLY_QUESTS } from '@/conf
 import { ITEMS } from '@/config/economy'
 import { PERMISSIONS, ROLES, ROLE_PERMISSIONS, can } from '@/config/roles'
 import * as admin from '@/services/admin'
+import { SERVER_MODE } from '@/config/runtime'
 import { formatCoins, formatDateTime, timeAgo } from '@/utils/format'
 import { pick, useT } from '@/i18n'
 
@@ -393,11 +394,43 @@ export function TestModeAdmin() {
 
 // ───────────────────────────── Settings (RBAC matrix) ─────────────────────────────
 
+function ReleaseResetCard({ me }) {
+  const { t } = useT()
+  const [scope, setScope] = useState(null)
+  const [phrase, setPhrase] = useState('')
+  const expected = scope === 'global' ? 'RESET GLOBAL' : 'RESET TESTER'
+  const open = (s) => { setPhrase(''); setScope(s) }
+  return (
+    <Card title={t('admin.release.title')} bodyClassName="p-4">
+      <p className="text-sm text-slate-400">{t('admin.release.body')}</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {['testers', 'global'].map((s) => (
+          <div key={s} className="rounded-xl border hairline p-3.5">
+            <p className="flex items-center gap-2 text-sm font-bold text-white"><RotateCcw className="h-4 w-4 text-slate-400" /> {t(`admin.release.${s}.title`)}</p>
+            <p className="mt-1 text-xs text-slate-500">{t(`admin.release.${s}.body`)}</p>
+            <Button className="mt-3" size="sm" variant={s === 'global' ? 'danger' : 'ghost'} onClick={() => open(s)}>{t(`admin.release.${s}.button`)}</Button>
+          </div>
+        ))}
+      </div>
+      {scope && (
+        <ReasonDialog open onClose={() => setScope(null)} adminName={me.username} title={t(`admin.release.${scope}.title`)} description={t('admin.release.keeps')}
+          confirmLabel={t(`admin.release.${scope}.button`)}
+          onConfirm={(r) => admin.releaseReset(scope, phrase.trim(), r)}>
+          <FormField label={t('admin.release.typePhrase', { phrase: expected })}>
+            <input id="release-phrase" value={phrase} onChange={(e) => setPhrase(e.target.value)} autoComplete="off" spellCheck={false} placeholder={expected} className={inputCls} />
+          </FormField>
+        </ReasonDialog>
+      )}
+    </Card>
+  )
+}
+
 export function SettingsAdmin() {
   const { t } = useT()
   const me = useCurrentUser()
   return (
     <AdminPage title={t('admin.nav.settings')} description={t('admin.settingsDesc')}>
+      {can(me.role, 'release.reset') && <ReleaseResetCard me={me} />}
       <Card title={t('admin.rbac')} bodyClassName="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-xs">
           <thead><tr className="border-b hairline text-slate-500"><th className="px-4 py-2.5 font-semibold">Permission</th>{ROLES.filter((r) => r !== 'user').map((r) => <th key={r} className="px-3 py-2.5 text-center font-semibold">{t(`admin.roles.${r}`)}</th>)}</tr></thead>
@@ -413,7 +446,7 @@ export function SettingsAdmin() {
       </Card>
       <Card title={t('admin.yourAccess')} bodyClassName="p-4 text-sm text-slate-400">
         <p>{t('admin.yourRole', { role: t(`admin.roles.${me.role}`) })}</p>
-        <p className="mt-2 text-xs">{t('admin.backendNote')}</p>
+        <p className="mt-2 text-xs">{t(SERVER_MODE ? 'admin.backendNoteServer' : 'admin.backendNote')}</p>
       </Card>
     </AdminPage>
   )

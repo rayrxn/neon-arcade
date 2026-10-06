@@ -88,6 +88,7 @@ function user_view(array $u, array $profile = []): array
         'ban' => $u['status'] === 'banned' ? ['until' => $banUntil, 'reason' => $u['ban_reason']] : null,
         'walletFrozen' => (bool) $u['wallet_frozen'],
         'isTest' => (bool) $u['is_test'],
+        'mustChangePassword' => !empty($u['must_change_password']) && $u['must_change_password'] !== 'f',
         'testControl' => $u['test_control'],
         'mutedUntil' => ($u['muted_until'] ?? null) === 'infinity' ? 8.64e15 : iso_to_ms($u['muted_until'] ?? null),
         'loginHistory' => [],
