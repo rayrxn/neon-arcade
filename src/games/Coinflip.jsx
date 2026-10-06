@@ -35,8 +35,8 @@ export default function Coinflip({ game }) {
   const [rotation, setRotation] = useState(0)
   const [landed, setLanded] = useState(true)
 
-  const go = () => {
-    const res = run(() => playCoinflip({ bet, side }))
+  const go = async () => {
+    const res = await run(() => playCoinflip({ bet, side }))
     if (!res) return
     play('flip')
     setLanded(false)

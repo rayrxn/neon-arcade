@@ -21,8 +21,8 @@ export default function Dice({ game }) {
   const roll = outcome?.roll
   const win = outcome?.session.result === 'win'
 
-  const go = () => {
-    const res = run(() => playDice({ bet, target, over }))
+  const go = async () => {
+    const res = await run(() => playDice({ bet, target, over }))
     if (!res) return
     setOutcome(res)
     playOutcome(res)

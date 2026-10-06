@@ -10,6 +10,7 @@ import Avatar from '@/components/ui/Avatar'
 import { Badge, ROLE_TONE } from '@/components/admin/AdminKit'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { can } from '@/config/roles'
+import { SERVER_MODE } from '@/config/runtime'
 import { logAdminLogin } from '@/services/admin'
 import { useT } from '@/i18n'
 
@@ -119,6 +120,9 @@ export default function AdminLayout() {
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+          {SERVER_MODE && (
+            <p className="mb-4 rounded-xl border border-neon-gold/30 bg-neon-gold/10 px-4 py-3 text-xs leading-relaxed text-neon-gold">{t('server.adminBanner')}</p>
+          )}
           <Outlet />
         </main>
       </div>

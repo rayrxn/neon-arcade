@@ -16,6 +16,8 @@ import { emit } from './events'
 import { flag } from './anticheat'
 import { deferUntilReveal } from './reveal'
 import { currentSeason, seasonTier } from './seasons'
+import { SERVER_MODE } from '@/config/runtime'
+import { act, applyOut } from './server'
 
 /**
  * Progres "server-side": XP, level, milestone, quest, daily reward, achievement, season.
@@ -254,6 +256,15 @@ export function recordGame(userId, session) {
 
 /** Metrik non-game (chat, profil) → quest. */
 export function trackMetric(userId, metric, value = 1) {
+  if (SERVER_MODE) {
+    // Server hanya menerima metrik yang belum ia hitung sendiri (chat, profil).
+    if (metric !== 'chat' && metric !== 'profile') return newOut()
+    act('metric', { metric }).then(({ result, apply }) => {
+      apply()
+      applyOut(userId, result)
+    }).catch(() => {})
+    return newOut()
+  }
   return atomic('progress.metric', () => {
     const out = newOut()
     update(userId, (p) => {
@@ -269,6 +280,7 @@ export function trackMetric(userId, metric, value = 1) {
 // ───────────────────────────── Login & daily ─────────────────────────────
 
 export function markLogin(userId) {
+  if (SERVER_MODE) return // dicatat server saat /api/me & login
   const out = newOut()
   update(userId, (p) => {
     rollPeriods(p)
@@ -304,6 +316,15 @@ export function dailyState(p, now = Date.now()) {
 }
 
 export async function claimDailyReward(userId) {
+  if (SERVER_MODE) {
+    const { result, apply } = await act('daily/claim')
+    apply()
+    notify(userId, 'daily', { day: result.day, rewards: result.rewards })
+    emit('DAILY_CLAIMED', { userId, day: result.day })
+    play('daily')
+    applyOut(userId, result)
+    return result
+  }
   await new Promise((r) => setTimeout(r, 300))
   return atomic('daily.claim', () => {
     const p0 = getProgress(userId)
@@ -343,6 +364,13 @@ export async function claimDailyReward(userId) {
 // ───────────────────────────── Quest ─────────────────────────────
 
 export async function claimQuest(userId, scope, questId) {
+  if (SERVER_MODE) {
+    const { result, apply } = await act('quest/claim', { scope, id: questId })
+    apply()
+    play('reward')
+    applyOut(userId, result)
+    return result
+  }
   await new Promise((r) => setTimeout(r, 250))
   return atomic('quest.claim', () => {
     const def = (scope === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS).find((q) => q.id === questId)
@@ -384,6 +412,7 @@ export function questView(p, scope, now = Date.now()) {
 
 /** Grant XP oleh admin / test mode (tercatat sebagai sumber khusus). */
 export function grantXp(userId, amount, source = 'admin') {
+  if (SERVER_MODE) throw new AppError('errors.serverSoon')
   return atomic('xp.grant', () => {
     const out = newOut()
     update(userId, (p) => {

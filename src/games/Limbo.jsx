@@ -37,8 +37,8 @@ export default function Limbo({ game }) {
     if (settled) playOutcome(outcome)
   }, [settled, outcome])
 
-  const go = () => {
-    const res = run(() => playLimbo({ bet, target: t2 }))
+  const go = async () => {
+    const res = await run(() => playLimbo({ bet, target: t2 }))
     if (res) setOutcome(res)
   }
 

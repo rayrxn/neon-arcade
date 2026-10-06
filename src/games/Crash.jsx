@@ -263,8 +263,8 @@ export default function Crash({ game }) {
     else playOutcome(res)
   }
 
-  const start = () => {
-    const res = run(() => crashStart({ bet, autoCashout: auto ? Number(auto) : null }))
+  const start = async () => {
+    const res = await run(() => crashStart({ bet, autoCashout: auto ? Number(auto) : null }))
     if (!res) return
     setEnd(null)
     setOutcome(null)
@@ -273,9 +273,9 @@ export default function Crash({ game }) {
     setRound(res)
   }
 
-  const cashout = () => {
+  const cashout = async () => {
     if (!round) return
-    const res = run(() => crashCashout(round.id))
+    const res = await run(() => crashCashout(round.id))
     if (res) {
       play('reward')
       settle(res)

@@ -56,9 +56,9 @@ export default function Roulette({ game }) {
     setBets((b) => ({ ...b, [key]: { type, value, amount: (b[key]?.amount ?? 0) + chip } }))
   }
 
-  const spin = () => {
+  const spin = async () => {
     const list = Object.values(bets)
-    const res = run(() => playRoulette({ bets: list }))
+    const res = await run(() => playRoulette({ bets: list }))
     if (!res) return
     const idx = WHEEL.indexOf(res.number)
     setSpinning(true)

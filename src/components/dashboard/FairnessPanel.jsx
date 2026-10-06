@@ -4,6 +4,8 @@ import { Check, Copy, KeyRound, RefreshCw, ShieldCheck, ShieldX } from 'lucide-r
 import Button from '@/components/ui/Button'
 import { useFairnessStore } from '@/store/useFairnessStore'
 import { sha256Hex } from '@/utils/rng'
+import { toast } from '@/store/useUiStore'
+import { errorKey } from '@/utils/errors'
 import { useT } from '@/i18n'
 
 function CopyButton({ value }) {
@@ -73,7 +75,7 @@ export default function FairnessPanel() {
               <KeyRound className="h-3.5 w-3.5 shrink-0 text-slate-500" />
               <input id="client-seed" value={draft} maxLength={64} onChange={(e) => setDraft(e.target.value)} className="h-9 min-w-0 flex-1 bg-transparent font-mono text-base text-slate-200 outline-none sm:text-xs" />
             </div>
-            <Button size="sm" variant="ghost" onClick={() => rotateSeeds(draft)} disabled={!draft.trim()}>
+            <Button size="sm" variant="ghost" onClick={() => Promise.resolve().then(() => rotateSeeds(draft)).catch((err) => toast({ tone: 'error', title: t(errorKey(err), err?.vars) }))} disabled={!draft.trim()}>
               <RefreshCw className="h-3.5 w-3.5" /> {t('fair.rotate')}
             </Button>
           </div>

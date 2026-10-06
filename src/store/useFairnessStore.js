@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { generateClientSeed, generateFloats, generateServerSeed, sha256Hex } from '@/utils/rng'
+import { SERVER_MODE } from '@/config/runtime'
+import { api, applyState } from '@/services/server'
+import { AppError } from '@/utils/errors'
 
 /**
  * Sesi provably fair: menyimpan seed aktif & nonce, dan menjadi SATU-SATUNYA pintu
@@ -29,6 +32,7 @@ export const useFairnessStore = create(
 
       /** Ambil `count` float untuk satu taruhan, lalu naikkan nonce. */
       roll: (count = 1) => {
+        if (SERVER_MODE) throw new AppError('errors.serverSoon') // angka acak hanya dibuat server
         const { serverSeed, serverSeedHash, clientSeed, nonce } = get()
         const floats = generateFloats({ serverSeed, clientSeed, nonce, count })
         set({ nonce: nonce + 1 })
@@ -37,6 +41,10 @@ export const useFairnessStore = create(
 
       /** Buka server seed lama, buat yang baru, reset nonce. Opsional: ganti client seed. */
       rotateSeeds: (nextClientSeed) => {
+        if (SERVER_MODE) {
+          // Server membuka seed lama & membuat yang baru; hash/nonce diambil dari jawaban server.
+          return api('fairness/rotate', { clientSeed: sanitizeClientSeed(nextClientSeed) }).then((fairness) => applyState({ fairness }))
+        }
         const { serverSeed, serverSeedHash, clientSeed, nonce } = get()
         set({
           previous: { serverSeed, serverSeedHash, clientSeed, rounds: nonce, revealedAt: Date.now() },

@@ -124,7 +124,7 @@ export default function CaseOpening({ game }) {
   }
 
   const open = async () => {
-    const res = run(() => openCase({ caseId }))
+    const res = await run(() => openCase({ caseId }))
     if (!res) return
     const items = decoyItems(STRIP_LEN, def.price)
     items[WIN_INDEX] = res.item

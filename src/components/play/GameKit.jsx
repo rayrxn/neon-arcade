@@ -24,16 +24,34 @@ export function useRunner() {
   const [busy, setBusy] = useState(false)
   const run = useCallback(
     (fn) => {
-      try {
-        setBusy(true)
-        return fn()
-      } catch (err) {
+      const onError = (err) => {
         play('error')
         toast({ tone: 'error', title: t(errorKey(err), err?.vars) })
         return null
-      } finally {
-        setBusy(false)
       }
+      setBusy(true)
+      let res
+      try {
+        res = fn()
+      } catch (err) {
+        setBusy(false)
+        return onError(err)
+      }
+      // Mode server: aksi game berupa promise (menunggu jawaban API).
+      if (res && typeof res.then === 'function') {
+        return res.then(
+          (value) => {
+            setBusy(false)
+            return value
+          },
+          (err) => {
+            setBusy(false)
+            return onError(err)
+          },
+        )
+      }
+      setBusy(false)
+      return res
     },
     [t],
   )

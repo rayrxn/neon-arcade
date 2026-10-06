@@ -6,6 +6,8 @@ import { emit } from '@/services/events'
 import { AppError } from '@/utils/errors'
 import { USERNAME_RE } from '@/utils/validation'
 import { useWalletStore } from './useWalletStore'
+import { SERVER_MODE } from '@/config/runtime'
+import { api, applyPayload, clearSession } from '@/services/server'
 
 /**
  * Mock authentication + profil user.
@@ -39,6 +41,11 @@ export const useAuthStore = create(
       attempts: {}, // { [email]: [ts gagal] } — rate limit login
 
       register: async ({ username, email, password }) => {
+        if (SERVER_MODE) {
+          const user = applyPayload(await api('auth/register', { username: username.trim(), email: normalizeEmail(email), password }))
+          emit('USER_REGISTERED', { userId: user.id })
+          return user
+        }
         await wait(NETWORK_LATENCY)
         const key = normalizeEmail(email)
         const name = username.trim()
@@ -80,6 +87,11 @@ export const useAuthStore = create(
       },
 
       login: async ({ email, password }) => {
+        if (SERVER_MODE) {
+          const user = applyPayload(await api('auth/login', { email: normalizeEmail(email), password }))
+          emit('USER_LOGIN', { userId: user.id })
+          return user
+        }
         await wait(NETWORK_LATENCY)
         const key = normalizeEmail(email)
         const user = get().users[key]
@@ -118,6 +130,13 @@ export const useAuthStore = create(
       },
 
       logout: (reason = 'manual') => {
+        if (SERVER_MODE) {
+          const userId = get().session?.userId
+          clearSession()
+          if (reason !== 'expired' && reason !== 'blocked') api('auth/logout', {}).catch(() => {})
+          if (userId) emit(reason === 'expired' ? 'SESSION_EXPIRED' : 'USER_LOGOUT', { userId, reason })
+          return
+        }
         const userId = get().session?.userId
         useWalletStore.getState().deactivate()
         set({ session: null })
@@ -126,11 +145,20 @@ export const useAuthStore = create(
 
       /** Perpanjang sesi yang masih aktif (dipanggil berkala selama tab terbuka). */
       touchSession: () => {
+        if (SERVER_MODE) return // sesi diperpanjang server (cookie)
         const s = get().session
         if (s && s.expiresAt > Date.now()) set({ session: { ...s, expiresAt: Date.now() + SESSION_TTL } })
       },
 
       updateProfile: async (patch) => {
+        if (SERVER_MODE) {
+          const body = {}
+          if (patch.displayName !== undefined) body.displayName = patch.displayName.trim()
+          if (patch.username !== undefined) body.username = patch.username.trim()
+          if (patch.avatar !== undefined) body.avatar = patch.avatar
+          if (patch.frame !== undefined) body.frame = patch.frame
+          return applyPayload(await api('profile', body))
+        }
         await wait(350)
         const { session, users } = get()
         const user = session && users[session.email]
@@ -159,6 +187,10 @@ export const useAuthStore = create(
       },
 
       changePassword: async ({ current, next }) => {
+        if (SERVER_MODE) {
+          await api('auth/password', { current, next })
+          return
+        }
         await wait(NETWORK_LATENCY)
         const { session, users } = get()
         const user = session && users[session.email]

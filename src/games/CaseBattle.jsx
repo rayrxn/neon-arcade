@@ -50,8 +50,8 @@ export default function CaseBattle({ game }) {
     if (finished) playOutcome(battle)
   }, [finished, battle])
 
-  const start = () => {
-    const res = run(() => playCaseBattle({ caseId, rounds }))
+  const start = async () => {
+    const res = await run(() => playCaseBattle({ caseId, rounds }))
     if (!res) return
     setShown(0)
     setBattle(res)

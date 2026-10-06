@@ -29,24 +29,25 @@ export default function Mines({ game }) {
     if (res.hit == null) playOutcome(res)
   }
 
-  const start = () => {
-    const res = run(() => minesStart({ bet, mines }))
+  const start = async () => {
+    const res = await run(() => minesStart({ bet, mines }))
     if (!res) return
     setBoard(null)
     setOutcome(null)
     setRound(res)
   }
 
-  const reveal = (i) => {
+  const reveal = async (i) => {
     if (!round || round.revealed.includes(i)) return
-    const res = run(() => minesReveal(round.id, i))
+    const res = await run(() => minesReveal(round.id, i))
     if (!res) return
     if (res.done) finishRound(res)
-    else setRound({ ...round, revealed: res.revealed })
+    else setRound((r) => (r && r.id === round.id ? { ...r, revealed: res.revealed } : r))
   }
 
-  const cashout = () => {
-    const res = run(() => minesCashout(round.id))
+  const cashout = async () => {
+    if (!round) return
+    const res = await run(() => minesCashout(round.id))
     if (res?.done) finishRound(res)
   }
 

@@ -3,6 +3,7 @@ import { FIELD, useWalletStore } from '@/store/useWalletStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { AG_HOLD_MS, TRANSFER_LIMITS } from '@/config/economy'
 import { AppError } from '@/utils/errors'
+import { SERVER_MODE } from '@/config/runtime'
 import { dayKey } from '@/utils/format'
 
 /**
@@ -41,6 +42,7 @@ export function validateTransfer({ fromUserId, toUserId, currency, amount }) {
 }
 
 export async function sendTransfer({ toUserId, currency, amount, note = '' }) {
+  if (SERVER_MODE) throw new AppError('errors.serverSoon')
   await wait(750)
   const me = getCurrentUser()
   if (!me) throw new AppError('errors.sessionExpired')
@@ -81,6 +83,7 @@ export async function sendTransfer({ toUserId, currency, amount, note = '' }) {
 
 /** Selesaikan transfer AG yang masa tahannya sudah lewat. Dipanggil berkala oleh PlatformRuntime. */
 export function settlePendingTransfers(now = Date.now()) {
+  if (SERVER_MODE) return 0
   const store = useWalletStore.getState()
   const notify = useNotificationStore.getState().notify
   let settled = 0

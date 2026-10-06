@@ -30,6 +30,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import RequireAuth from '@/components/routing/RequireAuth'
 import ThemeController from '@/components/runtime/ThemeController'
 import PlatformRuntime from '@/components/runtime/PlatformRuntime'
+import ServerGate from '@/components/runtime/ServerGate'
 import Toaster from '@/components/ui/Toaster'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { can } from '@/config/roles'
@@ -45,6 +46,7 @@ export default function App() {
     <>
       <div className="arcade-bg" aria-hidden />
       <ThemeController />
+      <ServerGate>
       <PlatformRuntime />
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
@@ -104,6 +106,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ServerGate>
       <Toaster />
     </>
   )

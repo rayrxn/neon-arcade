@@ -60,11 +60,11 @@ export default function Blackjack({ game }) {
     }
   }
 
-  const deal = () => {
+  const deal = async () => {
     setOutcome(null)
-    apply(run(() => blackjackStart({ bet })))
+    apply(await run(() => blackjackStart({ bet })))
   }
-  const act = (a) => apply(run(() => blackjackAction(hand.id, a)))
+  const act = async (a) => apply(await run(() => blackjackAction(hand.id, a)))
 
   const controls = (
     <>

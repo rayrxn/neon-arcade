@@ -9,6 +9,8 @@ import id5 from './phase5.id'
 import en5 from './phase5.en'
 import id6 from './phase6.id'
 import en6 from './phase6.en'
+import id7 from './phase7.id'
+import en7 from './phase7.en'
 
 const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v)
 function deepMerge(base, extra) {
@@ -16,8 +18,8 @@ function deepMerge(base, extra) {
   for (const [k, v] of Object.entries(extra)) out[k] = isObj(v) && isObj(base[k]) ? deepMerge(base[k], v) : v
   return out
 }
-const id = deepMerge(deepMerge(deepMerge(idBase, id4), id5), id6)
-const en = deepMerge(deepMerge(deepMerge(enBase, en4), en5), en6)
+const id = deepMerge(deepMerge(deepMerge(deepMerge(idBase, id4), id5), id6), id7)
+const en = deepMerge(deepMerge(deepMerge(deepMerge(enBase, en4), en5), en6), en7)
 
 /**
  * i18n ringan tanpa library.

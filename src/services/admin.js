@@ -8,6 +8,7 @@ import { ROLE_RANK, ROLES, can } from '@/config/roles'
 import { ITEMS, REDEEM_CODES } from '@/config/economy'
 import { GAMES } from '@/config/games'
 import { AppError } from '@/utils/errors'
+import { SERVER_MODE } from '@/config/runtime'
 import { round2 } from '@/utils/format'
 import { randomHex } from '@/utils/rng'
 import { play } from './sound'
@@ -40,6 +41,8 @@ export function requirePerm(permission) {
 }
 
 function requireReason(reason) {
+  // Tahap 1 server: aksi admin belum dipindah ke API → jangan ubah data di browser saja.
+  if (SERVER_MODE) throw new AppError('errors.serverSoon')
   if (!reason || String(reason).trim().length < 5) throw new AppError('admin.errors.reason')
   return String(reason).trim().slice(0, 300)
 }

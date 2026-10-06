@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { round2 } from '@/utils/format'
 import { randomHex } from '@/utils/rng'
 import { heldAmount, useRevealStore } from '@/services/reveal'
+import { SERVER_MODE } from '@/config/runtime'
 
 /**
  * Ledger dompet per akun. Dua mata uang terpisah:
@@ -118,7 +119,8 @@ export const useWalletStore = create(
           set((s) => ({
             activeUserId: userId,
             lastDelta: null,
-            wallets: s.wallets[userId] ? s.wallets : { ...s.wallets, [userId]: createWallet() },
+            // Mode server: dompet hanya datang dari snapshot server, tidak pernah dibuat di browser.
+            wallets: s.wallets[userId] || SERVER_MODE ? s.wallets : { ...s.wallets, [userId]: createWallet() },
           })),
         deactivate: () => set({ activeUserId: null, lastDelta: null }),
 

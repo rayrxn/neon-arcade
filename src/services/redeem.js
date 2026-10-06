@@ -5,6 +5,7 @@ import { usePlatformStore } from '@/store/usePlatformStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { ITEMS, REDEEM_CODES } from '@/config/economy'
 import { AppError } from '@/utils/errors'
+import { SERVER_MODE } from '@/config/runtime'
 
 /**
  * Redeem code — "API" mode lokal.
@@ -39,6 +40,7 @@ function resolve(code, userId, now = Date.now()) {
 }
 
 export async function checkCode(raw) {
+  if (SERVER_MODE) throw new AppError('errors.serverSoon')
   await wait(450)
   const me = getCurrentUser()
   if (!me) throw new AppError('errors.sessionExpired')
@@ -46,6 +48,7 @@ export async function checkCode(raw) {
 }
 
 export async function redeemCode(raw) {
+  if (SERVER_MODE) throw new AppError('errors.serverSoon')
   await wait(650)
   const me = getCurrentUser()
   if (!me) throw new AppError('errors.sessionExpired')

@@ -19,6 +19,8 @@ import { holdReveal } from './reveal'
 import { maintenanceActive } from './system'
 import { isStaff } from '@/config/roles'
 import { play } from './sound'
+import { SERVER_MODE } from '@/config/runtime'
+import { act, applyOut, serverOpenRound, toLocalTime } from './server'
 
 /**
  * Game engine — "server" mode lokal.
@@ -205,9 +207,87 @@ function staleRound(userId, game, id) {
   throw new AppError('play.errors.settled')
 }
 
+// ───────────────────────────── Mode server ─────────────────────────────
+// Hasil dihitung API (port 1:1 dari aturan di file ini). Permintaan diproses berurutan;
+// permintaan identik yang masih berjalan (klik ganda) memakai promise yang sama.
+
+let serverQueue = Promise.resolve()
+const inflight = new Map()
+
+function remote(action, args = {}) {
+  const key = `${action}:${JSON.stringify(args)}`
+  if (inflight.has(key)) return inflight.get(key)
+  const task = serverQueue.catch(() => {}).then(async () => {
+    const { result, apply, userId } = await act(`game/${action}`, args)
+    const s = result?.session
+    // Saldo baru baru terlihat setelah animasi selesai (reveal gate) → tahan dulu, baru simpan state.
+    if (s && !result.duplicate && !result.stale && !s.isTest && s.payout > 0) holdReveal(s.id, 'AC', s.payout)
+    apply()
+    if (result?.summary) applyOut(userId, result.summary)
+    if (s && !result.stale && !s.isTest && s.result === 'win' && s.payout > 0) recordWin({ userId, amount: s.payout, game: s.game })
+    return result
+  })
+  serverQueue = task
+  inflight.set(key, task)
+  const clean = () => inflight.delete(key)
+  task.then(clean, clean)
+  return task
+}
+
+const remoteStart = (action, args) => {
+  play('start')
+  return remote(action, args)
+}
+
+// Crash: kurva digambar dari jam lokal (disinkronkan ke server), status ditanyakan ~3×/detik.
+const crashPoll = { id: null, startedAt: null, inflight: false, last: 0, result: null, cashing: false }
+
+function serverCrashTick(id) {
+  if (crashPoll.result && crashPoll.result.id === id) {
+    const res = crashPoll.result.res
+    crashPoll.result = null
+    if (res.crashed) play('explode')
+    return res
+  }
+  let startedAt = crashPoll.id === id ? crashPoll.startedAt : null
+  if (startedAt == null) {
+    const open = serverOpenRound('crash')
+    if (open?.id !== id) return { done: true }
+    Object.assign(crashPoll, { id, startedAt: toLocalTime(open.startedAt) })
+    startedAt = crashPoll.startedAt
+  }
+  if (!crashPoll.inflight && !crashPoll.cashing && Date.now() - crashPoll.last > 300) {
+    crashPoll.inflight = true
+    crashPoll.last = Date.now()
+    remote('crash-tick', { id })
+      .then((res) => {
+        if (res?.done && !crashPoll.cashing) crashPoll.result = { id, res }
+      })
+      .catch(() => {})
+      .finally(() => {
+        crashPoll.inflight = false
+      })
+  }
+  return { done: false, multiplier: Math.max(1, crashMultiplierAt(Date.now() - startedAt)) }
+}
+
+async function serverCrashCashout(id) {
+  crashPoll.cashing = true
+  try {
+    const elapsed = crashPoll.id === id && crashPoll.startedAt != null ? Date.now() - crashPoll.startedAt : undefined
+    const res = await remote('crash-cashout', { id, elapsed })
+    if (res?.crashed) play('explode')
+    return res
+  } finally {
+    crashPoll.cashing = false
+    if (crashPoll.result?.id === id) crashPoll.result = null
+  }
+}
+
 // ───────────────────────────── Game instan ─────────────────────────────
 
 export function playDice({ bet, target, over }) {
+  if (SERVER_MODE) return remoteStart('dice', { bet, target: Number(target), over: !!over })
   const t = Math.round(Number(target) * 100) / 100
   if (!(t >= 2 && t <= 98)) throw new AppError('play.errors.invalid')
   const chance = over ? 100 - t : t
@@ -220,6 +300,7 @@ export function playDice({ bet, target, over }) {
 }
 
 export function playLimbo({ bet, target }) {
+  if (SERVER_MODE) return remoteStart('limbo', { bet, target: Number(target) })
   const t = Math.floor(Number(target) * 100) / 100
   if (!(t >= 1.01 && t <= 1_000_000)) throw new AppError('play.errors.invalid')
   const round = begin('limbo', bet, 1)
@@ -229,6 +310,7 @@ export function playLimbo({ bet, target }) {
 }
 
 export function playCoinflip({ bet, side }) {
+  if (SERVER_MODE) return remoteStart('coinflip', { bet, side })
   if (side !== 'heads' && side !== 'tails') throw new AppError('play.errors.invalid')
   const round = begin('coinflip', bet, 1)
   const outcome = coinflipSide(forced(round, 1, (f) => coinflipSide(f[0]) === side)[0])
@@ -245,6 +327,7 @@ export const PLINKO_TABLES = {
 }
 
 export function playPlinko({ bet, risk }) {
+  if (SERVER_MODE) return remoteStart('plinko', { bet, risk })
   const table = PLINKO_TABLES[risk]
   if (!table) throw new AppError('play.errors.invalid')
   const round = begin('plinko', bet, PLINKO_ROWS)
@@ -270,6 +353,7 @@ function rouletteHit(bet, n) {
 }
 
 export function playRoulette({ bets }) {
+  if (SERVER_MODE) return remoteStart('roulette', { bets })
   if (!Array.isArray(bets) || bets.length === 0 || bets.length > 40) throw new AppError('play.errors.noBets')
   for (const b of bets) {
     if (!ROULETTE_PAYOUT[b.type] || !Number.isInteger(b.amount) || b.amount < 1) throw new AppError('play.errors.invalid')
@@ -323,6 +407,7 @@ export function decoyItems(count, price) {
 }
 
 export function openCase({ caseId }) {
+  if (SERVER_MODE) return remoteStart('case-open', { caseId })
   const def = CASES.find((c) => c.id === caseId)
   if (!def) throw new AppError('play.errors.invalid')
   const round = begin('case-opening', def.price, 2)
@@ -334,6 +419,7 @@ export function openCase({ caseId }) {
 
 /** Case Battle vs bot: masing-masing buka `rounds` case. Pemenang ambil semua; seri = dibagi. */
 export function playCaseBattle({ caseId, rounds }) {
+  if (SERVER_MODE) return remoteStart('case-battle', { caseId, rounds })
   const def = CASES.find((c) => c.id === caseId)
   if (!def || ![1, 2, 3].includes(rounds)) throw new AppError('play.errors.invalid')
   const round = begin('case-battle', def.price * rounds, rounds * 4)
@@ -369,6 +455,13 @@ export const crashMultiplierAt = (ms) => Math.floor(Math.exp((CRASH_K * ms) / 10
 const crashTimeOf = (point) => (Math.log(point) / CRASH_K) * 1000
 
 export function crashStart({ bet, autoCashout }) {
+  if (SERVER_MODE) {
+    return remoteStart('crash-start', { bet, autoCashout: autoCashout || null }).then((r) => {
+      const startedAt = toLocalTime(r.startedAt)
+      Object.assign(crashPoll, { id: r.id, startedAt, last: Date.now(), result: null })
+      return { ...r, startedAt }
+    })
+  }
   const auto = autoCashout ? Math.floor(Number(autoCashout) * 100) / 100 : null
   if (auto !== null && !(auto >= 1.01 && auto <= 10_000)) throw new AppError('play.errors.invalid')
   const round = begin('crash', bet, 1, { autoCashout: auto })
@@ -380,6 +473,7 @@ export function crashStart({ bet, autoCashout }) {
 
 /** Status ronde berdasarkan waktu "server". Menyelesaikan ronde saat crash / auto cash out. */
 export function crashTick(id) {
+  if (SERVER_MODE) return serverCrashTick(id)
   const user = me()
   const round = loadOpen(user.id, 'crash', id)
   if (!round) return { done: true }
@@ -398,6 +492,7 @@ export function crashTick(id) {
 }
 
 export function crashCashout(id) {
+  if (SERVER_MODE) return serverCrashCashout(id)
   const user = me()
   const round = loadOpen(user.id, 'crash', id)
   if (!round) return staleRound(user.id, 'crash', id)
@@ -417,6 +512,7 @@ export const minesMultiplier = (mines, picks) => {
 }
 
 export function minesStart({ bet, mines }) {
+  if (SERVER_MODE) return remoteStart('mines-start', { bet, mines })
   if (!(Number.isInteger(mines) && mines >= 1 && mines <= 24)) throw new AppError('play.errors.invalid')
   const round = begin('mines', bet, 24, { mines, revealed: [] })
   round.positions = minePositions(round.floats, mines)
@@ -425,6 +521,12 @@ export function minesStart({ bet, mines }) {
 }
 
 export function minesReveal(id, index) {
+  if (SERVER_MODE) {
+    return remote('mines-reveal', { id, index }).then((r) => {
+      play(r?.hit != null ? 'explode' : 'reveal')
+      return r
+    })
+  }
   const user = me()
   const round = loadOpen(user.id, 'mines', id)
   if (!round) return staleRound(user.id, 'mines', id)
@@ -456,6 +558,7 @@ export function minesReveal(id, index) {
 }
 
 export function minesCashout(id, loaded) {
+  if (SERVER_MODE) return remote('mines-cashout', { id })
   const user = me()
   const round = loaded ?? loadOpen(user.id, 'mines', id)
   if (!round) return staleRound(user.id, 'mines', id)
@@ -526,6 +629,10 @@ function bjSettle(round) {
 }
 
 export function blackjackStart({ bet }) {
+  if (SERVER_MODE) {
+    play('card')
+    return remoteStart('blackjack-start', { bet })
+  }
   const round = begin('blackjack', bet, 51)
   const deck = shuffleWithFloats(createDeck(), round.floats)
   round.player = [deck.pop(), deck.pop()]
@@ -542,6 +649,10 @@ export function blackjackStart({ bet }) {
 }
 
 export function blackjackAction(id, action) {
+  if (SERVER_MODE) {
+    play('card')
+    return remote('blackjack-action', { id, action })
+  }
   const user = me()
   const round = loadOpen(user.id, 'blackjack', id)
   if (!round) return staleRound(user.id, 'blackjack', id)
@@ -575,6 +686,11 @@ export function blackjackAction(id, action) {
 
 /** Ronde yang masih terbuka untuk game ini (dipakai UI setelah refresh). */
 export function openRound(game) {
+  if (SERVER_MODE) {
+    const r = serverOpenRound(game)
+    if (r && game === 'crash') return { ...r, startedAt: toLocalTime(r.startedAt) }
+    return r
+  }
   const user = getCurrentUser()
   const round = user && loadOpen(user.id, game)
   if (!round) return null

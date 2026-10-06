@@ -35,8 +35,8 @@ export default function Plinko({ game }) {
   const timers = useRef([])
   const table = PLINKO_TABLES[risk]
 
-  const drop = () => {
-    const res = run(() => playPlinko({ bet, risk }))
+  const drop = async () => {
+    const res = await run(() => playPlinko({ bet, risk }))
     if (!res) return
     // Lintasan: mulai di tengah, tiap baris geser ±½ jarak sesuai path dari server.
     const xs = [50]

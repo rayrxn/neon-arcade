@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Field from '@/components/ui/Field'
 import { CurrencyIcon } from '@/components/ui/Currency'
 import { useAuthStore } from '@/store/useAuthStore'
+import { SERVER_MODE } from '@/config/runtime'
 import { STARTING_AC, STARTING_AG } from '@/store/useWalletStore'
 import { formatCoins } from '@/utils/format'
 import { errorKey } from '@/utils/errors'
@@ -199,7 +200,7 @@ export default function AuthForm() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs leading-relaxed text-slate-500">{t('auth.localNote')}</p>
+        <p className="mt-6 text-center text-xs leading-relaxed text-slate-500">{t(SERVER_MODE ? 'auth.serverNote' : 'auth.localNote')}</p>
         {mode === 'register' && <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-600">{t('auth.ownerNote')}</p>}
       </motion.div>
     </motion.div>

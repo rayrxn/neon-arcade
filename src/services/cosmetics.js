@@ -4,6 +4,12 @@ import { COSMETICS, FREE_ITEMS } from '@/config/cosmetics'
 import { AppError } from '@/utils/errors'
 import { emit } from './events'
 import { trackMetric } from './progression'
+import { SERVER_MODE } from '@/config/runtime'
+import { toast } from '@/store/useUiStore'
+import { api, applyPayload, hydrate } from './server'
+import { translate } from '@/i18n'
+import { usePrefsStore } from '@/store/usePrefsStore'
+import { errorKey } from '@/utils/errors'
 
 /**
  * Inventory & kosmetik (tabel user_items, user_equipped).
@@ -30,6 +36,26 @@ export function isEquipped(user, itemId) {
 
 const patch = (userId, fn) => useAuthStore.getState().adminPatchUser(userId, fn)
 
+/**
+ * Mode server: perubahan kosmetik langsung tampil (optimistis), lalu disimpan ke server.
+ * Kalau server menolak (mis. item tidak dimiliki), tampilan dikembalikan dari data server.
+ */
+function pushProfile(userId, { withAvatar = false } = {}) {
+  const u = Object.values(useAuthStore.getState().users).find((x) => x.id === userId)
+  if (!u) return
+  const body = { frame: u.frame ?? null, equipped: u.equipped ?? {} }
+  if (withAvatar) body.avatar = u.avatar
+  api('profile', body)
+    .then((data) => {
+      applyPayload(data)
+      checkProfileQuest(userId)
+    })
+    .catch((err) => {
+      toast({ tone: 'error', title: translate(usePrefsStore.getState().language, errorKey(err), err?.vars) })
+      hydrate()
+    })
+}
+
 /** Pasang item. Emote tidak dipasang (otomatis bisa dipakai di chat kalau dimiliki). */
 export function equip(itemId) {
   const me = getCurrentUser()
@@ -50,7 +76,8 @@ export function equip(itemId) {
     return { equipped: { ...e, [item.kind]: itemId } }
   })
   emit('ITEM_EQUIPPED', { userId: me.id, itemId })
-  checkProfileQuest(me.id)
+  if (SERVER_MODE) pushProfile(me.id, { withAvatar: item.kind === 'avatar' })
+  else checkProfileQuest(me.id)
 }
 
 export function unequip(itemId) {
@@ -65,6 +92,7 @@ export function unequip(itemId) {
     if (item.kind === 'avatar') return e.avatar === itemId ? { equipped: { ...e, avatar: null } } : {}
     return e[item.kind] === itemId ? { equipped: { ...e, [item.kind]: null } } : {}
   })
+  if (SERVER_MODE) pushProfile(me.id)
 }
 
 /** Emote yang boleh dipakai user di chat. */
