@@ -10,7 +10,7 @@ export default {
   play: {
     errors: { cooldown: 'Wait for this round to finish ({seconds} s).' },
     crash: { betClosed: 'Betting for this round is closed. Join the next one.', alreadyIn: 'You already have a bet in this round.' },
-    plinko: { recent: 'Recent results' },
+    plinko: { recent: 'Recent results', balls: 'Balls', totalBet: 'Total bet', dropN: 'Drop {n} balls', dropping: 'Dropping {n}/{total}…', hint: 'Slide to drop up to 16 balls in one go. Each ball is its own round.' },
   },
   chat: {
     rooms: { global: 'Global', vip: 'VIP room' },
@@ -69,6 +69,7 @@ export default {
   },
   loyalty: {
     requirementXp: 'Reach {xp} Loyalty XP', dailyBonus: 'Daily card bonus', bonusClaim: 'Claim bonus', bonusClaimed: 'Claimed today',
+    orBuy: 'Can’t wait? Buy {card} once for {ac} AC + {ag} AG. Every card after it is earned with Loyalty XP.', orBuyShort: 'or buy for {ac} AC + {ag} AG',
     bonusFromSilver: 'Starts at Silver.', bonusGot: '+{ac} AC · +{ag} AG',
     sources: { perk: 'Perk' },
   },

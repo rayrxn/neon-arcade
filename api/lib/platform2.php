@@ -157,14 +157,13 @@ function add_loyalty_xp(string $userId, int $amount, string $source, ?string $re
 /** Buy the next card with AC + AG. Atomic: both debits or nothing. */
 function loyalty_unlock(array $me): array
 {
-    // Cards are earned with Loyalty XP only.
-    fail('loyalty.errors.notForSale');
+    // Only the first card (Silver) can be bought; later cards are earned with Loyalty XP.
     $u = q1('SELECT * FROM users WHERE id = ? FOR UPDATE', [$me['id']]);
     if ($u['wallet_frozen']) fail('errors.walletFrozen');
     $current = effective_card($u);
     $next = next_card($current);
     if (!$next) fail('loyalty.errors.max');
-    if ($next['unlock_ac'] === null || $next['unlock_ag'] === null) fail('loyalty.errors.notForSale');
+    if ((int) $next['rank'] !== 1 || $next['unlock_ac'] === null || $next['unlock_ag'] === null) fail('loyalty.errors.notForSale');
     $w = q1('SELECT ac_balance, ag_balance FROM wallets WHERE user_id = ? FOR UPDATE', [$me['id']]);
     $needAc = (float) $next['unlock_ac'];
     $needAg = (float) $next['unlock_ag'];

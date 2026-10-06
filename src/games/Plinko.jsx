@@ -2,9 +2,10 @@ import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
-import { BetInput, Choice, Field, GameShell, Stage, playOutcome, useRunner } from '@/components/play/GameKit'
+import { BetInput, Choice, Field, GameShell, Stage, playOutcome, useBetCurrency, useRunner } from '@/components/play/GameKit'
 import { PLINKO_ROWS, PLINKO_TABLES, playPlinko } from '@/services/games'
 import { play } from '@/services/sound'
+import { formatCoins } from '@/utils/format'
 import { useT } from '@/i18n'
 
 const ROWS = PLINKO_ROWS
@@ -27,18 +28,19 @@ function binTone(m) {
 export default function Plinko({ game }) {
   const { t } = useT()
   const { run } = useRunner()
+  const currency = useBetCurrency()
   const [bet, setBet] = useState(100)
   const [risk, setRisk] = useState('medium')
   const [balls, setBalls] = useState([])
   const [outcome, setOutcome] = useState(null)
   const [hitBin, setHitBin] = useState(null)
   const [recent, setRecent] = useState([])
+  const [count, setCount] = useState(1)
+  const [dropping, setDropping] = useState(0)
   const timers = useRef([])
   const table = PLINKO_TABLES[risk]
 
-  const drop = async () => {
-    const res = await run(() => playPlinko({ bet, risk }))
-    if (!res) return
+  const animate = (res) => {
     // Lintasan: mulai di tengah, tiap baris geser ±½ jarak sesuai path dari server.
     const xs = [50]
     const ys = [0]
@@ -65,13 +67,44 @@ export default function Plinko({ game }) {
     )
   }
 
+  // Each ball is its own provably-fair round; the server allows one every 250 ms, so balls go out in a quick stream.
+  const drop = async () => {
+    if (dropping) return
+    for (let i = 0; i < count; i++) {
+      setDropping(i + 1)
+      const res = await run(() => playPlinko({ bet, risk }))
+      if (!res) break
+      animate(res)
+      if (i < count - 1) await new Promise((r) => setTimeout(r, 280))
+    }
+    setDropping(0)
+  }
+
   const controls = (
     <>
       <BetInput value={bet} onChange={setBet} />
       <Field label={t('play.plinko.risk')}>
-        <Choice value={risk} onChange={setRisk} disabled={balls.length > 0} options={['low', 'medium', 'high'].map((r) => ({ value: r, label: t(`play.plinko.${r}`) }))} />
+        <Choice value={risk} onChange={setRisk} disabled={balls.length > 0 || dropping > 0} options={['low', 'medium', 'high'].map((r) => ({ value: r, label: t(`play.plinko.${r}`) }))} />
       </Field>
-      <Button size="lg" className="w-full" onClick={drop}>{t('play.plinko.drop')}</Button>
+      <Field label={t('play.plinko.balls')} hint={<span className="num font-mono font-bold text-white">{count}</span>}>
+        <input
+          type="range"
+          min={1}
+          max={16}
+          step={1}
+          value={count}
+          disabled={dropping > 0}
+          onChange={(e) => setCount(Number(e.target.value))}
+          className="plinko-range w-full"
+          style={{ '--fill': `${((count - 1) / 15) * 100}%` }}
+          aria-label={t('play.plinko.balls')}
+        />
+        <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-500"><span>1</span><span>16</span></div>
+      </Field>
+      {count > 1 && <p className="flex justify-between text-xs text-slate-400"><span>{t('play.plinko.totalBet')}</span><span className="num font-mono font-bold text-white">{formatCoins(bet * count)} {currency}</span></p>}
+      <Button size="lg" className="w-full" onClick={drop} disabled={dropping > 0}>
+        {dropping > 0 ? t('play.plinko.dropping', { n: dropping, total: count }) : count > 1 ? t('play.plinko.dropN', { n: count }) : t('play.plinko.drop')}
+      </Button>
       <p className="text-center text-xs text-slate-500">{t('play.plinko.hint')}</p>
     </>
   )

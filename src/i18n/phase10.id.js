@@ -10,7 +10,7 @@ export default {
   play: {
     errors: { cooldown: 'Tunggu ronde ini selesai ({seconds} dtk).' },
     crash: { betClosed: 'Taruhan ronde ini sudah ditutup. Ikut ronde berikutnya.', alreadyIn: 'Kamu sudah bertaruh di ronde ini.' },
-    plinko: { recent: 'Hasil terakhir' },
+    plinko: { recent: 'Hasil terakhir', balls: 'Jumlah bola', totalBet: 'Total taruhan', dropN: 'Jatuhkan {n} bola', dropping: 'Menjatuhkan {n}/{total}…', hint: 'Geser untuk jatuhkan sampai 16 bola sekaligus. Tiap bola satu ronde.' },
   },
   chat: {
     rooms: { global: 'Global', vip: 'Ruang VIP' },
@@ -69,6 +69,7 @@ export default {
   },
   loyalty: {
     requirementXp: 'Capai {xp} Loyalty XP', dailyBonus: 'Bonus harian kartu', bonusClaim: 'Klaim bonus', bonusClaimed: 'Sudah diklaim hari ini',
+    orBuy: 'Mau langsung? Beli {card} sekali seharga {ac} AC + {ag} AG. Kartu setelahnya hanya lewat Loyalty XP.', orBuyShort: 'atau beli {ac} AC + {ag} AG',
     bonusFromSilver: 'Mulai dari Silver.', bonusGot: '+{ac} AC · +{ag} AG',
     sources: { perk: 'Perk' },
   },

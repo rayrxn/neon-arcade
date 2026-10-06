@@ -205,7 +205,7 @@ function admin_v2_action(array $me, string $name, array $a): ?array
                 if (((int) $o['rank'] < (int) $c['rank'] && (int) $o['xp_required'] >= $next['xp_required'] && $slug !== 'none')
                     || ((int) $o['rank'] > (int) $c['rank'] && (int) $o['xp_required'] <= $next['xp_required'])) fail('admin.errors.cardOrder');
             }
-            q('UPDATE loyalty_cards SET name = ?, xp_required = ?, max_bet_ac = ?, max_bet_ag = ?, unlock_ac = NULL, unlock_ag = NULL, color = ?, benefits = ?::jsonb, perks = ?::jsonb, updated_at = now() WHERE slug = ?',
+            q('UPDATE loyalty_cards SET name = ?, xp_required = ?, max_bet_ac = ?, max_bet_ag = ?, unlock_ac = CASE WHEN rank = 1 THEN unlock_ac END, unlock_ag = CASE WHEN rank = 1 THEN unlock_ag END, color = ?, benefits = ?::jsonb, perks = ?::jsonb, updated_at = now() WHERE slug = ?',
                 [$next['name'], $next['xp_required'], (string) $next['max_bet_ac'], (string) $next['max_bet_ag'], $next['color'], jenc($next['benefits']), jenc($next['perks']), $slug]);
             $GLOBALS['NEON_CARDS_DIRTY'] = true;
             audit_log($me, 'loyalty.cardConfig', null, $c['name'], $slug, card_view($c), $next, $r);

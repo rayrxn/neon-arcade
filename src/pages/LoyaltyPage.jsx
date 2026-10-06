@@ -1,18 +1,75 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { BadgeCheck, Check, ChevronRight, Gauge, Gift, Lock, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Check, ChevronRight, Gauge, Gift, Lock, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
+import Modal from '@/components/ui/Modal'
 import { EmptyState, Panel } from '@/components/ui/Controls'
 import { PageHeader } from '@/components/ui/PageKit'
+import { CurrencyIcon } from '@/components/ui/Currency'
 import LoyaltyCard from '@/components/loyalty/LoyaltyCard'
-import { cardOf, claimPerk, useCatalog, useExtras } from '@/services/platform2'
+import { cardOf, claimPerk, unlockLoyaltyCard, useCatalog, useExtras } from '@/services/platform2'
 import { useCurrentUser } from '@/store/useAuthStore'
+import { useDisplayBalance } from '@/store/useWalletStore'
 import { toast } from '@/store/useUiStore'
 import { SERVER_MODE } from '@/config/runtime'
 import { errorKey } from '@/utils/errors'
 import { formatCoins, timeAgo } from '@/utils/format'
 import { useT } from '@/i18n'
+
+/** Only the first card (Silver) can be bought; the server refuses every later card. */
+function UnlockDialog({ next, onClose }) {
+  const { t } = useT()
+  const ac = useDisplayBalance('AC')
+  const ag = useDisplayBalance('AG')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const missAc = Math.max(0, next.unlockAC - ac)
+  const missAg = Math.max(0, next.unlockAG - ag)
+  const confirm = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await unlockLoyaltyCard()
+      toast({ tone: 'success', title: t('loyalty.unlocked', { card: next.name }) })
+      onClose()
+    } catch (err) {
+      setError({ code: errorKey(err), vars: err?.vars })
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      locked={busy}
+      title={t('loyalty.unlockTitle', { card: next.name })}
+      icon={<span className="grid h-10 w-10 place-items-center rounded-xl bg-neon-gold/10 text-neon-gold"><WalletCards className="h-5 w-5" /></span>}
+      footer={
+        <>
+          <Button variant="ghost" className="flex-1" onClick={onClose} disabled={busy}>{t('common.cancel')}</Button>
+          <Button variant="gold" className="flex-1" loading={busy} disabled={missAc > 0 || missAg > 0} onClick={confirm}>{t('loyalty.unlockConfirm')}</Button>
+        </>
+      }
+    >
+      <div className="mx-auto max-w-[260px]"><LoyaltyCard card={next} /></div>
+      <dl className="mt-4 space-y-2 rounded-xl bg-white/[0.03] p-3 text-sm ring-1 ring-inset ring-white/[0.06]">
+        {[['AC', next.unlockAC, ac, missAc], ['AG', next.unlockAG, ag, missAg]].map(([cur, cost, have, miss]) => (
+          <div key={cur} className="flex items-center justify-between gap-3">
+            <dt className="flex items-center gap-1.5 text-slate-400"><CurrencyIcon currency={cur} size={14} /> {t('loyalty.cost')}</dt>
+            <dd className="text-right">
+              <span className="num font-mono font-bold text-white">{formatCoins(cost)} {cur}</span>
+              <span className={clsx('block text-[11px]', miss > 0 ? 'text-neon-red' : 'text-slate-500')}>{miss > 0 ? t('loyalty.missing', { amount: formatCoins(miss), currency: cur }) : t('loyalty.youHave', { amount: formatCoins(have), currency: cur })}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-xs leading-relaxed text-slate-500">{t('loyalty.unlockNote')}</p>
+      {error && <p className="mt-3 rounded-xl bg-neon-red/10 px-3 py-2.5 text-sm font-semibold text-neon-red" role="alert">{t(error.code, error.vars)}</p>}
+    </Modal>
+  )
+}
 
 function Benefit({ children }) {
   return (
@@ -30,6 +87,7 @@ export default function LoyaltyPage() {
   const { loyalty, perks } = useExtras()
   const [inspect, setInspect] = useState(null)
   const [claiming, setClaiming] = useState(false)
+  const [unlocking, setUnlocking] = useState(false)
   const bonus = perks?.card
   const claimBonus = async () => {
     setClaiming(true)
@@ -87,6 +145,12 @@ export default function LoyaltyPage() {
                 <span className="text-neon-gold">{t('loyalty.maxed')}</span>
               )}
             </div>
+            {next && next.rank === 1 && next.unlockAC !== null && (
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-neon-gold/[0.06] px-3 py-2.5 ring-1 ring-inset ring-neon-gold/20">
+                <p className="min-w-0 flex-1 text-xs text-slate-300">{t('loyalty.orBuy', { card: next.name, ac: formatCoins(next.unlockAC), ag: formatCoins(next.unlockAG) })}</p>
+                <Button size="sm" variant="gold" onClick={() => setUnlocking(true)}>{t('loyalty.unlockShort', { card: next.name })} <ArrowRight className="h-3.5 w-3.5" /></Button>
+              </div>
+            )}
           </div>
           <div className="mt-5 grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06]">
@@ -148,7 +212,7 @@ export default function LoyaltyPage() {
           <div className="lg:sticky lg:top-24 lg:self-start">
             <LoyaltyCard card={shown} holder={user?.username} dim={shown.rank > current.rank} />
             <h3 className="mt-4 font-display text-lg font-bold text-white">{shown.name}</h3>
-            <p className="text-xs text-slate-500">{shown.slug === 'none' ? t('loyalty.startingTier') : t('loyalty.requirementXp', { xp: formatCoins(shown.xpRequired) })}</p>
+            <p className="text-xs text-slate-500">{shown.slug === 'none' ? t('loyalty.startingTier') : t('loyalty.requirementXp', { xp: formatCoins(shown.xpRequired) })}{shown.rank === 1 && shown.unlockAC !== null && <> · {t('loyalty.orBuyShort', { ac: formatCoins(shown.unlockAC), ag: formatCoins(shown.unlockAG) })}</>}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
               <span className="rounded-lg bg-white/[0.04] px-2.5 py-2"><b className="num block font-mono text-sm text-white">{formatCoins(shown.maxBetAC)}</b> {t('loyalty.maxAc')}</span>
               <span className="rounded-lg bg-white/[0.04] px-2.5 py-2"><b className="num block font-mono text-sm text-neon-purple">{formatCoins(shown.maxBetAG)}</b> {t('loyalty.maxAg')}</span>
@@ -171,6 +235,7 @@ export default function LoyaltyPage() {
         </Panel>
       )}
 
+      {unlocking && next && <UnlockDialog next={next} onClose={() => setUnlocking(false)} />}
     </div>
   )
 }
