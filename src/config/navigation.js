@@ -1,10 +1,12 @@
-import { Bell, Gift, Gamepad2, History, LifeBuoy, Package, ShieldHalf, House, MessagesSquare, Settings, Ticket, Trophy, UserRound, Users, Wallet, Crown } from 'lucide-react'
+import { Bell, Gift, Gamepad2, History, LifeBuoy, Package, ShieldHalf, House, MessagesSquare, Settings, Ticket, Trophy, UserRound, Users, Wallet, Crown, ShoppingBag, WalletCards, Gem } from 'lucide-react'
 
 /** Menu utama. `group` memisahkan bagian di sidebar: main, social, account. */
 export const NAV_ITEMS = [
   { to: '/', end: true, labelKey: 'nav.home', icon: House, group: 'main' },
   { to: '/games', labelKey: 'nav.games', icon: Gamepad2, group: 'main' },
+  { to: '/shop', labelKey: 'nav.shop', icon: ShoppingBag, group: 'main' },
   { to: '/rewards', labelKey: 'nav.rewards', icon: Gift, group: 'main' },
+  { to: '/loyalty', labelKey: 'nav.loyalty', icon: WalletCards, group: 'main' },
   { to: '/leaderboard', labelKey: 'nav.leaderboard', icon: Crown, group: 'main' },
   { to: '/jackpot', labelKey: 'nav.jackpot', icon: Trophy, group: 'main' },
   { to: '/chat', labelKey: 'nav.chat', icon: MessagesSquare, group: 'social' },
@@ -13,6 +15,7 @@ export const NAV_ITEMS = [
   { to: '/wallet', labelKey: 'nav.wallet', icon: Wallet, group: 'account' },
   { to: '/history', labelKey: 'nav.history', icon: History, group: 'account' },
   { to: '/inventory', labelKey: 'nav.inventory', icon: Package, group: 'account' },
+  { to: '/membership', labelKey: 'nav.membership', icon: Gem, group: 'account' },
   { to: '/redeem', labelKey: 'nav.redeem', icon: Ticket, group: 'account' },
   { to: '/profile', labelKey: 'nav.profile', icon: UserRound, group: 'account' },
   { to: '/support', labelKey: 'nav.support', icon: LifeBuoy, group: 'account' },

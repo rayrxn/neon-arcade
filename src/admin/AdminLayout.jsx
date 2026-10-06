@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   Activity, ArrowLeft, Award, ChartColumn, CalendarCheck, FileText, FlaskConical, Gamepad2, Gift, LayoutDashboard,
   ListChecks, Megaphone, Menu, MessagesSquare, ScrollText, Settings, ShieldAlert, ShieldBan, Ticket, Users, Wallet, X, LifeBuoy, Server, Gavel,
+  Filter, Coins, WalletCards, BadgeCheck, ShoppingBag, Smile, Target, Gem,
 } from 'lucide-react'
 import clsx from 'clsx'
 import Avatar from '@/components/ui/Avatar'
@@ -33,6 +34,14 @@ export const ADMIN_SECTIONS = [
   { path: 'achievements', key: 'achievements', icon: Award, perm: 'rewards.view' },
   { path: 'codes', key: 'codes', icon: Ticket, perm: 'codes.manage' },
   { path: 'chat', key: 'chat', icon: MessagesSquare, perm: 'moderation' },
+  { path: 'chat-filter', key: 'chatFilter', icon: Filter, perm: 'moderation.config' },
+  { path: 'economy', key: 'economy', icon: Coins, perm: 'economy.manage' },
+  { path: 'loyalty', key: 'loyalty', icon: WalletCards, perm: 'loyalty.manage' },
+  { path: 'player-roles', key: 'playerRoles', icon: BadgeCheck, perm: 'playerroles.manage' },
+  { path: 'shop', key: 'shop', icon: ShoppingBag, perm: 'shop.manage' },
+  { path: 'emotes', key: 'emotes', icon: Smile, perm: 'emotes.manage' },
+  { path: 'missions', key: 'missions', icon: Target, perm: 'rewards.manage' },
+  { path: 'memberships', key: 'memberships', icon: Gem, perm: 'memberships.manage' },
   { path: 'announcements', key: 'announcements', icon: Megaphone, perm: 'announcements.manage' },
   { path: 'reports', key: 'reports', icon: FileText, perm: 'moderation' },
   { path: 'analytics', key: 'analytics', icon: ChartColumn, perm: 'analytics' },

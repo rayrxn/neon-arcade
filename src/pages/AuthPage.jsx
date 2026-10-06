@@ -4,6 +4,9 @@ import { Moon, Sun } from 'lucide-react'
 import Logo from '@/components/ui/Logo'
 import AuthShowcase from '@/components/auth/AuthShowcase'
 import AuthForm from '@/components/auth/AuthForm'
+import AuthBackdrop from '@/components/auth/AuthBackdrop'
+import { motion } from 'framer-motion'
+import CoinIcon from '@/components/ui/CoinIcon'
 import { useAuthStore } from '@/store/useAuthStore'
 import { usePrefsStore } from '@/store/usePrefsStore'
 import { resolveAppearance } from '@/components/runtime/ThemeController'
@@ -37,13 +40,18 @@ export default function AuthPage() {
   if (alreadySignedIn) return <Navigate to="/" replace />
 
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
+    <div className="relative grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
+      <AuthBackdrop />
       <AuthShowcase />
       <main className="relative flex flex-col items-center justify-center px-4 py-20 sm:px-8">
         <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
           <QuickPrefs />
         </div>
-        <Logo className="mb-8 lg:hidden" />
+        <motion.div className="mb-8 flex flex-col items-center gap-4 text-center lg:hidden" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+          <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} aria-hidden><CoinIcon size={56} spin /></motion.div>
+          <Logo />
+          <p className="max-w-xs text-sm text-slate-400">{t('auth.showcase.line1')} <span className="auth-shine font-semibold">{t('auth.showcase.line2')}</span></p>
+        </motion.div>
         <AuthForm />
         <Link to="/status" className="mt-6 text-xs text-slate-500 hover:text-slate-300">{t('status.title')}</Link>
       </main>

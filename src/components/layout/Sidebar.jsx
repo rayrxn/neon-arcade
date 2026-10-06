@@ -9,6 +9,7 @@ import { useNotifications } from '@/store/useNotificationStore'
 import { usePlatformStore } from '@/store/usePlatformStore'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { isStaff } from '@/config/roles'
+import { SERVER_MODE } from '@/config/runtime'
 import { useT } from '@/i18n'
 
 const SPRING = { type: 'spring', stiffness: 520, damping: 40 }
@@ -77,7 +78,7 @@ function SidebarContent({ idPrefix, onClose }) {
       <div className="shrink-0 space-y-2 border-t hairline p-3">
         <NavItem item={SETTINGS_ITEM} layoutId={layoutId} />
         {isStaffUser && <NavItem item={ADMIN_ITEM} layoutId={layoutId} />}
-        <p className="px-3 text-[11px] text-slate-600">{t('nav.localMode')} · <NavLink to="/status" className="underline-offset-2 hover:text-slate-300 hover:underline">{t('status.title')}</NavLink></p>
+        <p className="px-3 text-[11px] text-slate-600">{SERVER_MODE ? 'arcadebet.my.id' : t('nav.localMode')} · <NavLink to="/status" className="underline-offset-2 hover:text-slate-300 hover:underline">{t('status.title')}</NavLink></p>
       </div>
     </div>
   )

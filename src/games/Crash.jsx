@@ -4,7 +4,7 @@ import { Rocket, Users } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
-import { BetInput, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
+import { BetInput, useBetCurrency, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
 import { CRASH_K, CRASH_MIN_CASHOUT, crashCashout, crashMultiplierAt, crashStart, crashTick, openRound } from '@/services/games'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { useProgress } from '@/store/useProgressStore'
@@ -191,6 +191,7 @@ export default function Crash({ game }) {
   const user = useCurrentUser()
   const progress = useProgress(user?.id)
   const [bet, setBet] = useState(100)
+  const currency = useBetCurrency()
   const [auto, setAuto] = useState('')
   const [round, setRound] = useState(() => openRound('crash'))
   const [live, setLive] = useState(1)
@@ -316,7 +317,7 @@ export default function Crash({ game }) {
           <Button size="lg" variant="gold" className="w-full" onClick={cashout} disabled={live < CRASH_MIN_CASHOUT}>
             <span className="flex w-full items-center justify-between">
               <span>{live < CRASH_MIN_CASHOUT ? t('play.crash.cashoutFrom', { min: CRASH_MIN_CASHOUT.toFixed(2) }) : t('play.crash.cashout')}</span>
-              <span className="num font-mono">{formatCoins(potential)} AC</span>
+              <span className="num font-mono">{formatCoins(potential)} {round?.currency ?? currency}</span>
             </span>
           </Button>
         </motion.div>

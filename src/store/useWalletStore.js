@@ -58,7 +58,7 @@ export const createWallet = ({ ac = STARTING_AC, ag = STARTING_AG, withGrants = 
 const fail = (code) => ({ ok: false, error: code })
 
 /** Kategori riwayat wallet (dipakai filter & laporan). */
-export const TX_CATEGORIES = ['game', 'daily', 'quest', 'level', 'achievement', 'redeem', 'admin', 'system', 'reversal', 'refund', 'transfer', 'other']
+export const TX_CATEGORIES = ['game', 'daily', 'quest', 'level', 'achievement', 'redeem', 'shop', 'convert', 'loyalty', 'mission', 'admin', 'system', 'reversal', 'refund', 'transfer', 'other']
 export function categoryOf(tx) {
   if (tx.type === 'bet' || tx.type === 'win') return 'game'
   if (tx.type === 'reward') return ['daily', 'quest', 'level', 'achievement', 'season'].includes(tx.source) ? (tx.source === 'season' ? 'system' : tx.source) : 'system'
@@ -68,6 +68,8 @@ export function categoryOf(tx) {
   if (tx.type === 'refund') return 'refund'
   if (tx.type === 'grant' || tx.type === 'bonus') return 'system'
   if (tx.type === 'send' || tx.type === 'receive') return 'transfer'
+  if (tx.type === 'purchase') return tx.source === 'loyalty' ? 'loyalty' : 'shop'
+  if (tx.type === 'convert') return 'convert'
   return 'other'
 }
 

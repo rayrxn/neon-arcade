@@ -11,7 +11,7 @@ import { equippedOf } from '@/services/cosmetics'
 import { currentSeason, seasonTier, seasonXpOf } from '@/services/seasons'
 import { formatCoins, formatDate, timeAgo } from '@/utils/format'
 import { pick, useT } from '@/i18n'
-import RoleTag from '@/components/ui/RoleTag'
+import { ProfileBanner, StyledName, UserTags } from '@/components/ui/Identity'
 
 /** Header profil: banner, avatar + bingkai, nama, title, badge, level, tanggal gabung. */
 export function ProfileHero({ user, progress, actions, online }) {
@@ -21,13 +21,13 @@ export function ProfileHero({ user, progress, actions, online }) {
   const banner = eq.banner ? COSMETICS[eq.banner]?.gradient : 'from-neon-cyan/15 via-neon-purple/10 to-transparent'
   return (
     <section className="glass overflow-hidden rounded-2xl">
-      <div className={clsx('h-20 bg-gradient-to-r sm:h-24', banner)} />
+      <ProfileBanner user={user} fallback={clsx('bg-gradient-to-r', banner)} className="h-20 sm:h-24" />
       <div className="-mt-10 flex flex-col gap-4 px-4 pb-5 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between sm:px-6">
         <div className="flex min-w-0 items-end gap-4">
           <Avatar user={user} size="xl" online={online} className="rounded-2xl ring-4 ring-ink-900" />
           <div className="min-w-0 pb-1">
-            <h1 className="flex items-center gap-2 truncate font-display text-xl font-bold text-white sm:text-2xl">
-              {user.displayName} <RoleTag role={user.role} /> {user.isDemo && <DemoTag />}
+            <h1 className="flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-xl font-bold text-white sm:text-2xl">
+              <StyledName user={user} className="truncate" /> <UserTags user={user} /> {user.isDemo && <DemoTag />}
               {user.isTest && <span className="rounded bg-neon-gold/15 px-1.5 py-0.5 text-[10px] font-extrabold text-neon-gold">TEST</span>}
             </h1>
             <p className="truncate text-sm text-slate-400">

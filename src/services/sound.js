@@ -102,22 +102,36 @@ export function play(name) {
   }
 }
 
-// ── Musik lobby: synthwave lo-fi generatif (Am7 – Fmaj7 – Cmaj7 – G6, 92 BPM) ──
-// Pad hangat + bass + arpeggio dengan delay + kick & hat lembut. Dijadwalkan dengan
-// lookahead scheduler supaya timing stabil walau tab sibuk.
-const BPM = 92
-const BEAT = 60 / BPM
-const STEP = BEAT / 2 // 8th note
-const CHORDS = [
-  { root: 57, notes: [57, 60, 64, 67] }, // Am7
-  { root: 53, notes: [53, 57, 60, 64] }, // Fmaj7
-  { root: 48, notes: [48, 52, 55, 59] }, // Cmaj7
-  { root: 55, notes: [55, 59, 62, 64] }, // G6
-]
-const ARP = [0, 2, 1, 3, 2, 1, 3, 2]
+// ── Musik lobby: playlist generatif (semua disintesis, tanpa file audio) ──
+// Tiap lagu punya tempo, progresi akor, pola arpeggio, dan warna suara sendiri.
+// Satu lagu = BARS bar; setelah habis lanjut ke lagu berikutnya (acak, tidak mengulang lagu yang sama).
 const hz = (midi) => 440 * 2 ** ((midi - 69) / 12)
+export const TRACKS = [
+  { id: 'neon-drive', name: 'Neon Drive', bpm: 92, bars: 32, chords: [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 55, 59], [55, 59, 62, 64]], arp: [0, 2, 1, 3, 2, 1, 3, 2], lead: 'square', pad: 900, hat: true },
+  { id: 'midnight-arcade', name: 'Midnight Arcade', bpm: 104, bars: 32, chords: [[50, 53, 57, 60], [46, 50, 53, 57], [53, 57, 60, 64], [48, 52, 55, 58]], arp: [0, 1, 2, 3, 2, 1, 0, 2], lead: 'sawtooth', pad: 700, hat: true },
+  { id: 'coin-rain', name: 'Coin Rain', bpm: 84, bars: 28, chords: [[52, 55, 59, 62], [48, 52, 55, 59], [45, 48, 52, 55], [47, 50, 54, 57]], arp: [3, 2, 1, 0, 1, 2, 3, 1], lead: 'triangle', pad: 1100, hat: false },
+  { id: 'high-roller', name: 'High Roller', bpm: 112, bars: 36, chords: [[55, 58, 62, 65], [51, 55, 58, 62], [53, 57, 60, 63], [50, 53, 57, 60]], arp: [0, 2, 3, 2, 1, 2, 3, 0], lead: 'square', pad: 800, hat: true },
+  { id: 'after-hours', name: 'After Hours', bpm: 78, bars: 24, chords: [[49, 52, 56, 59], [54, 57, 61, 64], [52, 56, 59, 63], [47, 51, 54, 58]], arp: [0, 1, 3, 1, 2, 1, 3, 1], lead: 'sine', pad: 1300, hat: false },
+]
+const trackDuration = (tr) => (tr.bars * 4 * 60) / tr.bpm
+
 let duck = 1
 let seq = null
+/** Status pemutar untuk UI (MusicPlayer). */
+const listeners = new Set()
+let player = { index: -1, history: [], startedAt: 0, failed: false }
+const emitPlayer = () => listeners.forEach((fn) => fn(getPlayerState()))
+export function getPlayerState() {
+  const { sound } = usePrefsStore.getState()
+  const playing = !!seq
+  const tr = TRACKS[player.index] ?? TRACKS[Math.max(0, TRACKS.findIndex((x) => x.id === sound.track))] ?? TRACKS[0]
+  const elapsed = playing && ctx ? ctx.currentTime - player.startedAt : 0
+  return { playing, track: tr, index: TRACKS.indexOf(tr), elapsed: Math.max(0, elapsed), duration: trackDuration(tr), failed: player.failed, enabled: !sound.muted && !sound.musicOff && sound.music > 0 }
+}
+export function subscribePlayer(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
 
 function voice(freq, start, dur, { type = 'sawtooth', gain = 0.05, cutoff = 1200, attack = 0.02, release = 0.3, dest } = {}) {
   const osc = ctx.createOscillator()
@@ -164,44 +178,82 @@ function kick(start) {
   osc.stop(start + 0.32)
 }
 
-function scheduleStep(step, time) {
+function scheduleStep(tr, step, time) {
+  const beat = 60 / tr.bpm
+  const stepLen = beat / 2
   const bar = Math.floor(step / 8)
-  const chord = CHORDS[bar % CHORDS.length]
+  const chord = tr.chords[bar % tr.chords.length]
+  const root = chord[0]
   const inBar = step % 8
   if (inBar === 0) {
-    for (const n of chord.notes) voice(hz(n), time, BEAT * 4, { gain: 0.022, cutoff: 900, attack: 0.6, release: 1.2 })
-    voice(hz(chord.root - 24), time, BEAT * 1.6, { type: 'triangle', gain: 0.11, cutoff: 500, attack: 0.01, release: 0.4 })
+    for (const n of chord) voice(hz(n), time, beat * 4, { gain: 0.022, cutoff: tr.pad, attack: 0.6, release: 1.2 })
+    voice(hz(root - 24), time, beat * 1.6, { type: 'triangle', gain: 0.11, cutoff: 500, attack: 0.01, release: 0.4 })
   }
-  if (inBar === 4) voice(hz(chord.root - 24), time, BEAT * 1.6, { type: 'triangle', gain: 0.09, cutoff: 500, attack: 0.01, release: 0.4 })
-  // Arpeggio mulai dari putaran ke-2 supaya intro terasa pelan.
-  if (step >= 32) voice(hz(chord.notes[ARP[inBar]] + 12), time, STEP * 0.9, { type: 'square', gain: 0.018, cutoff: 2200, attack: 0.005, release: 0.15, dest: seq.delayIn })
-  if (step >= 16 && inBar % 4 === 0) kick(time)
-  if (step >= 16 && inBar % 2 === 1) noise(time, 0.05, 0.03, 7000)
+  if (inBar === 4) voice(hz(root - 24), time, beat * 1.6, { type: 'triangle', gain: 0.09, cutoff: 500, attack: 0.01, release: 0.4 })
+  // Arpeggio mulai bar 4, drum mulai bar 2; 2 bar terakhir dikosongkan sebagai outro.
+  const outro = bar >= tr.bars - 2
+  if (bar >= 4 && !outro) voice(hz(chord[tr.arp[inBar]] + 12), time, stepLen * 0.9, { type: tr.lead, gain: tr.lead === 'sine' ? 0.03 : 0.018, cutoff: 2200, attack: 0.005, release: 0.15, dest: seq.delayIn })
+  if (bar >= 2 && !outro && inBar % 4 === 0) kick(time)
+  if (tr.hat && bar >= 2 && !outro && inBar % 2 === 1) noise(time, 0.05, 0.03, 7000)
 }
 
-function startMusic() {
-  const bus = ctx.createGain()
-  const delayIn = ctx.createGain()
-  const delay = ctx.createDelay(1)
-  const feedback = ctx.createGain()
-  delay.delayTime.value = STEP * 1.5
-  feedback.gain.value = 0.35
-  delayIn.connect(bus)
-  delayIn.connect(delay).connect(feedback).connect(delay)
-  delay.connect(bus)
-  bus.gain.setValueAtTime(0.0001, ctx.currentTime)
-  bus.gain.linearRampToValueAtTime(1, ctx.currentTime + 2.5) // fade in
-  bus.connect(musicBus)
-  seq = { bus, delayIn, step: 0, next: ctx.currentTime + 0.1, timer: null }
-  const tick = () => {
-    while (seq && seq.next < ctx.currentTime + 0.25) {
-      scheduleStep(seq.step, seq.next)
-      seq.step = (seq.step + 1) % (CHORDS.length * 8 * 8) // loop ~2,8 menit
-      seq.next += STEP
+function pickNext() {
+  // Acak, tapi tidak mengulang lagu yang baru diputar (ingat 2 terakhir).
+  const recent = new Set(player.history.slice(-2))
+  const pool = TRACKS.map((_, i) => i).filter((i) => !recent.has(i))
+  return pool[Math.floor(Math.random() * pool.length)] ?? 0
+}
+
+function startTrack(index, fade = 2.5) {
+  try {
+    const tr = TRACKS[index]
+    const bus = ctx.createGain()
+    const delayIn = ctx.createGain()
+    const delay = ctx.createDelay(1)
+    const feedback = ctx.createGain()
+    delay.delayTime.value = (60 / tr.bpm / 2) * 1.5
+    feedback.gain.value = 0.35
+    delayIn.connect(bus)
+    delayIn.connect(delay).connect(feedback).connect(delay)
+    delay.connect(bus)
+    bus.gain.setValueAtTime(0.0001, ctx.currentTime)
+    bus.gain.linearRampToValueAtTime(1, ctx.currentTime + fade)
+    bus.connect(musicBus)
+    const stepLen = 60 / tr.bpm / 2
+    const total = tr.bars * 8
+    seq = { tr, bus, delayIn, step: 0, next: ctx.currentTime + 0.1, timer: null }
+    player = { ...player, index, startedAt: ctx.currentTime + 0.1, failed: false, history: [...player.history, index].slice(-5) }
+    usePrefsStore.getState().setSound?.({ track: tr.id })
+    const tick = () => {
+      if (!seq) return
+      while (seq && seq.step < total && seq.next < ctx.currentTime + 0.25) {
+        scheduleStep(seq.tr, seq.step, seq.next)
+        seq.step++
+        seq.next += stepLen
+      }
+      // Lagu habis → lanjut lagu berikutnya.
+      if (seq && seq.step >= total && ctx.currentTime >= seq.next) {
+        const old = seq
+        clearInterval(old.timer)
+        old.bus.disconnect()
+        seq = null
+        startTrack(pickNext(), 0.8)
+      }
     }
+    tick()
+    seq.timer = setInterval(tick, 90)
+    emitPlayer()
+  } catch {
+    player = { ...player, failed: true }
+    seq = null
+    emitPlayer()
   }
-  tick()
-  seq.timer = setInterval(tick, 90)
+}
+
+function startMusic(index) {
+  const { sound } = usePrefsStore.getState()
+  const saved = TRACKS.findIndex((x) => x.id === sound.track)
+  startTrack(index ?? (player.index >= 0 ? player.index : saved >= 0 ? saved : pickNext()))
 }
 
 function stopMusic() {
@@ -211,6 +263,7 @@ function stopMusic() {
   bus.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.3)
   setTimeout(() => bus.disconnect(), 1500)
   seq = null
+  emitPlayer()
 }
 
 function syncMusic() {
@@ -219,6 +272,37 @@ function syncMusic() {
   const want = !sound.muted && !sound.musicOff && sound.music > 0
   if (want && !seq) startMusic()
   else if (!want && seq) stopMusic()
+}
+
+function jump(index) {
+  const { sound } = usePrefsStore.getState()
+  if (!ensure()) return
+  if (seq) {
+    const old = seq
+    clearInterval(old.timer)
+    old.bus.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.15)
+    setTimeout(() => old.bus.disconnect(), 800)
+    seq = null
+  }
+  if (sound.musicOff || sound.muted || !(sound.music > 0)) usePrefsStore.getState().setSound({ musicOff: false, muted: false, music: sound.music > 0 ? sound.music : 0.4 })
+  startTrack(index, 0.6)
+}
+/** Kontrol pemutar (tombol di header & Settings). */
+export const musicNext = () => jump(pickNext())
+export const musicPrev = () => {
+  const prev = player.history.length >= 2 ? player.history[player.history.length - 2] : (player.index - 1 + TRACKS.length) % TRACKS.length
+  player = { ...player, history: player.history.slice(0, -2) }
+  jump(prev)
+}
+export const musicPlayTrack = (index) => jump(index)
+export function musicToggle() {
+  const { sound, setSound } = usePrefsStore.getState()
+  const on = !sound.muted && !sound.musicOff && sound.music > 0
+  if (on) setSound({ musicOff: true })
+  else {
+    ensure()
+    setSound({ musicOff: false, muted: false, music: sound.music > 0 ? sound.music : 0.4 })
+  }
 }
 
 /** Kecilkan musik saat main game (lobby = penuh). */

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
-import { BetInput, GameShell, Stage, playOutcome, useRunner } from '@/components/play/GameKit'
+import { BetInput, GameShell, Stage, playOutcome, useBetCurrency, useRunner } from '@/components/play/GameKit'
 import { RED, playRoulette } from '@/services/games'
 import { play } from '@/services/sound'
 import { formatCoins } from '@/utils/format'
@@ -43,6 +43,7 @@ export default function Roulette({ game }) {
   const { t } = useT()
   const { run } = useRunner()
   const [chip, setChip] = useState(50)
+  const currency = useBetCurrency()
   const [bets, setBets] = useState({})
   const [rotation, setRotation] = useState(0)
   const [spinning, setSpinning] = useState(false)
@@ -89,7 +90,7 @@ export default function Roulette({ game }) {
     <>
       <BetInput value={chip} onChange={setChip} disabled={spinning} label={t('play.roulette.chip')} />
       <div className="rounded-xl bg-white/[0.03] p-3 text-sm ring-1 ring-inset ring-white/[0.06]">
-        <div className="flex justify-between"><span className="text-slate-400">{t('play.roulette.total')}</span><b className="num font-mono text-white">{formatCoins(total)} AC</b></div>
+        <div className="flex justify-between"><span className="text-slate-400">{t('play.roulette.total')}</span><b className="num font-mono text-white">{formatCoins(total)} {currency}</b></div>
         <div className="mt-1 flex justify-between"><span className="text-slate-400">{t('play.roulette.spots')}</span><b className="text-white">{Object.keys(bets).length}</b></div>
       </div>
       <div className="grid grid-cols-2 gap-2">

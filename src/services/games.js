@@ -20,6 +20,7 @@ import { maintenanceActive } from './system'
 import { isStaff } from '@/config/roles'
 import { play } from './sound'
 import { SERVER_MODE } from '@/config/runtime'
+import { usePrefsStore } from '@/store/usePrefsStore'
 import { act, applyOut, serverOpenRound, toLocalTime } from './server'
 
 /**
@@ -221,7 +222,7 @@ function remote(action, args = {}) {
     const { result, apply, userId } = await act(`game/${action}`, args)
     const s = result?.session
     // Saldo baru baru terlihat setelah animasi selesai (reveal gate) → tahan dulu, baru simpan state.
-    if (s && !result.duplicate && !result.stale && !s.isTest && s.payout > 0) holdReveal(s.id, 'AC', s.payout)
+    if (s && !result.duplicate && !result.stale && !s.isTest && s.payout > 0) holdReveal(s.id, s.currency ?? 'AC', s.payout)
     apply()
     if (result?.summary) applyOut(userId, result.summary)
     return result
@@ -233,9 +234,12 @@ function remote(action, args = {}) {
   return task
 }
 
+/** Currency of new rounds (chosen in the bet box). Cases are always AC. */
+export const betCurrency = () => (SERVER_MODE ? usePrefsStore.getState().betCurrency ?? 'AC' : 'AC')
+
 const remoteStart = (action, args) => {
   play('start')
-  return remote(action, args)
+  return remote(action, action.startsWith('case-') ? args : { ...args, currency: betCurrency() })
 }
 
 // Crash: kurva digambar dari jam lokal (disinkronkan ke server), status ditanyakan ~3×/detik.

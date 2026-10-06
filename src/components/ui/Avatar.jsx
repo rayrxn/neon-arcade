@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { initials } from '@/utils/format'
 import { ITEMS } from '@/config/economy'
+import { useFrameColor } from './Identity'
 
 export const PRESET_STYLES = {
   cyan: 'from-[#5ef0ff] to-[#1a7cff]',
@@ -29,7 +30,10 @@ const DOT = { xs: 'h-2 w-2', sm: 'h-2.5 w-2.5', md: 'h-2.5 w-2.5', lg: 'h-3 w-3'
 export default function Avatar({ user, name, size = 'md', online, showFrame = true, className }) {
   const label = user?.displayName || user?.username || name || ''
   const avatar = user?.avatar ?? { kind: 'preset', id: 'cyan' }
-  const frame = showFrame && user?.frame ? ITEMS[user.frame] : null
+  const shopFrame = useFrameColor(user)
+  // A frame bought in the shop wins over an older cosmetic frame.
+  const frame = showFrame && !shopFrame && user?.frame ? ITEMS[user.frame] : null
+  const ring = showFrame && shopFrame ? { boxShadow: `0 0 0 2px rgb(var(--ink-950, 6 7 12)), 0 0 0 4px ${shopFrame}, 0 0 14px ${shopFrame}66` } : undefined
 
   return (
     <span className={clsx('relative inline-flex shrink-0', className)}>
@@ -40,6 +44,7 @@ export default function Avatar({ user, name, size = 'md', online, showFrame = tr
           avatar.kind === 'image' ? 'bg-ink-800' : clsx('bg-gradient-to-br', PRESET_STYLES[avatar.id] ?? PRESET_STYLES.cyan),
           frame && clsx('ring-2 ring-offset-2 ring-offset-ink-950', frame.ring),
         )}
+        style={ring}
         aria-hidden
       >
         {avatar.kind === 'image' ? <img src={avatar.src} alt="" className="h-full w-full object-cover" /> : initials(label)}

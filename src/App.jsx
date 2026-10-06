@@ -10,6 +10,9 @@ import RedeemPage from '@/pages/RedeemPage'
 import ProfilePage from '@/pages/ProfilePage'
 import SettingsPage from '@/pages/SettingsPage'
 import RewardsPage from '@/pages/RewardsPage'
+import ShopPage from '@/pages/ShopPage'
+import LoyaltyPage from '@/pages/LoyaltyPage'
+import MembershipPage from '@/pages/MembershipPage'
 import HistoryPage from '@/pages/HistoryPage'
 import LeaderboardPage from '@/pages/LeaderboardPage'
 import FriendsPage from '@/pages/FriendsPage'
@@ -22,6 +25,7 @@ import { ModerationQueue } from '@/admin/pages/Moderation'
 import { SupportAdmin } from '@/admin/pages/Support'
 import { SystemAdmin } from '@/admin/pages/System'
 import AdminLayout from '@/admin/AdminLayout'
+import { ChatModerationAdmin, EconomyAdmin, EmotesAdmin, LoyaltyAdmin, MembershipsAdmin, MissionsAdmin, PlayerRolesAdmin, ShopAdmin } from '@/admin/pages/Platform'
 import AdminDashboard from '@/admin/pages/Dashboard'
 import { UserDetail, UserList } from '@/admin/pages/Users'
 import { AntiCheat, GamesAdmin, Sessions, Wallets } from '@/admin/pages/Operations'
@@ -68,6 +72,9 @@ export default function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="rewards" element={<RewardsPage />} />
+            <Route path="shop" element={<ShopPage />} />
+            <Route path="loyalty" element={<LoyaltyPage />} />
+            <Route path="membership" element={<MembershipPage />} />
             <Route path="history" element={<HistoryPage />} />
             <Route path="history/:id" element={<HistoryPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
@@ -99,6 +106,14 @@ export default function App() {
             <Route path="achievements" element={<Guard perm="rewards.view"><AchievementsAdmin /></Guard>} />
             <Route path="codes" element={<Guard perm="codes.manage"><CodesAdmin /></Guard>} />
             <Route path="chat" element={<Guard perm="moderation"><ChatAdmin /></Guard>} />
+            <Route path="chat-filter" element={<Guard perm="moderation.config"><ChatModerationAdmin /></Guard>} />
+            <Route path="economy" element={<Guard perm="economy.manage"><EconomyAdmin /></Guard>} />
+            <Route path="loyalty" element={<Guard perm="loyalty.manage"><LoyaltyAdmin /></Guard>} />
+            <Route path="player-roles" element={<Guard perm="playerroles.manage"><PlayerRolesAdmin /></Guard>} />
+            <Route path="shop" element={<Guard perm="shop.manage"><ShopAdmin /></Guard>} />
+            <Route path="emotes" element={<Guard perm="emotes.manage"><EmotesAdmin /></Guard>} />
+            <Route path="missions" element={<Guard perm="rewards.manage"><MissionsAdmin /></Guard>} />
+            <Route path="memberships" element={<Guard perm="memberships.manage"><MembershipsAdmin /></Guard>} />
             <Route path="announcements" element={<Guard perm="announcements.manage"><AnnouncementsAdmin /></Guard>} />
             <Route path="reports" element={<Guard perm="moderation"><ChatAdmin reportsOnly /></Guard>} />
             <Route path="analytics" element={<Guard perm="analytics"><AdminDashboard full /></Guard>} />

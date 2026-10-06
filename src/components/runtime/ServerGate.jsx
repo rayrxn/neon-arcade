@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Loader2, RefreshCw, WifiOff } from 'lucide-react'
+import { RefreshCw, WifiOff } from 'lucide-react'
+import CoinIcon from '@/components/ui/CoinIcon'
 import Logo from '@/components/ui/Logo'
 import Button from '@/components/ui/Button'
 import { SERVER_MODE } from '@/config/runtime'
@@ -62,10 +63,18 @@ export default function ServerGate({ children }) {
   if (status === 'ready') return children
   return (
     <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
-      <Logo />
       {status === 'loading' ? (
-        <Loader2 className="h-5 w-5 animate-spin text-neon-cyan" aria-label={t('server.loading')} />
+        <div className="flex flex-col items-center gap-5" role="status" aria-label={t('server.loading')}>
+          <div className="relative grid place-items-center">
+            <div className="boot-ring" />
+            <CoinIcon size={26} spin className="absolute" />
+          </div>
+          <Logo />
+          <div className="h-0.5 w-32 overflow-hidden rounded-full bg-white/[0.06]"><div className="boot-bar h-full w-1/3 rounded-full bg-neon-cyan" /></div>
+        </div>
       ) : (
+        <>
+        <Logo />
         <div className="glass max-w-sm rounded-2xl p-6">
           <WifiOff className="mx-auto h-6 w-6 text-neon-red" />
           <p className="mt-3 font-display text-sm font-bold text-white">{t('server.offlineTitle')}</p>
@@ -74,6 +83,7 @@ export default function ServerGate({ children }) {
             <RefreshCw className="h-4 w-4" /> {t('server.retry')}
           </Button>
         </div>
+        </>
       )}
     </div>
   )

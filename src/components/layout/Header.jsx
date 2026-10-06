@@ -1,5 +1,6 @@
 import { matchPath, useLocation } from 'react-router-dom'
-import { Menu, Music, Music2, Volume2, VolumeX } from 'lucide-react'
+import { Menu, Volume2, VolumeX } from 'lucide-react'
+import MusicPlayer from './MusicPlayer'
 import { usePrefsStore } from '@/store/usePrefsStore'
 import BalanceChip from './BalanceChip'
 import NotificationBell from './NotificationBell'
@@ -15,17 +16,6 @@ function MuteButton() {
   return (
     <button onClick={toggle} aria-pressed={muted} aria-label={muted ? t('settings.sound.unmute') : t('settings.sound.mute')} title={muted ? t('settings.sound.unmute') : t('settings.sound.mute')} className="hidden h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white sm:grid focus-ring">
       {muted ? <VolumeX className="h-[18px] w-[18px]" /> : <Volume2 className="h-[18px] w-[18px]" />}
-    </button>
-  )
-}
-
-function MusicButton() {
-  const { t } = useT()
-  const off = usePrefsStore((s) => s.sound?.musicOff || !(s.sound?.music > 0))
-  const toggle = usePrefsStore((s) => s.toggleMusic)
-  return (
-    <button onClick={toggle} aria-pressed={!off} aria-label={off ? t('settings.sound.musicOn') : t('settings.sound.musicOffLabel')} title={off ? t('settings.sound.musicOn') : t('settings.sound.musicOffLabel')} className={`grid h-9 w-9 place-items-center rounded-xl transition hover:bg-white/5 focus-ring ${off ? 'text-slate-500' : 'text-neon-cyan'}`}>
-      {off ? <Music2 className="h-[18px] w-[18px] opacity-60" /> : <Music className="h-[18px] w-[18px]" />}
     </button>
   )
 }
@@ -58,7 +48,7 @@ export default function Header({ onMenu }) {
           <BalanceChip currency="AG" />
         </div>
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1 lg:ml-1">
-          <MusicButton />
+          <MusicPlayer />
           <MuteButton />
           <NotificationBell />
           <UserMenu />

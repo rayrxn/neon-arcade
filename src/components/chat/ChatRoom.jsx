@@ -21,7 +21,10 @@ import { useNow } from '@/hooks/useNow'
 import { formatCoins, formatTime, timeAgo } from '@/utils/format'
 import { errorKey } from '@/utils/errors'
 import { useT } from '@/i18n'
-import RoleTag from '@/components/ui/RoleTag'
+import EmotePicker from './EmotePicker'
+import { RichText, StyledName, UserTags, chatEffectProps } from '@/components/ui/Identity'
+import { useCatalog } from '@/services/platform2'
+import { SERVER_MODE } from '@/config/runtime'
 
 const EMPTY = []
 
@@ -56,14 +59,16 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
   const { t } = useT()
   const mine = message.userId === me?.id
   const mod = !compact && can(me?.role, 'moderation')
+  const catalog = useCatalog()
+  const fx = chatEffectProps(catalog, author)
   return (
-    <div className={clsx('group relative flex gap-3 px-3 sm:px-4', grouped ? 'pt-0.5' : 'pt-3', mine && 'bg-neon-cyan/[0.03]')}>
+    <div className={clsx('group relative flex gap-3 px-3 sm:px-4', grouped ? 'pt-0.5' : 'pt-3', mine && !fx.className && 'bg-neon-cyan/[0.03]')}>
       <div className="w-8 shrink-0">{!grouped && <Avatar user={author} name={author?.username} size="sm" />}</div>
       <div className="min-w-0 flex-1 pb-1">
         {!grouped && (
           <p className="flex flex-wrap items-baseline gap-x-1.5">
-            <Link to={author ? `/u/${author.username}` : '#'} className={clsx('text-sm font-bold hover:underline', mine ? 'text-neon-cyan' : 'text-white')}>{author?.displayName ?? '—'}</Link>
-            {author && <RoleTag role={author.role} className="self-center" />}
+            <Link to={author ? `/u/${author.username}` : '#'} className={clsx('text-sm font-bold hover:underline', mine ? 'text-neon-cyan' : 'text-white')}><StyledName user={author} /></Link>
+            {author && <UserTags user={author} compact={compact} className="self-center" />}
             {message.badge && COSMETICS[message.badge] && <span className="rounded bg-white/[0.06] px-1 text-[10px] font-bold text-neon-gold" title={COSMETICS[message.badge].name?.en}>{COSMETICS[message.badge].glyph}</span>}
             {!compact && <span className="text-xs text-slate-500">@{author?.username}</span>}
             {author?.isDemo && <DemoTag />}
@@ -73,8 +78,8 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
         {message.deleted ? (
           <p className="text-sm italic text-slate-500">{t('chat.deleted')}</p>
         ) : (
-          <p className="break-words text-sm leading-relaxed text-slate-300">
-            <MessageText text={message.text} myUsername={me?.username} />
+          <p className={clsx('break-words text-sm leading-relaxed text-slate-300', fx.className && '-ml-2 px-2 py-0.5', fx.className)} style={fx.style}>
+            {SERVER_MODE ? <RichText text={message.text} myUsername={me?.username} /> : <MessageText text={message.text} myUsername={me?.username} />}
             {message.flagged && <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">{t('chat.filtered')}</span>}
           </p>
         )}
@@ -238,7 +243,16 @@ export default function ChatRoom({ compact = false, limit, className }) {
                 <button type="button" onClick={() => setEmoteOpen((o) => !o)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:text-white focus-ring" aria-label={t('chat.emotes')} aria-expanded={emoteOpen}>
                   <Smile className="h-4 w-4" />
                 </button>
-                {emoteOpen && (
+                {emoteOpen && SERVER_MODE && (
+                  <EmotePicker
+                    onClose={() => setEmoteOpen(false)}
+                    onPick={(e) => {
+                      setText((v) => `${v}${v && !v.endsWith(' ') ? ' ' : ''}:${e.code}: `.slice(0, MAX_LENGTH))
+                      inputRef.current?.focus()
+                    }}
+                  />
+                )}
+                {emoteOpen && !SERVER_MODE && (
                   <div className="glass-strong absolute bottom-10 right-0 z-20 flex w-48 flex-wrap gap-1 rounded-xl p-2">
                     {emotes.map((e) => (
                       <button key={e.id} type="button" onClick={() => { setText((v) => `${v}${v && !v.endsWith(' ') ? ' ' : ''}:${e.code}: `); setEmoteOpen(false); inputRef.current?.focus() }} className="grid h-9 min-w-9 place-items-center rounded-lg px-1.5 text-base hover:bg-white/[0.08]" title={`:${e.code}:`}>
@@ -310,7 +324,7 @@ export function OnlineList({ className }) {
         <li key={user.id} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
           <Avatar user={user} size="sm" online={online} />
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-slate-200">{user.displayName} <RoleTag role={user.role} /> {user.isDemo && <DemoTag />}</p>
+            <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-slate-200"><StyledName user={user} className="truncate" /> <UserTags user={user} compact /> {user.isDemo && <DemoTag />}</p>
             <p className="truncate text-[11px] text-slate-500">{online ? t('chat.online') : seen ? t('chat.lastSeen', { time: timeAgo(seen, now) }) : t('chat.offline')}</p>
           </div>
         </li>

@@ -31,7 +31,7 @@ const motion = new Proxy({}, {
 })
 const Motion = {
   motion, AnimatePresence: ({ children }) => h(React.Fragment, null, children), MotionConfig: ({ children }) => children,
-  animate: () => ({ stop() {} }), useAnimationControls: () => ({ start() {} }),
+  animate: () => ({ stop() {} }), useAnimationControls: () => ({ start() {} }), useMotionValue: (v) => ({ get: () => v, set() {}, on: () => () => {} }), useSpring: (m) => m, useTransform: (m) => m,
   useMotionValue: (v) => ({ v, get() { return this.v }, set(x) { this.v = x } }),
   useTransform: (mv, fn) => ({ get: () => fn(mv.get()) }),
 }
@@ -384,7 +384,7 @@ const assert = (label, cond, extra = '') => { if (!cond) failures++; console.log
   before = w()[C].balance; const gamesBefore = pC().stats.games
   let wins = 0
   for (let i = 0; i < 6; i++) { clock += 300; const rr = G.playDice({ bet: 100, target: 90, over: true }); if (rr.session.result === 'win') wins++ }
-  clock += 300; const cr2 = G.crashStart({ bet: 100 }); clock += 400; const cc = G.crashCashout(cr2.id)
+  clock += 300; const cr2 = G.crashStart({ bet: 100 }); clock += 600; const cc = G.crashCashout(cr2.id)
   assert('force win works on test account', wins === 6 && cc.session.result === 'win')
   assert('test sessions: is_test, no balance/stats change', w()[C].balance === before && pC().stats.games === gamesBefore && pC().sessions[0].isTest === true)
   auth().getState().logout(); await auth().getState().login({ email: 'budi@arcade.test', password: 'arcade123' })

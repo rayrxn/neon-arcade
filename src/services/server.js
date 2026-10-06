@@ -8,6 +8,7 @@ import { useNotificationStore } from '@/store/useNotificationStore'
 import { useUiStore, toast } from '@/store/useUiStore'
 import { usePrefsStore } from '@/store/usePrefsStore'
 import { useAdminStore } from '@/store/useAdminStore'
+import { useExtrasStore } from '@/store/useExtrasStore'
 import { can } from '@/config/roles'
 import { AppError } from '@/utils/errors'
 import { translate } from '@/i18n'
@@ -103,6 +104,7 @@ export function applyState(state, userId = useAuthStore.getState().session?.user
   }
   if (state.season) usePlatformStore.setState({ season: state.season })
   if (state.notifications) applyNotifications(userId, state.notifications)
+  if (state.extras) useExtrasStore.setState((s) => ({ byUser: { ...s.byUser, [userId]: state.extras } }))
 }
 
 /** Jenis notifikasi yang bisa dimatikan pemain (Settings → Notifikasi). */
@@ -196,7 +198,7 @@ export function adminSync() {
         return { byUser }
       })
       const a = data.admin ?? {}
-      useAdminStore.setState((s) => ({ logs: a.logs ?? s.logs, events: a.events ?? s.events, errors: a.errors ?? s.errors, codes: a.codes ?? s.codes }))
+      useAdminStore.setState((s) => ({ logs: a.logs ?? s.logs, events: a.events ?? s.events, errors: a.errors ?? s.errors, codes: a.codes ?? s.codes, v2: a.v2 ?? s.v2 }))
       return data
     })
     .catch(() => null)

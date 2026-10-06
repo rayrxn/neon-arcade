@@ -5,7 +5,10 @@ import { ArrowLeft, Award, CheckCircle2, ShieldCheck, Sparkles, Target, Trophy }
 import clsx from 'clsx'
 import GameArt from '@/components/games/GameArt'
 import { CurrencyIcon } from '@/components/ui/Currency'
-import { useDisplayBalance } from '@/store/useWalletStore'
+import { useDisplayBalance, useWalletStore } from '@/store/useWalletStore'
+import { usePrefsStore } from '@/store/usePrefsStore'
+import { SERVER_MODE } from '@/config/runtime'
+import { useExtras } from '@/services/platform2'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { useProgress } from '@/store/useProgressStore'
 import { useFairnessStore } from '@/store/useFairnessStore'
@@ -67,43 +70,96 @@ export const playOutcome = (outcome) => {
   play(outcome?.session?.result === 'win' ? 'win' : outcome?.session?.result === 'push' ? 'success' : 'lose')
 }
 
-/** Input taruhan AC: ½, 2×, Max. Nilai integer, dibatasi saldo. */
-export function BetInput({ value, onChange, disabled, label }) {
+/** Currency used for new rounds (AC or AG). Local mode: AC only. */
+export function useBetCurrency() {
+  const cur = usePrefsStore((s) => s.betCurrency)
+  return SERVER_MODE && cur === 'AG' ? 'AG' : 'AC'
+}
+
+/** Highest bet allowed by the player's Loyalty Card for a currency. */
+export function useMaxBet(currency) {
+  const loyalty = useExtras().loyalty
+  if (!SERVER_MODE) return LIMITS.maxBet
+  return Math.floor(currency === 'AG' ? loyalty.maxBetAG ?? 10 : loyalty.maxBetAC ?? 250000)
+}
+
+/** Bet input: AC/AG switch, ½, 2×, Max. Whole numbers, limited by balance and Loyalty Card. */
+export function BetInput({ value, onChange, disabled, label, acOnly = false }) {
   const { t } = useT()
-  const balance = useDisplayBalance('AC')
-  const set = (v) => onChange(Math.max(LIMITS.minBet, Math.min(LIMITS.maxBet, Math.floor(v) || 0)))
+  const chosen = useBetCurrency()
+  const currency = acOnly ? 'AC' : chosen
+  const setCurrency = usePrefsStore((s) => s.setBetCurrency)
+  const balance = useDisplayBalance(currency)
+  const maxBet = useMaxBet(currency)
+  const clamp = (v) => Math.max(LIMITS.minBet, Math.min(maxBet, Math.floor(v) || 0))
+  const set = (v) => onChange(clamp(v))
   const over = value > balance
+  const overLimit = value > maxBet
+  const switchTo = (c) => {
+    if (c === currency || disabled) return
+    setCurrency(c)
+    onChange(c === 'AG' ? Math.max(1, Math.min(Math.floor(value / 25000) || 1, Math.floor(useWalletStoreBalance(c)) || 1)) : Math.max(LIMITS.minBet, Math.min(100, maxBet)))
+  }
   return (
     <div>
-      <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
+      <div className="mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold">
         <span className="text-slate-400">{label ?? t('play.bet')}</span>
-        <span className="text-slate-500">{t('play.balance')} {formatCoins(balance)}</span>
+        <span className="truncate text-slate-500">{t('play.balance')} {formatCoins(balance)} {currency}</span>
       </div>
-      <div className={clsx('input-shell flex items-center gap-2 pl-3 pr-1.5', over && '!border-neon-red/60')}>
-        <CurrencyIcon currency="AC" size={18} />
+      <div className={clsx('input-shell flex items-center gap-1.5 pl-1.5 pr-1.5', (over || overLimit) && '!border-neon-red/60')}>
+        {SERVER_MODE && !acOnly ? (
+          <div className="flex shrink-0 rounded-lg bg-white/[0.04] p-0.5" role="radiogroup" aria-label={t('play.currency')}>
+            {['AC', 'AG'].map((c) => (
+              <button
+                key={c}
+                type="button"
+                role="radio"
+                aria-checked={currency === c}
+                disabled={disabled}
+                onClick={() => switchTo(c)}
+                className={clsx('flex h-8 items-center gap-1 rounded-md px-1.5 text-[11px] font-bold transition disabled:opacity-50', currency === c ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-slate-200')}
+              >
+                <CurrencyIcon currency={c} size={14} /> {c}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span className="pl-1.5"><CurrencyIcon currency="AC" size={18} /></span>
+        )}
         <input
           id="bet-amount"
           inputMode="numeric"
           value={value || ''}
           disabled={disabled}
-          onChange={(e) => onChange(Math.min(LIMITS.maxBet, Number(e.target.value.replace(/\D/g, '')) || 0))}
+          onChange={(e) => onChange(Math.min(maxBet * 10, Number(e.target.value.replace(/\D/g, '')) || 0))}
           onBlur={() => set(value)}
-          className="num h-11 min-w-0 flex-1 bg-transparent font-mono text-base font-bold text-white outline-none disabled:opacity-60"
+          className="num h-11 min-w-0 flex-1 bg-transparent pl-1 font-mono text-base font-bold text-white outline-none disabled:opacity-60"
           aria-label={label ?? t('play.bet')}
         />
         {[
           ['½', () => set(value / 2)],
           ['2×', () => set(value * 2)],
-          ['Max', () => set(Math.min(balance, LIMITS.maxBet))],
+          ['Max', () => set(Math.min(balance, maxBet))],
         ].map(([lbl, fn]) => (
-          <button key={lbl} type="button" disabled={disabled} onClick={fn} className="h-8 rounded-lg bg-white/[0.06] px-2.5 text-xs font-bold text-slate-300 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-40">
+          <button key={lbl} type="button" disabled={disabled} onClick={fn} className="h-8 rounded-lg bg-white/[0.06] px-2 text-xs font-bold text-slate-300 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-40">
             {lbl}
           </button>
         ))}
       </div>
-      {over && <p className="mt-1.5 text-xs font-medium text-neon-red">{t('errors.insufficient')}</p>}
+      {over && <p className="mt-1.5 text-xs font-medium text-neon-red">{t(currency === 'AG' ? 'errors.insufficientAG' : 'errors.insufficientAC')}</p>}
+      {!over && overLimit && (
+        <p className="mt-1.5 text-xs font-medium text-neon-red">
+          {t('play.errors.loyaltyMaxShort', { max: formatCoins(maxBet), currency })} <Link to="/loyalty" className="underline">{t('loyalty.upgradeLink')}</Link>
+        </p>
+      )}
     </div>
   )
+}
+
+const useWalletStoreBalance = (c) => {
+  const w = useWalletStore.getState()
+  const wallet = w.wallets[w.activeUserId]
+  return c === 'AG' ? wallet?.gems ?? 0 : wallet?.balance ?? 0
 }
 
 /** Tombol pilihan kecil (risk, sisi koin, dll.). */
@@ -165,9 +221,9 @@ export function ResultCard({ outcome, game }) {
         </div>
         <div className="text-right">
           <p className={clsx('num font-mono text-lg font-bold', net > 0 ? 'text-neon-green' : net < 0 ? 'text-slate-300' : 'text-slate-400')}>
-            {formatSigned(net)} <span className="text-xs text-neon-gold">AC</span>
+            {formatSigned(net)} <span className={clsx('text-xs', session.currency === 'AG' ? 'text-neon-purple' : 'text-neon-gold')}>{session.currency ?? 'AC'}</span>
           </p>
-          <p className="text-xs text-slate-500">{t('play.payout')} {formatCoins(session.payout)} AC</p>
+          <p className="text-xs text-slate-500">{t('play.payout')} {formatCoins(session.payout)} {session.currency ?? 'AC'}</p>
         </div>
       </div>
 

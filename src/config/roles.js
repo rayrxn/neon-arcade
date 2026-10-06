@@ -34,6 +34,14 @@ export const PERMISSIONS = [
   'wallet.reverse', // reversal transaksi
   'system.manage', // maintenance, status layanan, season, slow mode
   'release.reset', // reset saldo & progres saat rilis update (Owner)
+  'economy.manage', // kurs AC→AG, transaksi mencurigakan (Owner)
+  'loyalty.manage', // kartu loyalty, XP, batas taruhan (Owner)
+  'playerroles.manage', // role progres pemain (Owner)
+  'shop.manage', // item shop
+  'emotes.manage', // katalog emote
+  'rewards.manage', // misi & klaim hadiah
+  'memberships.manage', // VIP / VVIP (Owner)
+  'moderation.config', // kata terlarang & tingkat moderasi
 ]
 
 const ALL = new Set(PERMISSIONS)
@@ -44,7 +52,7 @@ const ALL = new Set(PERMISSIONS)
  */
 export const ROLE_PERMISSIONS = {
   super_admin: ALL,
-  admin: new Set(PERMISSIONS.filter((p) => !['roles.manage', 'testmode', 'release.reset'].includes(p))),
+  admin: new Set(PERMISSIONS.filter((p) => !['roles.manage', 'testmode', 'release.reset', 'economy.manage', 'loyalty.manage', 'playerroles.manage', 'memberships.manage'].includes(p))),
   moderator: new Set(['dashboard', 'users.view', 'users.ban', 'users.warn', 'moderation', 'reports.view', 'reports.manage', 'sessions.view', 'logs.view']),
   support: new Set(['dashboard', 'users.view', 'users.warn', 'sessions.view', 'rewards.view', 'reports.view', 'support.manage']),
   developer: new Set(['dashboard', 'testmode', 'sessions.view']),

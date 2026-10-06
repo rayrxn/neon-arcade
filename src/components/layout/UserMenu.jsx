@@ -8,7 +8,7 @@ import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { useT } from '@/i18n'
-import RoleTag from '@/components/ui/RoleTag'
+import { StyledName, UserTags } from '@/components/ui/Identity'
 
 export default function UserMenu() {
   const { t } = useT()
@@ -66,7 +66,7 @@ export default function UserMenu() {
             <div className="flex items-center gap-3 px-2 py-2">
               <Avatar user={user} />
               <div className="min-w-0">
-                <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-white"><span className="truncate">{user?.displayName}</span> <RoleTag role={user?.role} /></p>
+                <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-white"><StyledName user={user} className="truncate" /> <UserTags user={user} compact /></p>
                 <p className="truncate text-xs text-slate-500">@{user?.username}</p>
               </div>
             </div>

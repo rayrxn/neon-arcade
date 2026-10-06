@@ -188,6 +188,8 @@ function route(string $method, string $path): array
         $light = in_array($action, ['crash-tick', 'mines-reveal', 'blackjack-action'], true);
         $cur = (string) (body()['currency'] ?? 'AC');
         if (!in_array($cur, ['AC', 'AG'], true)) fail('play.errors.invalid');
+        // Cases are priced in AC.
+        if (str_starts_with($action, 'case-')) $cur = 'AC';
         return with_user(function (Ctx $c) use ($fn, $cur) {
             $c->currency = $cur;
             return $fn($c, body());

@@ -1,4 +1,4 @@
-import { ShieldCheck, ArrowDownLeft, CreditCard, Gamepad2, Gift, History, RotateCcw, Send, Sparkles, Ticket, Trophy, Undo2 } from 'lucide-react'
+import { ShieldCheck, ArrowDownLeft, ArrowRightLeft, CreditCard, Gamepad2, Gift, History, RotateCcw, Send, ShoppingBag, Sparkles, Ticket, Trophy, Undo2 } from 'lucide-react'
 import clsx from 'clsx'
 import { Amount } from '@/components/ui/Currency'
 import { EmptyState } from '@/components/ui/Controls'
@@ -20,6 +20,8 @@ export const TX_META = {
   reward: { icon: Gift, tone: 'text-neon-gold bg-neon-gold/10' },
   adjust: { icon: ShieldCheck, tone: 'text-slate-300 bg-white/[0.06]' },
   reversal: { icon: Undo2, tone: 'text-neon-purple bg-neon-purple/10' },
+  purchase: { icon: ShoppingBag, tone: 'text-neon-purple bg-neon-purple/10' },
+  convert: { icon: ArrowRightLeft, tone: 'text-neon-cyan bg-neon-cyan/10' },
 }
 
 /** Keterangan kedua baris transaksi (user terkait / game / kode). */
@@ -32,6 +34,7 @@ export function txDetail(t, tx) {
   if (tx.type === 'adjust') return t(tx.reference?.startsWith('fairness') ? 'tx.fairness' : 'tx.adminAdjust')
   if (tx.type === 'reward') return t(`tx.rewardSource.${tx.source ?? 'daily'}`)
   if (tx.type === 'reversal') return t('tx.reversalDetail', { id: tx.reversalOf ?? '—' })
+  if (tx.type === 'purchase' || tx.type === 'convert') return tx.reason ?? t('tx.platform')
   if (tx.game) return getGameName(tx.game)
   return t('tx.platform')
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Clock3, History } from 'lucide-react'
 import BalanceCards from '@/components/wallet/BalanceCards'
 import TransactionList from '@/components/wallet/TransactionList'
+import Converter from '@/components/wallet/Converter'
 import { Panel, Segmented } from '@/components/ui/Controls'
 import Button from '@/components/ui/Button'
 import { TX_CATEGORIES, categoryOf, useActiveWallet } from '@/store/useWalletStore'
@@ -28,6 +29,8 @@ export default function WalletPage() {
       </div>
 
       <BalanceCards />
+
+      <Converter />
 
       {pending.length > 0 && (
         <button onClick={() => openModal('tx', { txId: pending[0].id })} className="flex w-full items-center gap-3 rounded-2xl bg-neon-gold/[0.07] px-4 py-3 text-left ring-1 ring-inset ring-neon-gold/25 transition hover:bg-neon-gold/10">

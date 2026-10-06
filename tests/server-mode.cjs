@@ -6,6 +6,8 @@
 const fs = require('fs')
 const path = require('path')
 const vm = require('vm')
+const OUT_DIR = path.join(__dirname, 'output')
+const dump = (name, markup) => { try { fs.mkdirSync(OUT_DIR, { recursive: true }); fs.writeFileSync(path.join(OUT_DIR, `${name}.html`), markup) } catch {} }
 const G = (() => { try { return require('child_process').execSync('npm root -g').toString().trim() } catch { return '' } })()
 const need = (name) => { try { return require(name) } catch { return require(path.join(G, name)) } }
 const React = need('react')
@@ -29,7 +31,7 @@ const motion = new Proxy({}, {
 })
 const Motion = {
   motion, AnimatePresence: ({ children }) => h(React.Fragment, null, children), MotionConfig: ({ children }) => children,
-  animate: () => ({ stop() {} }), useAnimationControls: () => ({ start() {} }),
+  animate: () => ({ stop() {} }), useAnimationControls: () => ({ start() {} }), useMotionValue: (v) => ({ get: () => v, set() {}, on: () => () => {} }), useSpring: (m) => m, useTransform: (m) => m,
   useMotionValue: (v) => ({ v, get() { return this.v }, set(x) { this.v = x } }),
   useTransform: (mv, fn) => ({ get: () => fn(mv.get()) }),
 }
@@ -78,7 +80,7 @@ function makeContext(jar) {
   const localStorage = { getItem: (k) => (k in storage ? storage[k] : null), setItem: (k, v) => { storage[k] = String(v) }, removeItem: (k) => { delete storage[k] } }
   const window = { React, ReactDOM: {}, ReactRouterDOM, Motion, LucideReact, localStorage, document: {}, addEventListener() {}, removeEventListener() {}, NEON_API: API }
   const ctx = {
-    window, React, localStorage, document: { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} }, console, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {},
+    window, React, localStorage, document: { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} }, console, URLSearchParams, URL, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {},
     TextEncoder, crypto: globalThis.crypto, Intl, Date, Math, JSON, Promise, Object, Array, Set, Map, Number, String, RegExp, Error, structuredClone,
     getComputedStyle: () => ({ getPropertyValue: () => '0 0 0' }), sessionStorage: { getItem: () => null, setItem() {} }, ResizeObserver: class { observe() {} disconnect() {} },
     performance, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, fetch: makeFetch(jar),
@@ -338,6 +340,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
     home: 'src/pages/HomePage.jsx', games: 'src/pages/GamesPage.jsx', wallet: 'src/pages/WalletPage.jsx', rewards: 'src/pages/RewardsPage.jsx',
     history: 'src/pages/HistoryPage.jsx', profile: 'src/pages/ProfilePage.jsx', settings: 'src/pages/SettingsPage.jsx', inventory: 'src/pages/InventoryPage.jsx',
     leaderboard: 'src/pages/LeaderboardPage.jsx', redeem: 'src/pages/RedeemPage.jsx',
+    shop: 'src/pages/ShopPage.jsx', loyalty: 'src/pages/LoyaltyPage.jsx', membership: 'src/pages/MembershipPage.jsx', chat: 'src/pages/ChatPage.jsx',
   }
   for (const [slug, f] of Object.entries({ 'case-opening': 'CaseOpening', 'case-battle': 'CaseBattle', crash: 'Crash', plinko: 'Plinko', mines: 'Mines', dice: 'Dice', limbo: 'Limbo', coinflip: 'Coinflip', roulette: 'Roulette', blackjack: 'Blackjack' })) pages['g-' + slug] = `src/games/${f}.jsx`
   const AppLayout = L('src/components/layout/AppLayout.jsx').default
@@ -347,6 +350,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
     outlet = h(Page, name.startsWith('g-') ? { game: L('src/config/games.js').getGame(name.slice(2)) } : {})
     try {
       const markup = Server.renderToString(h(AppLayout))
+      dump(`sm-${name}`, markup)
       const bad = /NaN|undefined|\[object Object\]/.exec(markup.replace(/<[^>]+>/g, ' '))
       assert(`render ${name} (mode server)`, !bad, bad ? bad[0] : '')
     } catch (e) {
@@ -363,6 +367,9 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
     rewards: 'src/admin/pages/Content.jsx#RewardsOverview', daily: 'src/admin/pages/Content.jsx#DailyAdmin', quests: 'src/admin/pages/Content.jsx#QuestsAdmin',
     achievements: 'src/admin/pages/Content.jsx#AchievementsAdmin', codes: 'src/admin/pages/Content.jsx#CodesAdmin', announcements: 'src/admin/pages/Content.jsx#AnnouncementsAdmin',
     logs: 'src/admin/pages/Content.jsx#LogsAdmin', testmode: 'src/admin/pages/Content.jsx#TestModeAdmin', settings: 'src/admin/pages/Content.jsx#SettingsAdmin',
+    economy: 'src/admin/pages/Platform.jsx#EconomyAdmin', loyalty: 'src/admin/pages/Platform.jsx#LoyaltyAdmin', 'player-roles': 'src/admin/pages/Platform.jsx#PlayerRolesAdmin',
+    shop: 'src/admin/pages/Platform.jsx#ShopAdmin', emotes: 'src/admin/pages/Platform.jsx#EmotesAdmin', missions: 'src/admin/pages/Platform.jsx#MissionsAdmin',
+    memberships: 'src/admin/pages/Platform.jsx#MembershipsAdmin', 'chat-filter': 'src/admin/pages/Platform.jsx#ChatModerationAdmin',
   }
   const myId = me()
   auth.setState((s) => ({ users: { ...s.users, [email]: { ...s.users[email], role: 'super_admin' } } }))
@@ -373,6 +380,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
     outlet = h(Page, name === 'user' ? { id: myId } : {})
     try {
       const markup = Server.renderToString(h(AdminLayout))
+      dump(`sm-a-${name}`, markup)
       const bad = /NaN|undefined|\[object Object\]/.exec(markup.replace(/<[^>]+>/g, ' '))
       assert(`render admin ${name} (mode server)`, !bad, bad ? bad[0] : '')
     } catch (e) {
