@@ -4,6 +4,7 @@ import { useNotificationStore } from '@/store/useNotificationStore'
 import { AG_HOLD_MS, TRANSFER_LIMITS } from '@/config/economy'
 import { AppError } from '@/utils/errors'
 import { SERVER_MODE } from '@/config/runtime'
+import { act, sync } from './server'
 import { dayKey } from '@/utils/format'
 
 /**
@@ -42,7 +43,12 @@ export function validateTransfer({ fromUserId, toUserId, currency, amount }) {
 }
 
 export async function sendTransfer({ toUserId, currency, amount, note = '' }) {
-  if (SERVER_MODE) throw new AppError('errors.serverSoon')
+  if (SERVER_MODE) {
+    const { result, apply } = await act('transfer', { toUserId, currency, amount, note })
+    apply()
+    sync()
+    return { ...result, tx: useWalletStore.getState().wallets[useWalletStore.getState().activeUserId]?.transactions?.[0] ?? null }
+  }
   await wait(750)
   const me = getCurrentUser()
   if (!me) throw new AppError('errors.sessionExpired')

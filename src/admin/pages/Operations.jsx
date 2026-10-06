@@ -273,10 +273,10 @@ export function AntiCheat() {
         <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} tone={dialog.status === 'dismissed' ? 'primary' : 'danger'}
           title={dialog.kind === 'flag' ? t(`admin.flagStatus.${dialog.status}`) : dialog.kind === 'cancel' ? t('admin.ac.cancelReward') : t(`admin.ua.${dialog.kind}`)}
           description={`@${sel.username} · ${t(`admin.flags.${sel.type}`)}`}
-          onConfirm={(r) => {
+          onConfirm={async (r) => {
             if (dialog.kind === 'flag') return admin.updateFlag(sel.userId, sel.id, dialog.status, r)
             if (dialog.kind === 'cancel') {
-              admin.invalidateSession(sel.userId, sel.sessionId, r, sel.type)
+              await admin.invalidateSession(sel.userId, sel.sessionId, r, sel.type)
               return admin.updateFlag(sel.userId, sel.id, 'confirmed', r)
             }
             if (dialog.kind === 'walletFreeze') return admin.freezeWallet(sel.userId, true, r)

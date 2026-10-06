@@ -60,7 +60,7 @@ function NewTicket({ onDone }) {
     setBusy(true)
     try {
       await new Promise((r) => setTimeout(r, 300))
-      const ticket = createTicket(form)
+      const ticket = await createTicket(form)
       toast({ tone: 'success', title: t('support.created', { id: ticket.id }) })
       onDone(ticket)
     } catch (err) {
@@ -108,10 +108,10 @@ function Reply({ ticket }) {
   const { t } = useT()
   const [text, setText] = useState('')
   const [error, setError] = useState(null)
-  const send = (e) => {
+  const send = async (e) => {
     e.preventDefault()
     try {
-      replyTicket(ticket.id, text)
+      await replyTicket(ticket.id, text)
       setText('')
     } catch (err) {
       setError(t(errorKey(err), err?.vars))
@@ -121,7 +121,7 @@ function Reply({ ticket }) {
     return (
       <div className="flex items-center justify-between gap-3 border-t hairline px-4 py-3 sm:px-5">
         <p className="text-xs text-slate-500">{t('support.closedNote')}</p>
-        <Button size="sm" variant="ghost" onClick={() => { try { reopenTicket(ticket.id) } catch (err) { toast({ tone: 'error', title: t(errorKey(err)) }) } }}><RotateCcw className="h-4 w-4" /> {t('support.reopen')}</Button>
+        <Button size="sm" variant="ghost" onClick={async () => { try { await reopenTicket(ticket.id) } catch (err) { toast({ tone: 'error', title: t(errorKey(err), err?.vars) }) } }}><RotateCcw className="h-4 w-4" /> {t('support.reopen')}</Button>
       </div>
     )
   return (

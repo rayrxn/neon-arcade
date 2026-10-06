@@ -298,8 +298,8 @@ export function AnnouncementsAdmin() {
       </div>
       {confirm && (
         <ReasonDialog open onClose={() => setConfirm(false)} adminName={me.username} tone="primary" title={form.title}
-          onConfirm={(r) => {
-            admin.saveAnnouncement({ ...form, startAt: form.startAt ? new Date(form.startAt).getTime() : null, endAt: form.endAt ? new Date(form.endAt).getTime() : null }, r)
+          onConfirm={async (r) => {
+            await admin.saveAnnouncement({ ...form, startAt: form.startAt ? new Date(form.startAt).getTime() : null, endAt: form.endAt ? new Date(form.endAt).getTime() : null }, r)
             setForm(empty)
           }}>
           <p className="text-sm text-slate-400">{form.message}</p>

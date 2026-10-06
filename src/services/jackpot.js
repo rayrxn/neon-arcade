@@ -3,6 +3,7 @@ import { usePlatformStore } from '@/store/usePlatformStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { JACKPOT_THRESHOLD } from '@/config/economy'
 import { randomHex } from '@/utils/rng'
+import { SERVER_MODE } from '@/config/runtime'
 
 /**
  * Pengumuman jackpot. Game memanggil recordWin() setelah payout (lihat services/games.js).
@@ -10,6 +11,7 @@ import { randomHex } from '@/utils/rng'
  * dan dikirim sebagai notifikasi ke akun lain.
  */
 export function recordWin({ userId, amount, game }) {
+  if (SERVER_MODE) return null // dicatat server saat payout
   if (amount < JACKPOT_THRESHOLD) return null
   const user = getUserById(userId)
   if (!user) return null

@@ -113,11 +113,14 @@ tetap memakai service layer di browser seperti sebelumnya.
   saldo AC/AG (ledger `wallet_post`, idempoten, tidak bisa minus), 10 game (port 1:1 dari `services/games.js`,
   RNG provably fair identik — `api/tests/rng_compare.mjs`), daily reward, quest, XP/level/milestone L15/L50,
   achievement, season, seed provably fair, profil & kosmetik. Flag anti-cheat tetap tersimpan walau request ditolak.
-- **Masih di browser (Tahap 2):** transfer antar pemain & redeem kode (sementara dinonaktifkan di mode server),
-  panel admin (membaca data lokal; aksi admin dinonaktifkan), teman, chat, notifikasi, laporan, tiket support.
+- **Tahap 2 (juga di server):** transfer antar pemain (AG ditahan 60 detik, limit harian), redeem kode (kode bawaan +
+  buatan admin), jackpot, chat global (moderasi, slow mode, mention), teman/blokir/favorit, notifikasi lintas perangkat,
+  laporan, tiket support, dan **seluruh admin panel**: snapshot data asli + 30 aksi admin dengan RBAC, alasan wajib, dan
+  audit log (`api/lib/admin.php`). Akun demo tidak dibuat di mode server. Data bersama disegarkan tiap 15 detik
+  (4 detik di halaman chat) karena hosting biasa tidak mendukung WebSocket.
 - **Kode:** `api/` (router `index.php`, aturan di `api/lib/*.php`), `db/migrations/*.sql`, `src/services/server.js`,
   `src/config/runtime.js`, `src/components/runtime/ServerGate.jsx`.
-- **Tes:** `bash api/tests/run.sh` (API + RNG vs JS), `node tests/server-mode.cjs` (bundle frontend asli ↔ API lokal),
+- **Tes:** `bash api/tests/run.sh` (API tahap 1 & 2 + RNG vs JS), `bash tests/run-server-mode.sh` (bundle frontend asli ↔ API lokal, DB baru),
   ditambah `npm test` & `npm run test:db` untuk mode lokal dan database.
 
 ### Alur deploy

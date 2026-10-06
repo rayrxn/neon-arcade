@@ -210,6 +210,7 @@ function finish(Ctx $c, array $round, $multiplier, string $result, array $detail
         if (empty($c->meta['biggestWin']) || $payout > $c->meta['biggestWin']['amount']) {
             $c->meta['biggestWin'] = ['amount' => $payout, 'game' => $round['game'], 'at' => $c->now];
         }
+        if ($result === 'win') record_jackpot($round['userId'], (float) $payout, $round['game']);
     }
     $sessionArr = $session;
     $sessionArr['detail'] = $detail;

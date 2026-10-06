@@ -10,6 +10,8 @@ import { trackMetric } from './progression'
 import { createReport } from './reports'
 import { emit } from './events'
 import { play } from './sound'
+import { SERVER_MODE } from '@/config/runtime'
+import { api, applyOut, applyState, background, sync } from './server'
 
 /**
  * Global Chat — "API" mode lokal (pesan tersinkron antar-tab di browser yang sama).
@@ -48,6 +50,15 @@ export function moderate(text) {
 export async function sendMessage(raw) {
   const me = getCurrentUser()
   if (!me) throw new AppError('errors.sessionExpired')
+  if (SERVER_MODE) {
+    const data = await api('chat/send', { text: String(raw ?? '') })
+    applyState(data.state)
+    applyOut(me.id, data.result.out)
+    usePlatformStore.setState((s) => ({ chat: [...s.chat.filter((m) => m.id !== data.result.message.id), data.result.message].slice(-200) }))
+    play('chat')
+    sync()
+    return data.result.message
+  }
   if (me.mutedUntil && me.mutedUntil > Date.now()) {
     if (me.mutedUntil > Date.now() + 365 * 86_400_000) throw new AppError('chat.errors.mutedPermanent')
     throw new AppError('chat.errors.muted', { until: new Date(me.mutedUntil).toLocaleString() })
@@ -95,6 +106,7 @@ export async function sendMessage(raw) {
 export function hideMessage(messageId) {
   const me = getCurrentUser()
   if (me) usePlatformStore.getState().hideMessage(me.id, messageId)
+  if (me && SERVER_MODE) background('chat/hide', { messageId })
 }
 
 /** Report pesan → antrean moderasi (pesan juga disembunyikan untuk pelapor). */

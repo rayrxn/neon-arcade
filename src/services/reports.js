@@ -7,6 +7,8 @@ import { AppError } from '@/utils/errors'
 import { randomHex } from '@/utils/rng'
 import { emit } from './events'
 import { atomic } from './tx'
+import { SERVER_MODE } from '@/config/runtime'
+import { social } from './server'
 
 /**
  * Report dari user (tabel reports). Masuk ke antrean /admin/moderation dengan status `new`.
@@ -27,6 +29,10 @@ const reports = () => useAdminStore.getState().reports
 export function createReport({ targetType, targetUserId = null, messageId = null, sessionId = null, reason, description }) {
   const me = getCurrentUser()
   if (!me) throw new AppError('errors.sessionExpired')
+  if (SERVER_MODE) {
+    if (messageId) usePlatformStore.getState().hideMessage(me.id, messageId)
+    return social('report', { targetType, targetUserId, messageId, sessionId, reason, description })
+  }
   if (!REPORT_TYPES.includes(targetType) || !REPORT_REASONS.includes(reason)) throw new AppError('reports.errors.invalid')
   const text = String(description ?? '').replace(/\s+/g, ' ').trim()
   if (text.length < 10) throw new AppError('reports.errors.short')

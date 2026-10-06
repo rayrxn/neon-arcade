@@ -28,9 +28,9 @@ function ReportDetail({ report, onClose }) {
   const [assignee, setAssignee] = useState(report?.assignee?.id ?? '')
   if (!report) return null
   const staff = staffList('reports.manage')
-  const run = (action, opts = {}) => {
+  const run = async (action, opts = {}) => {
     try {
-      reportAction(report.id, action, opts)
+      await reportAction(report.id, action, opts)
       toast({ tone: 'success', title: t('admin.done') })
     } catch (err) {
       toast({ tone: 'error', title: t(errorKey(err), err?.vars) })

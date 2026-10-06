@@ -7,6 +7,8 @@ import { usePlatformStore } from '@/store/usePlatformStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { useUiStore, toast } from '@/store/useUiStore'
 import { usePrefsStore } from '@/store/usePrefsStore'
+import { useAdminStore } from '@/store/useAdminStore'
+import { can } from '@/config/roles'
 import { AppError } from '@/utils/errors'
 import { translate } from '@/i18n'
 import { emit } from './events'
@@ -90,6 +92,134 @@ export function applyState(state, userId = useAuthStore.getState().session?.user
     })
   }
   if (state.season) usePlatformStore.setState({ season: state.season })
+  if (state.notifications) applyNotifications(userId, state.notifications)
+}
+
+/** Jenis notifikasi yang bisa dimatikan pemain (Settings → Notifikasi). */
+const PREF_FOR_KIND = {
+  transferIn: 'transfers', transferOut: 'transfers', transferPending: 'transfers', transferFailed: 'transfers', redeem: 'redeem',
+  jackpot: 'jackpots', mention: 'mentions', levelUp: 'progress', quest: 'progress', achievement: 'progress', daily: 'progress',
+  reward: 'progress', friendRequest: 'friends', friendAccept: 'friends',
+}
+
+/** Notifikasi dari server → store (jenis yang dimatikan pemain disaring di sini). */
+export function applyNotifications(userId, list) {
+  const prefs = usePrefsStore.getState().notifications ?? {}
+  const items = list.filter((n) => !(PREF_FOR_KIND[n.kind] && prefs[PREF_FOR_KIND[n.kind]] === false))
+  useNotificationStore.setState((s) => ({ byUser: { ...s.byUser, [userId]: items } }))
+}
+
+/** Ganti daftar user lain di useAuthStore dengan data server (user aktif dipertahankan). */
+function applyUsers(list) {
+  const meId = useAuthStore.getState().session?.userId
+  useAuthStore.setState((s) => {
+    const users = {}
+    for (const [k, u] of Object.entries(s.users)) if (u.id === meId) users[k] = u
+    for (const u of list) if (u.id !== meId) users[u.email || u.key || `u:${u.id}`] = u
+    return { users }
+  })
+}
+
+let syncing = null
+/** Selama data admin (superset: email, warning, dompet, flag) masih segar, sync publik tidak menimpanya. */
+let adminFreshUntil = 0
+/** Data bersama (pemain lain, chat, teman, notifikasi, pengumuman, sistem). */
+export function sync() {
+  if (!useAuthStore.getState().session) return Promise.resolve(null)
+  if (syncing) return syncing
+  syncing = api('sync')
+    .then((data) => {
+      const meId = useAuthStore.getState().session?.userId
+      if (!meId || !data) return null
+      if (typeof data.serverTime === 'number') clockOffset = data.serverTime - Date.now()
+      if (Date.now() > adminFreshUntil) {
+        applyUsers(data.users ?? [])
+        useProgressStore.setState((s) => {
+          const byUser = {}
+          if (s.byUser[meId]) byUser[meId] = s.byUser[meId]
+          for (const [id, p] of Object.entries(data.progress ?? {})) if (id !== meId) byUser[id] = p
+          return { byUser }
+        })
+      }
+      usePlatformStore.setState({ ...data.platform })
+      const a = data.admin ?? {}
+      useAdminStore.setState((s) => ({
+        announcements: a.announcements ?? s.announcements,
+        gameConfig: a.gameConfig ?? s.gameConfig,
+        system: a.system ?? s.system,
+        reports: a.reports ?? s.reports,
+        tickets: a.tickets ?? s.tickets,
+        codes: a.codes && Object.keys(a.codes).length ? a.codes : s.codes,
+      }))
+      if (data.notifications) applyNotifications(meId, data.notifications)
+      return data
+    })
+    .catch(() => null)
+    .finally(() => {
+      syncing = null
+    })
+  return syncing
+}
+
+let adminSyncing = null
+/** Data admin lengkap (semua user, dompet, progres, audit log, event). Hanya staff. */
+export function adminSync() {
+  const me = useAuthStore.getState().session?.userId
+  const role = me ? Object.values(useAuthStore.getState().users).find((u) => u.id === me)?.role : null
+  if (!can(role, 'dashboard')) return Promise.resolve(null)
+  if (adminSyncing) return adminSyncing
+  adminSyncing = api('admin/snapshot')
+    .then((data) => {
+      const meId = useAuthStore.getState().session?.userId
+      if (!meId || !data) return null
+      adminFreshUntil = Date.now() + 25_000
+      applyUsers(data.users ?? [])
+      // Data diri sendiri tetap dari snapshot pribadi (lebih lengkap); sisanya dari admin.
+      useWalletStore.setState((s) => {
+        const wallets = { ...data.wallets }
+        if (s.wallets[meId]) wallets[meId] = s.wallets[meId]
+        return { wallets }
+      })
+      useProgressStore.setState((s) => {
+        const byUser = { ...data.progress }
+        if (s.byUser[meId]) byUser[meId] = { ...s.byUser[meId], flags: data.progress?.[meId]?.flags ?? [] }
+        return { byUser }
+      })
+      const a = data.admin ?? {}
+      useAdminStore.setState((s) => ({ logs: a.logs ?? s.logs, events: a.events ?? s.events, errors: a.errors ?? s.errors, codes: a.codes ?? s.codes }))
+      return data
+    })
+    .catch(() => null)
+    .finally(() => {
+      adminSyncing = null
+    })
+  return adminSyncing
+}
+
+/** Aksi admin di server, lalu segarkan data admin & platform. */
+export async function adminCall(name, args = {}) {
+  const data = await api('admin/action', { name, args })
+  // Urutan penting: data publik dulu, data admin (lebih lengkap) terakhir.
+  await sync()
+  await adminSync()
+  return data.result
+}
+
+/** Aksi sosial di server (respons { result }), lalu sinkron. */
+export async function social(path, body = {}) {
+  const data = await api(path, body)
+  await sync()
+  return data.result
+}
+
+/** Perubahan optimistis: kirim ke server di belakang layar; kalau ditolak, tampilan dikembalikan dari server. */
+export function background(path, body = {}) {
+  api(path, body)
+    .then(() => sync())
+    .catch((err) => {
+      toast({ tone: 'error', title: translate(lang(), err?.code ?? 'errors.generic', err?.vars) })
+      sync()
+    })
 }
 
 /** User dari server → useAuthStore (bentuk sama dengan akun lokal). */
@@ -142,7 +272,8 @@ export async function hydrate() {
  */
 export function applyOut(userId, out) {
   if (!out || !userId) return
-  const notify = (kind, data) => useNotificationStore.getState().notify(userId, kind, data)
+  // Notifikasi quest/achievement/level dibuat server (ikut di state.notifications).
+  const notify = () => {}
   if (out.xp > 0) emit('XP_GAINED', { userId, xp: out.xp })
   for (const q of out.quests ?? []) {
     notify('quest', { scope: q.scope, quest: q.id })

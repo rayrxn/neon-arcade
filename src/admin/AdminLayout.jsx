@@ -12,6 +12,7 @@ import { useCurrentUser } from '@/store/useAuthStore'
 import { can } from '@/config/roles'
 import { SERVER_MODE } from '@/config/runtime'
 import { ErrorBoundary } from '@/components/ui/PageKit'
+import { adminSync } from '@/services/server'
 import { logAdminLogin } from '@/services/admin'
 import { useT } from '@/i18n'
 
@@ -70,6 +71,11 @@ export default function AdminLayout() {
 
   useEffect(() => {
     logAdminLogin()
+    if (!SERVER_MODE) return
+    // Data admin asli dari server: dimuat saat panel dibuka, lalu disegarkan tiap 20 detik.
+    adminSync()
+    const id = setInterval(() => document.visibilityState === 'visible' && adminSync(), 20_000)
+    return () => clearInterval(id)
   }, [])
   useEffect(() => {
     setOpen(false)
@@ -121,9 +127,6 @@ export default function AdminLayout() {
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-          {SERVER_MODE && (
-            <p className="mb-4 rounded-xl border border-neon-gold/30 bg-neon-gold/10 px-4 py-3 text-xs leading-relaxed text-neon-gold">{t('server.adminBanner')}</p>
-          )}
           <ErrorBoundary resetKey={pathname} name={`admin${pathname}`}>
             <Outlet />
           </ErrorBoundary>

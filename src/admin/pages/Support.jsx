@@ -18,9 +18,9 @@ function TicketAdmin({ ticket, onClose }) {
   const [reply, setReply] = useState('')
   const [note, setNote] = useState('')
   const staff = staffList('support.manage')
-  const run = (fn) => {
+  const run = async (fn) => {
     try {
-      fn()
+      await fn()
       toast({ tone: 'success', title: t('admin.done') })
       return true
     } catch (err) {
@@ -54,12 +54,12 @@ function TicketAdmin({ ticket, onClose }) {
         {ticket.status === 'CLOSED' || ticket.status === 'RESOLVED' ? (
           <Button size="sm" variant="ghost" onClick={() => run(() => reopenTicket(ticket.id))}>{t('support.reopen')}</Button>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); if (run(() => replyTicket(ticket.id, reply))) setReply('') }} className="flex gap-2">
+          <form onSubmit={async (e) => { e.preventDefault(); if (await run(() => replyTicket(ticket.id, reply))) setReply('') }} className="flex gap-2">
             <input value={reply} onChange={(e) => setReply(e.target.value)} placeholder={t('support.staffReplyPh')} className={inputCls} />
             <Button type="submit" size="sm" disabled={reply.trim().length < 2}><Send className="h-4 w-4" /></Button>
           </form>
         )}
-        <form onSubmit={(e) => { e.preventDefault(); if (run(() => addTicketNote(ticket.id, note))) setNote('') }} className="flex gap-2">
+        <form onSubmit={async (e) => { e.preventDefault(); if (await run(() => addTicketNote(ticket.id, note))) setNote('') }} className="flex gap-2">
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('support.notePh')} className={inputCls} />
           <Button type="submit" size="sm" variant="ghost" disabled={note.trim().length < 2}>{t('moderation.actions.note')}</Button>
         </form>

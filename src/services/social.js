@@ -6,6 +6,8 @@ import { GAMES } from '@/config/games'
 import { AppError } from '@/utils/errors'
 import { randomHex } from '@/utils/rng'
 import { emit } from './events'
+import { SERVER_MODE } from '@/config/runtime'
+import { background, social } from './server'
 
 /**
  * Teman, blokir, favorit (tabel friendships, user_blocks, favorites).
@@ -38,6 +40,7 @@ export function findUserByName(name) {
 }
 
 export async function sendFriendRequest(username) {
+  if (SERVER_MODE) return social('friends/request', { username })
   await new Promise((r) => setTimeout(r, 200))
   const user = me()
   const target = findUserByName(username)
@@ -63,6 +66,10 @@ export function acceptFriend(requestId) {
   const row = platform().friendships.find((f) => f.id === requestId)
   if (!row || row.to !== user.id || row.status !== 'pending') throw new AppError('friends.errors.noRequest')
   usePlatformStore.setState((s) => ({ friendships: s.friendships.map((f) => (f.id === requestId ? { ...f, status: 'accepted', acceptedAt: Date.now() } : f)) }))
+  if (SERVER_MODE) {
+    background('friends/accept', { id: requestId })
+    return row
+  }
   notify(row.from, 'friendAccept', { username: user.username })
   emit('FRIEND_ACCEPTED', { userId: user.id, friendId: row.from })
   return row
@@ -73,6 +80,7 @@ export function declineFriend(requestId) {
   const row = platform().friendships.find((f) => f.id === requestId)
   if (!row || row.status !== 'pending' || (row.to !== user.id && row.from !== user.id)) throw new AppError('friends.errors.noRequest')
   usePlatformStore.setState((s) => ({ friendships: s.friendships.filter((f) => f.id !== requestId) }))
+  if (SERVER_MODE) background('friends/decline', { id: requestId })
 }
 
 export function removeFriend(friendId) {
@@ -80,6 +88,7 @@ export function removeFriend(friendId) {
   const row = pairOf(user.id, friendId)
   if (!row) throw new AppError('friends.errors.noRequest')
   usePlatformStore.setState((s) => ({ friendships: s.friendships.filter((f) => f.id !== row.id) }))
+  if (SERVER_MODE) background('friends/remove', { friendId })
   emit('FRIEND_REMOVED', { userId: user.id, friendId })
 }
 
@@ -90,12 +99,14 @@ export function blockUser(targetId) {
     blocks: { ...s.blocks, [user.id]: [...new Set([...(s.blocks[user.id] ?? []), targetId])] },
     friendships: s.friendships.filter((f) => !((f.from === user.id && f.to === targetId) || (f.from === targetId && f.to === user.id))),
   }))
+  if (SERVER_MODE) background('block', { userId: targetId, on: true })
   emit('USER_BLOCKED', { userId: user.id, targetId })
 }
 
 export function unblockUser(targetId) {
   const user = me()
   usePlatformStore.setState((s) => ({ blocks: { ...s.blocks, [user.id]: (s.blocks[user.id] ?? []).filter((id) => id !== targetId) } }))
+  if (SERVER_MODE) background('block', { userId: targetId, on: false })
 }
 
 /** Daftar teman lengkap untuk halaman Friends. */
@@ -119,6 +130,7 @@ export function toggleFavorite(slug) {
   const list = platform().favorites[user.id] ?? []
   const on = !list.includes(slug)
   usePlatformStore.setState((s) => ({ favorites: { ...s.favorites, [user.id]: on ? [slug, ...list] : list.filter((x) => x !== slug) } }))
+  if (SERVER_MODE) background('favorite', { slug })
   return on
 }
 export const favoritesOf = (userId, state = platform()) => state.favorites[userId] ?? []

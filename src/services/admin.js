@@ -9,6 +9,7 @@ import { ITEMS, REDEEM_CODES } from '@/config/economy'
 import { GAMES } from '@/config/games'
 import { AppError } from '@/utils/errors'
 import { SERVER_MODE } from '@/config/runtime'
+import { adminCall } from './server'
 import { round2 } from '@/utils/format'
 import { randomHex } from '@/utils/rng'
 import { play } from './sound'
@@ -41,8 +42,6 @@ export function requirePerm(permission) {
 }
 
 function requireReason(reason) {
-  // Tahap 1 server: aksi admin belum dipindah ke API → jangan ubah data di browser saja.
-  if (SERVER_MODE) throw new AppError('errors.serverSoon')
   if (!reason || String(reason).trim().length < 5) throw new AppError('admin.errors.reason')
   return String(reason).trim().slice(0, 300)
 }
@@ -133,12 +132,17 @@ export function logAdminLogin() {
   } catch {
     /* sessionStorage tidak tersedia */
   }
+  if (SERVER_MODE) {
+    adminCall('logAdminLogin').catch(() => {})
+    return
+  }
   log(admin, 'admin.login', null, '—')
 }
 
 // ───────────────────────────── Users ─────────────────────────────
 
 export function editUser(userId, patch, reason) {
+  if (SERVER_MODE) return adminCall('editUser', { userId, patch, reason })
   const admin = requirePerm('users.edit')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId, { allowSelf: true })
@@ -160,6 +164,7 @@ export function editUser(userId, patch, reason) {
 }
 
 export function setRole(userId, role, reason) {
+  if (SERVER_MODE) return adminCall('setRole', { userId, role, reason })
   const admin = requirePerm('roles.manage')
   const r = requireReason(reason)
   if (!ROLES.includes(role)) throw new AppError('admin.errors.invalid')
@@ -171,6 +176,7 @@ export function setRole(userId, role, reason) {
 
 /** hours = null → permanen. Moderator hanya boleh ban sementara (maks 72 jam). */
 export function banUser(userId, hours, reason) {
+  if (SERVER_MODE) return adminCall('banUser', { userId, hours, reason })
   const admin = requirePerm('users.ban')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId)
@@ -185,6 +191,7 @@ export function banUser(userId, hours, reason) {
 }
 
 export function unbanUser(userId, reason) {
+  if (SERVER_MODE) return adminCall('unbanUser', { userId, reason })
   const admin = requirePerm('users.ban')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId)
@@ -195,6 +202,7 @@ export function unbanUser(userId, reason) {
 }
 
 export function freezeAccount(userId, frozen, reason) {
+  if (SERVER_MODE) return adminCall('freezeAccount', { userId, frozen, reason })
   const admin = requirePerm('users.freeze')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId)
@@ -204,6 +212,7 @@ export function freezeAccount(userId, frozen, reason) {
 }
 
 export function freezeWallet(userId, frozen, reason) {
+  if (SERVER_MODE) return adminCall('freezeWallet', { userId, frozen, reason })
   const admin = requirePerm('users.freeze')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId, { allowSelf: false })
@@ -217,6 +226,7 @@ export function freezeWallet(userId, frozen, reason) {
 
 /** Tambah (delta > 0) atau kurangi (delta < 0) saldo. Saldo tidak boleh negatif. */
 export function adjustCurrency(userId, currency, delta, reason) {
+  if (SERVER_MODE) return adminCall('adjustCurrency', { userId, currency, delta, reason })
   const admin = requirePerm('wallet.manage')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId, { allowSelf: true })
@@ -234,6 +244,7 @@ export function adjustCurrency(userId, currency, delta, reason) {
 }
 
 export function resetCurrency(userId, which, reason) {
+  if (SERVER_MODE) return adminCall('resetCurrency', { userId, which, reason })
   const admin = requirePerm('wallet.manage')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId, { allowSelf: true })
@@ -251,6 +262,7 @@ export function resetCurrency(userId, which, reason) {
 // ───────────────────────────── Progress ─────────────────────────────
 
 export function resetProgress(userId, part, reason) {
+  if (SERVER_MODE) return adminCall('resetProgress', { userId, part, reason })
   const admin = requirePerm('progress.reset')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId, { allowSelf: true })
@@ -287,6 +299,7 @@ export function allFlags() {
 }
 
 export function updateFlag(userId, flagId, status, reason) {
+  if (SERVER_MODE) return adminCall('updateFlag', { userId, flagId, status, reason })
   const admin = requirePerm('anticheat')
   const r = requireReason(reason)
   const target = getUserById(userId)
@@ -308,6 +321,7 @@ export function updateFlag(userId, flagId, status, reason) {
  * Keuntungan bersih dari sesi itu ditarik kembali dari wallet (tidak sampai negatif).
  */
 export function invalidateSession(userId, sessionId, reason, violation = 'manual') {
+  if (SERVER_MODE) return adminCall('invalidateSession', { userId, sessionId, reason, violation })
   const admin = requirePerm('sessions.invalidate')
   const r = requireReason(reason)
   const target = getUserById(userId)
@@ -340,6 +354,7 @@ export function invalidateSession(userId, sessionId, reason, violation = 'manual
 // ───────────────────────────── Moderation ─────────────────────────────
 
 export function deleteMessage(messageId, reason) {
+  if (SERVER_MODE) return adminCall('deleteMessage', { messageId, reason })
   const admin = requirePerm('moderation')
   const r = requireReason(reason)
   const msg = usePlatformStore.getState().chat.find((m) => m.id === messageId)
@@ -354,6 +369,7 @@ export function deleteMessage(messageId, reason) {
  * Moderator maks 7 hari; mute permanen butuh users.freeze (admin ke atas).
  */
 export function muteUser(userId, minutes, reason) {
+  if (SERVER_MODE) return adminCall('muteUser', { userId, minutes, reason })
   const admin = requirePerm('moderation')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId)
@@ -371,6 +387,7 @@ export const unmuteUser = (userId, reason) => muteUser(userId, 0, reason)
 
 /** Warning tercatat di profil moderasi user; 3 warning aktif → saran tindakan di panel. */
 export function warnUser(userId, reason) {
+  if (SERVER_MODE) return adminCall('warnUser', { userId, reason })
   const admin = requirePerm('users.warn')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId)
@@ -383,6 +400,7 @@ export function warnUser(userId, reason) {
 }
 
 export function removeWarning(userId, warningId, reason) {
+  if (SERVER_MODE) return adminCall('removeWarning', { userId, warningId, reason })
   const admin = requirePerm('users.warn')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId)
@@ -403,6 +421,7 @@ export const activeWarnings = (user) => (user?.warnings ?? []).filter((w) => !w.
  * Idempotency key `reversal:<txId>` → satu transaksi tidak bisa di-reverse dua kali.
  */
 export function reverseTransaction(userId, txId, reason) {
+  if (SERVER_MODE) return adminCall('reverseTransaction', { userId, txId, reason })
   const admin = requirePerm('wallet.reverse')
   const r = requireReason(reason)
   const target = requireTarget(admin, userId, { allowSelf: true })
@@ -440,6 +459,7 @@ const REPORT_ACTIONS = { investigate: 'investigating', resolve: 'resolved', dism
  * Reporter mendapat notifikasi setiap status berubah (tanpa detail internal).
  */
 export function reportAction(reportId, action, { reason = '', assigneeId = null, note = '', resolution = '' } = {}) {
+  if (SERVER_MODE) return adminCall('reportAction', { reportId, action, reason, assigneeId, note, resolution })
   const admin = requirePerm('reports.manage')
   const report = useAdminStore.getState().reports.find((x) => x.id === reportId)
   if (!report) throw new AppError('errors.notFound')
@@ -491,6 +511,7 @@ export function staffList(permission) {
 // ───────────────────────────── System ─────────────────────────────
 
 export function setMaintenance({ enabled, message, until }, reason) {
+  if (SERVER_MODE) return adminCall('setMaintenance', { enabled, message, until, reason })
   const admin = requirePerm('system.manage')
   const r = requireReason(reason)
   const before = useAdminStore.getState().system.maintenance
@@ -502,6 +523,7 @@ export function setMaintenance({ enabled, message, until }, reason) {
 
 /** status = null → kembali ke pemeriksaan otomatis. note tampil di halaman /status. */
 export function setServiceStatus(service, status, reason, note = '') {
+  if (SERVER_MODE) return adminCall('setServiceStatus', { service, status, reason, note })
   const admin = requirePerm('system.manage')
   const r = requireReason(reason)
   if (!SERVICES.includes(service) || (status && !STATUSES.includes(status))) throw new AppError('admin.errors.invalid')
@@ -516,6 +538,7 @@ export function setServiceStatus(service, status, reason, note = '') {
 }
 
 export function setAutoFreeze(on, reason) {
+  if (SERVER_MODE) return adminCall('setAutoFreeze', { on, reason })
   const admin = requirePerm('system.manage')
   const r = requireReason(reason)
   useAdminStore.setState((s) => ({ system: { ...s.system, autoFreezeCritical: !!on } }))
@@ -523,6 +546,7 @@ export function setAutoFreeze(on, reason) {
 }
 
 export function setSlowMode(seconds, reason) {
+  if (SERVER_MODE) return adminCall('setSlowMode', { seconds, reason })
   const admin = requirePerm('moderation')
   const r = requireReason(reason)
   const v = Math.max(0, Math.min(300, Math.round(Number(seconds) || 0)))
@@ -533,6 +557,7 @@ export function setSlowMode(seconds, reason) {
 
 /** Akhiri season sekarang: hasil dibekukan, leaderboard diarsipkan, season baru dimulai. */
 export function endSeasonNow(reason) {
+  if (SERVER_MODE) return adminCall('endSeasonNow', { reason })
   const admin = requirePerm('system.manage')
   const r = requireReason(reason)
   const now = Date.now()
@@ -555,6 +580,7 @@ export function allCodes() {
 }
 
 export function createCode({ code, kind, amount, itemId, maxUses, perUser, expiresAt, active }, reason) {
+  if (SERVER_MODE) return adminCall('createCode', { code, kind, amount, itemId, maxUses, perUser, expiresAt, active, reason })
   const admin = requirePerm('codes.manage')
   const r = requireReason(reason)
   const key = String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
@@ -584,6 +610,7 @@ export function createCode({ code, kind, amount, itemId, maxUses, perUser, expir
 }
 
 export function setCodeActive(code, active, reason) {
+  if (SERVER_MODE) return adminCall('setCodeActive', { code, active, reason })
   const admin = requirePerm('codes.manage')
   const r = requireReason(reason)
   const existing = useAdminStore.getState().codes[code] ?? {}
@@ -594,6 +621,7 @@ export function setCodeActive(code, active, reason) {
 // ───────────────────────────── Announcements ─────────────────────────────
 
 export function saveAnnouncement(data, reason) {
+  if (SERVER_MODE) return adminCall('saveAnnouncement', { data, reason })
   const admin = requirePerm('announcements.manage')
   const r = requireReason(reason)
   const title = String(data.title ?? '').trim()
@@ -622,6 +650,7 @@ export function saveAnnouncement(data, reason) {
 // ───────────────────────────── Games ─────────────────────────────
 
 export function setGameStatus(slug, status, reason) {
+  if (SERVER_MODE) return adminCall('setGameStatus', { slug, status, reason })
   const admin = requirePerm('games.manage')
   const r = requireReason(reason)
   if (!GAMES.some((g) => g.slug === slug) || !['live', 'maintenance', 'disabled'].includes(status)) throw new AppError('admin.errors.invalid')
@@ -631,6 +660,7 @@ export function setGameStatus(slug, status, reason) {
 }
 
 export function setGameMaxBet(slug, maxBet, reason) {
+  if (SERVER_MODE) return adminCall('setGameMaxBet', { slug, maxBet, reason })
   const admin = requirePerm('games.manage')
   const r = requireReason(reason)
   if (!Number.isInteger(maxBet) || maxBet < 10 || maxBet > 100_000) throw new AppError('admin.errors.invalid')
@@ -642,6 +672,7 @@ export function setGameMaxBet(slug, maxBet, reason) {
 // ───────────────────────────── Test mode ─────────────────────────────
 
 export function setTestAccount(userId, isTest, reason) {
+  if (SERVER_MODE) return adminCall('setTestAccount', { userId, isTest, reason })
   const admin = requirePerm('testmode')
   const r = requireReason(reason)
   const target = getUserById(userId)
@@ -652,6 +683,7 @@ export function setTestAccount(userId, isTest, reason) {
 }
 
 export function setTestControl(userId, mode, reason) {
+  if (SERVER_MODE) return adminCall('setTestControl', { userId, mode, reason })
   const admin = requirePerm('testmode')
   const r = requireReason(reason)
   const target = getUserById(userId)
@@ -663,6 +695,7 @@ export function setTestControl(userId, mode, reason) {
 
 /** Simulasi untuk akun test — hanya sesi/notifikasi bertanda TEST, tanpa saldo & statistik asli. */
 export function simulate(userId, kind, reason) {
+  if (SERVER_MODE) return adminCall('simulate', { userId, kind, reason })
   const admin = requirePerm('testmode')
   const r = requireReason(reason)
   const target = getUserById(userId)

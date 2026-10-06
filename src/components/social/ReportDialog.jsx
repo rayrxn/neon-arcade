@@ -33,7 +33,7 @@ export default function ReportDialog({ open, onClose, preset = {} }) {
     setError(null)
     try {
       await new Promise((r) => setTimeout(r, 250))
-      createReport({ targetType: type, targetUserId: preset.targetUserId ?? null, messageId: preset.messageId ?? null, sessionId: preset.sessionId ?? null, reason, description: text })
+      await createReport({ targetType: type, targetUserId: preset.targetUserId ?? null, messageId: preset.messageId ?? null, sessionId: preset.sessionId ?? null, reason, description: text })
       toast({ tone: 'success', title: t('reports.sent'), body: t('reports.sentBody') })
       onClose()
     } catch (err) {

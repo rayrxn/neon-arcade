@@ -15,6 +15,7 @@ import { initSound, play } from '@/services/sound'
 import { ensureSeason } from '@/services/seasons'
 import { describeNotification } from '@/components/notifications/describe'
 import { translate } from '@/i18n'
+import { SERVER_MODE } from '@/config/runtime'
 
 /** Store yang disinkronkan antar-tab lewat event `storage` (mode lokal). */
 const SYNCED = {
@@ -41,6 +42,8 @@ export default function PlatformRuntime() {
 
   // Seed akun demo + selesaikan transfer AG yang sudah lewat masa tahan.
   useEffect(() => {
+    // Mode server: pemain, transfer, dan season datang dari server — tidak ada akun demo.
+    if (SERVER_MODE) return
     seedPlatform()
     settlePendingTransfers()
     ensureSeason()

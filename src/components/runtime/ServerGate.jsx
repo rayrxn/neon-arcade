@@ -3,7 +3,7 @@ import { Loader2, RefreshCw, WifiOff } from 'lucide-react'
 import Logo from '@/components/ui/Logo'
 import Button from '@/components/ui/Button'
 import { SERVER_MODE } from '@/config/runtime'
-import { hydrate } from '@/services/server'
+import { hydrate, sync } from '@/services/server'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useT } from '@/i18n'
 
@@ -19,6 +19,7 @@ export default function ServerGate({ children }) {
   const load = async () => {
     setStatus('loading')
     const res = await hydrate()
+    if (res.ok) await sync()
     setStatus(res.ok ? 'ready' : 'offline')
   }
 
@@ -30,14 +31,24 @@ export default function ServerGate({ children }) {
 
   useEffect(() => {
     if (!SERVER_MODE || status !== 'ready') return
-    const refresh = () => {
-      if (document.visibilityState === 'visible' && useAuthStore.getState().session) hydrate()
+    // Data akun penuh tiap 60 detik; data bersama (chat, teman, notifikasi) lebih sering —
+    // 4 detik saat halaman chat terbuka, 15 detik di halaman lain. Berhenti saat tab disembunyikan.
+    let tick = 0
+    const loop = () => {
+      if (document.visibilityState !== 'visible' || !useAuthStore.getState().session) return
+      tick++
+      const onChat = /chat/.test(window.location.hash || window.location.pathname)
+      if (tick % 15 === 0) hydrate()
+      if (onChat || tick % 4 === 0) sync()
     }
-    const id = setInterval(refresh, 60_000)
-    document.addEventListener('visibilitychange', refresh)
+    const id = setInterval(loop, 4_000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && useAuthStore.getState().session) hydrate().then(() => sync())
+    }
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       clearInterval(id)
-      document.removeEventListener('visibilitychange', refresh)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [status])
 

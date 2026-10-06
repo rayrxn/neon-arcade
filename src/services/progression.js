@@ -319,7 +319,6 @@ export async function claimDailyReward(userId) {
   if (SERVER_MODE) {
     const { result, apply } = await act('daily/claim')
     apply()
-    notify(userId, 'daily', { day: result.day, rewards: result.rewards })
     emit('DAILY_CLAIMED', { userId, day: result.day })
     play('daily')
     applyOut(userId, result)

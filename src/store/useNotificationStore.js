@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { randomHex } from '@/utils/rng'
 import { usePrefsStore } from './usePrefsStore'
+import { SERVER_MODE } from '@/config/runtime'
+import { background } from '@/services/server'
 
 /**
  * Notifikasi per akun (ikon lonceng di header).
@@ -45,11 +47,18 @@ export const useNotificationStore = create(
         set((s) => ({ byUser: { ...s.byUser, [userId]: [item, ...(s.byUser[userId] ?? [])].slice(0, 200) } }))
         return item
       },
-      markRead: (userId, id) =>
-        set((s) => ({ byUser: { ...s.byUser, [userId]: (s.byUser[userId] ?? []).map((n) => (n.id === id ? { ...n, read: true } : n)) } })),
-      markAllRead: (userId) =>
-        set((s) => ({ byUser: { ...s.byUser, [userId]: (s.byUser[userId] ?? []).map((n) => ({ ...n, read: true })) } })),
-      clear: (userId) => set((s) => ({ byUser: { ...s.byUser, [userId]: [] } })),
+      markRead: (userId, id) => {
+        set((s) => ({ byUser: { ...s.byUser, [userId]: (s.byUser[userId] ?? []).map((n) => (n.id === id ? { ...n, read: true } : n)) } }))
+        if (SERVER_MODE) background('notifications', { action: 'read', id })
+      },
+      markAllRead: (userId) => {
+        set((s) => ({ byUser: { ...s.byUser, [userId]: (s.byUser[userId] ?? []).map((n) => ({ ...n, read: true })) } }))
+        if (SERVER_MODE) background('notifications', { action: 'readAll' })
+      },
+      clear: (userId) => {
+        set((s) => ({ byUser: { ...s.byUser, [userId]: [] } }))
+        if (SERVER_MODE) background('notifications', { action: 'clear' })
+      },
     }),
     { name: 'neon-arcade:notifications', version: 1, storage: createJSONStorage(() => localStorage) },
   ),

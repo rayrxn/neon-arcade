@@ -7,6 +7,8 @@ import { randomHex } from '@/utils/rng'
 import { emit } from './events'
 import { atomic } from './tx'
 import { log } from './admin'
+import { SERVER_MODE } from '@/config/runtime'
+import { adminCall, social } from './server'
 
 /**
  * Support center (tabel support_tickets, ticket_messages).
@@ -40,6 +42,7 @@ function staff(reasonless = true) {
 const notify = (userId, data) => useNotificationStore.getState().notify(userId, 'ticket', data, { force: true })
 
 export function createTicket({ category, subject, message, sessionId = '', txId = '' }) {
+  if (SERVER_MODE) return social('ticket/create', { category, subject, message, sessionId, txId })
   const user = me()
   if (!TICKET_CATEGORIES.includes(category)) throw new AppError('support.errors.category')
   const s = clean(subject, 4, 80)
@@ -74,6 +77,7 @@ export const myTickets = (userId) => tickets().filter((t) => t.userId === userId
 
 /** Balasan user (pemilik tiket) atau staff. */
 export function replyTicket(ticketId, text) {
+  if (SERVER_MODE) return social('ticket/reply', { ticketId, text })
   const user = me()
   const ticket = tickets().find((t) => t.id === ticketId)
   if (!ticket) throw new AppError('errors.notFound')
@@ -100,6 +104,7 @@ export function replyTicket(ticketId, text) {
 }
 
 export function setTicketStatus(ticketId, status) {
+  if (SERVER_MODE) return adminCall('setTicketStatus', { ticketId, status })
   const user = staff()
   if (!TICKET_STATUSES.includes(status)) throw new AppError('admin.errors.invalid')
   const ticket = tickets().find((t) => t.id === ticketId)
@@ -113,6 +118,7 @@ export function setTicketStatus(ticketId, status) {
 }
 
 export function assignTicket(ticketId, adminId) {
+  if (SERVER_MODE) return adminCall('assignTicket', { ticketId, adminId })
   const user = staff()
   const ticket = tickets().find((t) => t.id === ticketId)
   if (!ticket) throw new AppError('errors.notFound')
@@ -130,6 +136,7 @@ export function assignTicket(ticketId, adminId) {
 }
 
 export function addTicketNote(ticketId, text) {
+  if (SERVER_MODE) return adminCall('addTicketNote', { ticketId, text })
   const user = staff()
   const body = clean(text, 2, 1000)
   save(ticketId, (t) => ({ ...t, notes: [...t.notes, { id: randomHex(4), by: user.username, text: body, at: Date.now() }] }))
@@ -137,6 +144,7 @@ export function addTicketNote(ticketId, text) {
 
 /** User bisa membuka lagi tiket RESOLVED/CLOSED dalam 7 hari; staff kapan saja. */
 export function reopenTicket(ticketId) {
+  if (SERVER_MODE) return social('ticket/reopen', { ticketId })
   const user = me()
   const ticket = tickets().find((t) => t.id === ticketId)
   if (!ticket) throw new AppError('errors.notFound')

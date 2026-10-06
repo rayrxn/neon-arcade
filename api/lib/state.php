@@ -11,6 +11,18 @@ function wallet_post(string $userId, string $currency, $amount, string $type, st
     );
 }
 
+/** Notifikasi untuk satu user (tabel notifications). */
+function notify(string $userId, string $kind, array $data = []): void
+{
+    q('INSERT INTO notifications (user_id, kind, data) VALUES (?, ?, ?::jsonb)', [$userId, $kind, jenc((object) $data)]);
+}
+
+function notifications_view(string $userId, int $limit = 100): array
+{
+    $rows = q('SELECT id, kind, data, read_at, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ' . (int) $limit, [$userId])->fetchAll();
+    return array_map(fn($n) => ['id' => $n['id'], 'kind' => $n['kind'], 'data' => (object) jdec($n['data'], []), 'at' => iso_to_ms($n['created_at']), 'read' => $n['read_at'] !== null], $rows);
+}
+
 function raise_flag(string $userId, string $type, string $risk, ?string $sessionId, string $expected, string $submitted): void
 {
     q('SELECT raise_flag(?::uuid, ?, ?::flag_risk, ?::uuid, ?, ?)', [$userId, $type, $risk, $sessionId, $expected, $submitted]);
@@ -95,6 +107,21 @@ function preset_for(string $seed): string
 
 function tx_view(array $t): array
 {
+    $v = tx_view_base($t);
+    if (!empty($t['tr_id'])) {
+        $isSend = $t['type'] === 'send';
+        $v['counterparty'] = ['userId' => $isSend ? $t['tr_to'] : $t['tr_from'], 'username' => $isSend ? $t['tr_to_name'] : $t['tr_from_name']];
+        $v['note'] = $t['tr_note'];
+        if ($isSend && $t['tr_status'] === 'pending') {
+            $v['status'] = 'pending';
+            $v['releaseAt'] = iso_to_ms($t['tr_release']);
+        }
+    }
+    return $v;
+}
+
+function tx_view_base(array $t): array
+{
     return [
         'id' => $t['id'],
         'type' => $t['type'],
@@ -118,8 +145,21 @@ function tx_view(array $t): array
 function wallet_view(string $userId, array $meta, int $limit = 200): array
 {
     $w = q1('SELECT ac_balance, ag_balance FROM wallets WHERE user_id = ?', [$userId]);
-    $rows = q('SELECT t.*, s.game FROM wallet_transactions t LEFT JOIN game_sessions s ON s.id = t.session_id
-               WHERE t.user_id = ? ORDER BY t.created_at DESC, t.id DESC LIMIT ' . (int) $limit, [$userId])->fetchAll();
+    $rows = q("SELECT t.*, s.game, tr.id AS tr_id, tr.from_id AS tr_from, tr.to_id AS tr_to, tr.note AS tr_note, tr.status AS tr_status, tr.release_at AS tr_release,
+                      uf.username AS tr_from_name, ut.username AS tr_to_name
+               FROM wallet_transactions t
+               LEFT JOIN game_sessions s ON s.id = t.session_id
+               LEFT JOIN transfers tr ON tr.send_tx = t.id OR tr.receive_tx = t.id
+               LEFT JOIN users uf ON uf.id = tr.from_id
+               LEFT JOIN users ut ON ut.id = tr.to_id
+               WHERE t.user_id = ? ORDER BY t.created_at DESC, t.id DESC LIMIT " . (int) $limit, [$userId])->fetchAll();
+    $txs = array_map('tx_view', $rows);
+    // Transfer yang ditolak limit harian: tercatat di riwayat tanpa mengubah saldo.
+    foreach (q("SELECT tr.*, u.username FROM transfers tr JOIN users u ON u.id = tr.to_id WHERE tr.from_id = ? AND tr.status = 'failed' ORDER BY tr.created_at DESC LIMIT 20", [$userId])->fetchAll() as $f) {
+        $txs[] = ['id' => $f['id'], 'type' => 'send', 'currency' => $f['currency'], 'amount' => -num($f['amount']), 'balanceAfter' => null, 'at' => iso_to_ms($f['created_at']), 'status' => 'failed',
+            'reason' => $f['reason'], 'counterparty' => ['userId' => $f['to_id'], 'username' => $f['username']], 'note' => $f['note'], 'game' => null, 'category' => 'transfer'];
+    }
+    usort($txs, fn($a, $b) => $b['at'] <=> $a['at']);
     return [
         'balance' => num($w['ac_balance'] ?? 0),
         'gems' => num($w['ag_balance'] ?? 0),
@@ -131,7 +171,7 @@ function wallet_view(string $userId, array $meta, int $limit = 200): array
         'lastBonusAt' => $meta['lastBonusAt'],
         'inventory' => array_values($meta['inventory']),
         'redeemed' => array_values($meta['redeemed']),
-        'transactions' => array_map('tx_view', $rows),
+        'transactions' => array_slice($txs, 0, $limit),
     ];
 }
 
@@ -161,6 +201,7 @@ function state_view(string $userId, array $p, array $meta): array
         'fairness' => fairness_view($userId),
         'season' => current_season(now_ms()),
         'open' => (object) open_rounds_view($userId),
+        'notifications' => notifications_view($userId),
         'serverTime' => now_ms(),
     ];
 }

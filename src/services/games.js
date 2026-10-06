@@ -224,7 +224,6 @@ function remote(action, args = {}) {
     if (s && !result.duplicate && !result.stale && !s.isTest && s.payout > 0) holdReveal(s.id, 'AC', s.payout)
     apply()
     if (result?.summary) applyOut(userId, result.summary)
-    if (s && !result.stale && !s.isTest && s.result === 'win' && s.payout > 0) recordWin({ userId, amount: s.payout, game: s.game })
     return result
   })
   serverQueue = task

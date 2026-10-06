@@ -204,9 +204,94 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   assert('server seed aktif tidak pernah ada di browser', !fair.getState().serverSeed)
   assert('roll lokal diblokir di mode server', (await code(() => fair.getState().roll(1))) === 'errors.serverSoon')
 
-  // Fitur yang belum dipindah
-  assert('transfer ditahan (serverSoon)', (await code(() => L('src/services/transfers.js').sendTransfer({ toUserId: 'x', currency: 'AC', amount: 10 }))) === 'errors.serverSoon')
-  assert('redeem ditahan (serverSoon)', (await code(() => L('src/services/redeem.js').redeemCode('WELCOME500'))) === 'errors.serverSoon')
+  // ── Tahap 2: dua pemain di dua perangkat ──
+  const jarB = {}
+  const ctxB = makeContext(jarB)
+  const LB = (p) => ctxB.__load(p)
+  await LB('src/services/server.js').hydrate()
+  const emailB = `e2eb_${Date.now()}@test.id`
+  await LB('src/store/useAuthStore.js').useAuthStore.getState().register({ username: `b_${String(Date.now()).slice(-8)}`, email: emailB, password: 'rahasia123' })
+  const B = LB('src/store/useAuthStore.js').useAuthStore.getState().session.userId
+  const unameB = LB('src/store/useAuthStore.js').useAuthStore.getState().users[emailB].username
+  await S.sync()
+  assert('sync: pemain lain muncul (tanpa email)', Object.values(auth.getState().users).some((u) => u.id === B && u.email === ''))
+  assert('mode server: tidak ada akun demo', !Object.values(auth.getState().users).some((u) => u.isDemo))
+
+  // Transfer lewat service asli
+  const T = L('src/services/transfers.js')
+  const balA = W().balance
+  const tr = await T.sendTransfer({ toUserId: B, currency: 'AC', amount: 500, note: 'hadiah' })
+  assert('transfer AC lewat server', tr.status === 'success' && W().balance === balA - 500 && tr.tx?.type === 'send')
+  await LB('src/services/server.js').hydrate()
+  await LB('src/services/server.js').sync()
+  const wB = LB('src/store/useWalletStore.js').useWalletStore.getState().wallets[B]
+  assert('penerima melihat transfer + notifikasi', wB.transactions[0].type === 'receive' && wB.transactions[0].counterparty.userId === me() &&
+    (LB('src/store/useNotificationStore.js').useNotificationStore.getState().byUser[B] ?? []).some((n) => n.kind === 'transferIn'))
+  assert('transfer ke diri sendiri ditolak', (await code(() => T.sendTransfer({ toUserId: me(), currency: 'AC', amount: 50 }))) === 'send.errors.self')
+
+  // Redeem
+  const R = L('src/services/redeem.js')
+  const pre = await R.checkCode('welcome500')
+  const balR = W().balance
+  await R.redeemCode('WELCOME500')
+  assert('redeem lewat server', pre.rewards[0].amount === 500 && W().balance === balR + 500 && W().redeemed[0].code === 'WELCOME500')
+  assert('redeem kedua ditolak', (await code(() => R.redeemCode('WELCOME500'))) === 'redeem.errors.used')
+
+  // Teman
+  const SOC = L('src/services/social.js')
+  await SOC.sendFriendRequest(unameB)
+  await LB('src/services/server.js').sync()
+  const reqB = LB('src/services/social.js').incomingRequests(B)
+  assert('permintaan teman sampai di perangkat B', reqB.length === 1)
+  LB('src/services/social.js').acceptFriend(reqB[0].id)
+  await sleep(600)
+  await S.sync()
+  assert('pertemanan diterima (sinkron ke A)', SOC.friendIds(me()).includes(B))
+  SOC.toggleFavorite('crash')
+  await sleep(500)
+  await S.sync()
+  assert('favorit tersimpan di server', SOC.favoritesOf(me()).includes('crash'))
+
+  // Chat
+  const CH = L('src/services/chat.js')
+  const msg = await CH.sendMessage(`halo @${unameB}`)
+  assert('chat lewat server', !!msg?.id && L('src/store/usePlatformStore.js').usePlatformStore.getState().chat.some((m) => m.id === msg.id))
+  await LB('src/services/server.js').sync()
+  assert('pesan terlihat di perangkat B + mention', LB('src/store/usePlatformStore.js').usePlatformStore.getState().chat.some((m) => m.id === msg.id) &&
+    (LB('src/store/useNotificationStore.js').useNotificationStore.getState().byUser[B] ?? []).some((n) => n.kind === 'mention'))
+  assert('jeda chat dari server', (await code(() => CH.sendMessage('lagi'))) === 'chat.errors.slowDown')
+
+  // Laporan & tiket dari B
+  await LB('src/services/reports.js').createReport({ targetType: 'message', targetUserId: me(), messageId: msg.id, reason: 'spam', description: 'mention berulang-ulang' })
+  const tk = await LB('src/services/support.js').createTicket({ category: 'bug', subject: 'Tombol macet', message: 'tombol main tidak merespons' })
+  assert('laporan & tiket dibuat lewat server', !!tk.id)
+
+  // Admin (A = akun pertama = super admin)
+  const ADM = L('src/services/admin.js')
+  assert('A super admin', auth.getState().users[email].role === 'super_admin')
+  await S.adminSync()
+  assert('admin snapshot: dompet & email pemain lain', wallet.getState().wallets[B]?.balance > 0 && Object.values(auth.getState().users).some((u) => u.id === B && u.email === emailB))
+  const res = await ADM.adjustCurrency(B, 'AC', 1000, 'kompensasi bug')
+  await LB('src/services/server.js').hydrate()
+  assert('admin tambah saldo → B menerima', res.after === res.before + 1000 && LB('src/store/useWalletStore.js').useWalletStore.getState().wallets[B].balance === res.after)
+  await ADM.warnUser(B, 'spam mention')
+  assert('warning tercatat di data admin', (auth.getState().users[emailB].warnings ?? []).length === 1)
+  const rep = L('src/store/useAdminStore.js').useAdminStore.getState().reports.find((r) => r.messageId === msg.id)
+  assert('laporan masuk antrean admin', !!rep)
+  await ADM.reportAction(rep.id, 'resolve', { reason: 'sudah ditegur' })
+  assert('laporan diselesaikan', L('src/store/useAdminStore.js').useAdminStore.getState().reports.find((r) => r.id === rep.id).status === 'resolved')
+  await L('src/services/support.js').replyTicket(tk.id, 'sedang kami cek')
+  assert('staff membalas tiket', L('src/store/useAdminStore.js').useAdminStore.getState().tickets.find((x) => x.id === tk.id).status === 'WAITING_FOR_USER')
+  await ADM.banUser(B, 24, 'pelanggaran berulang')
+  const bannedErr = await code(() => LB('src/services/server.js').api('sync'))
+  assert('pemain di-ban dikeluarkan dari perangkatnya', bannedErr === 'errors.sessionExpired' && LB('src/store/useAuthStore.js').useAuthStore.getState().session === null)
+  await ADM.unbanUser(B, 'banding diterima')
+  assert('aksi tanpa alasan ditolak server', (await code(() => ADM.setGameStatus('dice', 'maintenance', 'x'))) === 'admin.errors.reason')
+  await ADM.setGameMaxBet('dice', 5000, 'batasi taruhan')
+  assert('konfigurasi game dari server', L('src/store/useAdminStore.js').useAdminStore.getState().gameConfig.dice.maxBet === 5000)
+  await ADM.setGameMaxBet('dice', 100000, 'kembali normal')
+  assert('audit log terisi', L('src/store/useAdminStore.js').useAdminStore.getState().logs.some((l) => l.code === 'ADMIN_AC_ADJUSTMENT') && L('src/store/useAdminStore.js').useAdminStore.getState().logs.some((l) => l.code === 'ADMIN_TEMP_BAN'))
+  assert('analitik admin dari data server', L('src/services/admin.js').analytics().totalUsers >= 2)
 
   // Profil
   await auth.getState().updateProfile({ displayName: 'E2E Player' })
