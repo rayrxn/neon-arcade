@@ -5,8 +5,9 @@ import ReceiveModal from './ReceiveModal'
 import TopUpModal from './TopUpModal'
 import TxDetailModal from './TxDetailModal'
 import EditProfileModal from './EditProfileModal'
+import ExchangeModal from './ExchangeModal'
 
-const MODALS = { send: SendModal, receive: ReceiveModal, topup: TopUpModal, tx: TxDetailModal, editProfile: EditProfileModal }
+const MODALS = { send: SendModal, receive: ReceiveModal, topup: TopUpModal, tx: TxDetailModal, editProfile: EditProfileModal, exchange: ExchangeModal }
 
 /**
  * Semua modal global dibuka lewat openModal(type, props) dari mana saja

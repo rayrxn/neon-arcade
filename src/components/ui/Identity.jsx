@@ -82,16 +82,17 @@ export function CardTag({ slug, className }) {
   )
 }
 
-/** Progression role tag ([NEWCOMER], [EXPERT], ...). */
+/** Progression role tag ([NEWCOMER] … [LEGENDARY]); the bling grows with the rank (index.css, .role-chip--r0…r6). */
 export function PlayerRoleTag({ slug, className, showNewcomer = false }) {
   const catalog = useCatalog()
   const role = roleOf(catalog, slug)
   if (!role || (!showNewcomer && role.rank === 0)) return null
   const Icon = roleIcon(role.icon)
   return (
-    <span className={clsx('id-tag role-chip', className)} style={{ '--tag': role.color }} title={role.name}>
-      <Icon className="h-2.5 w-2.5" strokeWidth={2.6} aria-hidden="true" />
-      {role.name}
+    <span className={clsx('id-tag role-chip', `role-chip--r${Math.max(0, Math.min(6, role.rank))}`, `role-chip--${slug}`, className)} style={{ '--tag': role.color }} title={role.name}>
+      <span className="role-chip__fx" aria-hidden="true"><i /><i /><i /></span>
+      <Icon className="role-chip__icon" strokeWidth={2.6} aria-hidden="true" />
+      <span className="role-chip__text" data-text={role.name}>{role.name}</span>
     </span>
   )
 }

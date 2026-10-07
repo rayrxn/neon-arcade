@@ -11,6 +11,8 @@ import { useCurrentUser } from '@/store/useAuthStore'
 import { isStaff } from '@/config/roles'
 import { SERVER_MODE } from '@/config/runtime'
 import { useT } from '@/i18n'
+import { BUILD, formatRelease } from '@/config/build'
+import { openUpdateLog } from '@/components/updates/UpdateLog'
 import { usePrefsStore } from '@/store/usePrefsStore'
 
 const SPRING = { type: 'spring', stiffness: 520, damping: 40 }
@@ -54,7 +56,7 @@ function NavItem({ item, layoutId, badge, rail, onTip }) {
 }
 
 function SidebarContent({ idPrefix, onClose, rail = false, onToggle }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const layoutId = `${idPrefix}-nav`
   const me = useCurrentUser()
   const isStaffUser = isStaff(me?.role)
@@ -100,6 +102,14 @@ function SidebarContent({ idPrefix, onClose, rail = false, onToggle }) {
         <NavItem item={SETTINGS_ITEM} layoutId={layoutId} rail={rail} onTip={setTip} />
         {isStaffUser && <NavItem item={ADMIN_ITEM} layoutId={layoutId} rail={rail} onTip={setTip} />}
         {!rail && <p className="px-3 text-[11px] text-slate-600">{SERVER_MODE ? 'arcadebet.my.id' : t('nav.localMode')} · <NavLink to="/status" className="underline-offset-2 hover:text-slate-300 hover:underline">{t('status.title')}</NavLink></p>}
+        {rail ? (
+          <button type="button" onClick={openUpdateLog} className="block w-full text-center font-mono text-[9px] font-bold text-slate-600 hover:text-slate-300" title={t('updates.title')}>v{BUILD.version}</button>
+        ) : (
+          <button type="button" onClick={openUpdateLog} className="site-version group flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[11px] text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-300">
+            <span className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-300 group-hover:text-white">v{BUILD.version}</span>
+            <span className="min-w-0 truncate">{BUILD.at ? t('updates.released', { time: formatRelease(BUILD.at, lang) }) : t('updates.title')}</span>
+          </button>
+        )}
       </div>
     </div>
   )

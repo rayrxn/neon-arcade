@@ -16,6 +16,7 @@ import { isStaff } from '@/config/roles'
 import { maintenanceActive } from '@/services/system'
 import { useNow } from '@/hooks/useNow'
 import PopupCenter from '@/components/notifications/PopupCenter'
+import UpdateLog from '@/components/updates/UpdateLog'
 
 export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -58,6 +59,7 @@ export default function AppLayout() {
       <ModalHost />
       <LevelUpOverlay />
       <PopupCenter />
+      <UpdateLog />
     </div>
   )
 }

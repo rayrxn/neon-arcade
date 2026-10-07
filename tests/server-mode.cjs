@@ -417,6 +417,9 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
     ['forgot', h(L('src/components/auth/ForgotPassword.jsx').default, { initialEmail: 'a@b.co', onBack() {} })],
     ['reset-page', h(L('src/pages/AccountLinkPages.jsx').ResetPasswordPage)],
     ['verify-page', h(L('src/pages/AccountLinkPages.jsx').VerifyEmailPage)],
+    ['update-log', (() => { const U = L('src/components/updates/UpdateLog.jsx'); U.openUpdateLog(); return h(U.default) })()],
+    ['exchange', h(L('src/components/modals/ExchangeModal.jsx').default, { open: true, onClose() {} })],
+    ['exchange-prank', h(L('src/components/modals/ExchangeModal.jsx').default, { open: true, onClose() {}, initialStep: 'prank' })],
   ]) {
     try {
       const markup = Server.renderToString(el)

@@ -17,6 +17,10 @@ if [ -n "${TAILWIND_BIN:-}" ] || [ ! -f "$SRC" ]; then
 fi
 [ -f "$SRC" ] || { echo "Build gagal: $SRC tidak ada"; exit 1; }
 MAIN_SHA="$(git -C "$ROOT" rev-parse --short HEAD)"
+BUILD_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# Latest update-log entry (src/config/changelog.js): shown in the footer and pushed to open tabs via version.json.
+LATEST_JSON="$(node -e "const s=require('fs').readFileSync('$ROOT/src/config/changelog.js','utf8').replace(/^[\\s\\S]*?export default/,''); process.stdout.write(JSON.stringify(eval('('+s+')')[0]))")"
+APP_VERSION="$(node -e "process.stdout.write(JSON.parse(process.argv[1]).version)" "$LATEST_JSON")"
 
 assemble() {
   local dir=$1
@@ -28,12 +32,14 @@ assemble() {
     printf '<meta name="build" content="%s">\n' "$MAIN_SHA"
     printf '<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<link rel="icon" href="/favicon.ico" sizes="any">\n'
     printf '<link rel="apple-touch-icon" href="/apple-touch-icon.png">\n<link rel="manifest" href="/site.webmanifest">\n'
-    printf '<script>window.NEON_API = "/api";</script>\n'
+    printf '<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "%s", "at": "%s", "version": "%s"};</script>\n' "$MAIN_SHA" "$BUILD_AT" "$APP_VERSION"
     cat "$SRC"
     printf '\n</html>\n'
   } > "$dir/index.html"
 
   cp "$ROOT"/public/* "$dir/"
+  # Open tabs poll this file; a new sha means an update was released.
+  printf '{"sha": "%s", "at": "%s", "version": "%s", "entry": %s}\n' "$MAIN_SHA" "$BUILD_AT" "$APP_VERSION" "$LATEST_JSON" > "$dir/version.json"
   rm -rf "$dir/api"
   mkdir -p "$dir/api"
   cp -r "$ROOT/api/index.php" "$ROOT/api/.htaccess" "$ROOT/api/lib" "$dir/api/"
@@ -50,7 +56,7 @@ RedirectMatch 404 /\.git
 </FilesMatch>
 
 # index.html selalu dicek ulang supaya update langsung terlihat
-<FilesMatch "^(index\.html)?$">
+<FilesMatch "^(index\.html|version\.json)?$">
   Header set Cache-Control "no-cache, must-revalidate"
 </FilesMatch>
 

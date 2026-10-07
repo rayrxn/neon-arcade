@@ -1,0 +1,57 @@
+/** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
+export default [
+  {
+    "version": "1.8.0",
+    "date": "2026-10-07",
+    "emoji": "📜",
+    "colors": ["#22d3ee", "#a855f7", "#f472b6"],
+    "title": { "en": "Update log & rank bling", "id": "Update log & rank makin bling" },
+    "tagline": { "en": "See what changed the moment an update lands.", "id": "Langsung lihat apa yang baru begitu update masuk." },
+    "items": [
+      { "tag": "new", "en": "Update log pops up automatically after every update.", "id": "Update log muncul otomatis setiap ada update." },
+      { "tag": "new", "en": "Site version and release time at the bottom of the menu.", "id": "Versi situs dan jam rilis di bagian bawah menu." },
+      { "tag": "new", "en": "Every rank from Newcomer to Legendary has its own animated style.", "id": "Setiap rank dari Newcomer sampai Legendary punya gaya animasi sendiri." },
+      { "tag": "new", "en": "Exchange to Rupiah in the Wallet. Try it 😉", "id": "Tukar ke Rupiah di Wallet. Coba aja 😉" }
+    ]
+  },
+  {
+    "version": "1.7.0",
+    "date": "2026-10-07",
+    "emoji": "👑",
+    "colors": ["#2ef59a", "#ff4d6a", "#ffd23a"],
+    "title": { "en": "Staff tags & name effects", "id": "Tag staf & efek nama" },
+    "tagline": { "en": "Owner, Admin, Moderator, Helper and Tester each got their own theme.", "id": "Owner, Admin, Moderator, Helper, dan Tester punya tema masing-masing." },
+    "items": [
+      { "tag": "improve", "en": "Staff tags redesigned with animated rings and role themes.", "id": "Tag staf didesain ulang dengan bingkai beranimasi dan tema per role." },
+      { "tag": "fix", "en": "Name prefix and suffix now line up with the name.", "id": "Prefix dan suffix nama sekarang sejajar dengan nama." },
+      { "tag": "new", "en": "Name effects: glitch, watery, neon pulse, fire, shine, electric.", "id": "Efek nama: glitch, watery, neon pulse, fire, shine, electric." }
+    ]
+  },
+  {
+    "version": "1.6.0",
+    "date": "2026-10-07",
+    "emoji": "♛",
+    "colors": ["#7f1d1d", "#fbbf24", "#22d3ee"],
+    "title": { "en": "Monarch card & bigger battle pass", "id": "Kartu Monarch & battle pass lebih besar" },
+    "tagline": { "en": "A new top card, stronger card perks and VIP at the end of the free pass.", "id": "Kartu tertinggi baru, perk kartu lebih kuat, dan VIP di akhir pass gratis." },
+    "items": [
+      { "tag": "new", "en": "Monarch loyalty card with a royal glitch design.", "id": "Kartu loyalty Monarch dengan desain kerajaan yang glitch." },
+      { "tag": "new", "en": "One-time membership rewards for Platinum, Infinite, Black and Monarch.", "id": "Hadiah membership sekali untuk Platinum, Infinite, Black, dan Monarch." },
+      { "tag": "improve", "en": "Battle pass: a reward every tier, exclusive cosmetics, VIP on free tier 50.", "id": "Battle pass: hadiah di setiap tier, kosmetik eksklusif, VIP di tier 50 gratis." },
+      { "tag": "improve", "en": "VVIP now includes VIP bonuses.", "id": "VVIP sekarang termasuk bonus VIP." }
+    ]
+  },
+  {
+    "version": "1.5.0",
+    "date": "2026-10-07",
+    "emoji": "✉️",
+    "colors": ["#0891b2", "#059669", "#a855f7"],
+    "title": { "en": "Password reset & email verification", "id": "Reset password & verifikasi email" },
+    "tagline": { "en": "Forgot your password? Reset it by email.", "id": "Lupa password? Reset lewat email." },
+    "items": [
+      { "tag": "new", "en": "Forgot password on the sign-in page.", "id": "Lupa password di halaman masuk." },
+      { "tag": "new", "en": "Verify your email in Settings.", "id": "Verifikasi email di Pengaturan." },
+      { "tag": "fix", "en": "No more “[object Object]” text.", "id": "Tidak ada lagi tulisan “[object Object]”." }
+    ]
+  }
+]

@@ -1,4 +1,4 @@
-import { ArrowDownLeft, Plus, Send, Ticket } from 'lucide-react'
+import { ArrowDownLeft, Banknote, Plus, Send, Ticket } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { Amount, CurrencyIcon } from '@/components/ui/Currency'
@@ -25,7 +25,7 @@ function BalanceCard({ currency, value }) {
 }
 
 /** Dua saldo terpisah + aksi cepat. Dipakai di Home dan Wallet. */
-export default function BalanceCards({ showActions = true }) {
+export default function BalanceCards({ showActions = true, showExchange = false }) {
   const { t } = useT()
   const wallet = useActiveWallet()
   const ac = useDisplayBalance('AC')
@@ -37,6 +37,7 @@ export default function BalanceCards({ showActions = true }) {
     { key: 'receive', icon: ArrowDownLeft, label: t('wallet.actions.receive'), onClick: () => openModal('receive'), tone: 'text-neon-green' },
     { key: 'topup', icon: Plus, label: t('wallet.actions.topup'), onClick: () => openModal('topup'), tone: 'text-gem' },
     { key: 'redeem', icon: Ticket, label: t('wallet.actions.redeem'), onClick: () => navigate('/redeem'), tone: 'text-neon-purple' },
+    ...(showExchange ? [{ key: 'exchange', icon: Banknote, label: t('exchange.action'), onClick: () => openModal('exchange'), tone: 'text-neon-green' }] : []),
   ]
 
   return (
@@ -46,7 +47,7 @@ export default function BalanceCards({ showActions = true }) {
         <BalanceCard currency="AG" value={ag} />
       </div>
       {showActions && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className={clsx('grid gap-2', actions.length > 4 ? 'grid-cols-5' : 'grid-cols-4')}>
           {actions.map(({ key, icon: Icon, label, onClick, tone }) => (
             <button key={key} onClick={onClick} className="glass flex flex-col items-center gap-1.5 rounded-xl px-1 py-3 text-xs font-bold text-slate-300 transition hover:border-white/15 hover:text-white sm:flex-row sm:justify-center sm:gap-2 sm:py-3.5 sm:text-sm focus-ring">
               <Icon className={clsx('h-[18px] w-[18px]', tone)} />

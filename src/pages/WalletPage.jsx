@@ -28,7 +28,7 @@ export default function WalletPage() {
         <p className="mt-1 text-sm text-slate-500">{t('wallet.subtitle')}</p>
       </div>
 
-      <BalanceCards />
+      <BalanceCards showExchange />
 
       <Converter />
 

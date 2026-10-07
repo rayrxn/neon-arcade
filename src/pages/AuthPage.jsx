@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { usePrefsStore } from '@/store/usePrefsStore'
 import { resolveAppearance } from '@/components/runtime/ThemeController'
 import { useT } from '@/i18n'
+import { BUILD, formatRelease } from '@/config/build'
 
 /** Bahasa & tema bisa diganti sebelum login. */
 function QuickPrefs() {
@@ -35,7 +36,7 @@ function QuickPrefs() {
 export default function AuthPage() {
   // Dicek sekali saat mount: user yang sudah login langsung ke Home,
   // tapi login yang baru berhasil tetap sempat menampilkan animasi "Berhasil".
-  const { t } = useT()
+  const { t, lang } = useT()
   const [alreadySignedIn] = useState(() => !!useAuthStore.getState().session)
   if (alreadySignedIn) return <Navigate to="/" replace />
 
@@ -53,7 +54,12 @@ export default function AuthPage() {
           <p className="max-w-xs text-sm text-slate-400">{t('auth.showcase.line1')} <span className="auth-shine font-semibold">{t('auth.showcase.line2')}</span></p>
         </motion.div>
         <AuthForm />
-        <Link to="/status" className="mt-6 text-xs text-slate-500 hover:text-slate-300">{t('status.title')}</Link>
+        <p className="mt-6 flex flex-wrap items-center justify-center gap-x-2 text-xs text-slate-500">
+          <Link to="/status" className="hover:text-slate-300">{t('status.title')}</Link>
+          <span aria-hidden="true">·</span>
+          <span className="font-mono">v{BUILD.version}</span>
+          {BUILD.at && <><span aria-hidden="true">·</span><span>{t('updates.released', { time: formatRelease(BUILD.at, lang) })}</span></>}
+        </p>
       </main>
     </div>
   )
