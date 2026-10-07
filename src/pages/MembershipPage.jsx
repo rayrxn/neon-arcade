@@ -91,7 +91,7 @@ function TierCard({ tier, cfg, rows, active, onGet }) {
         })}
       </ul>
       <Button size="lg" variant={vvip ? 'primary' : 'gem'} className="mt-6 w-full" disabled={!!active} onClick={() => onGet(tier)}>
-        {active ? t('membership.active') : t(`membership.get${vvip ? 'Vvip' : 'Vip'}`)}
+        {active === 'included' ? t('membership.includedActive') : active ? t('membership.active') : t(`membership.get${vvip ? 'Vvip' : 'Vip'}`)}
       </Button>
     </motion.article>
   )
@@ -158,6 +158,24 @@ function MemberPerks({ tier }) {
           <div className="flex flex-col justify-center rounded-xl border border-dashed border-white/10 p-4 text-xs text-slate-500">{t('membership.vvipOnly', { perk: t('membership.perk.endless') })}</div>
         )}
       </div>
+
+      {tier === 'vvip' && perks?.vipIncluded && (
+        <div>
+          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-300"><Crown className="h-3.5 w-3.5" /> {t('membership.vipIncluded')}</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ['vd', 'member_daily', CalendarDays, t('membership.perk.daily'), 'daily'],
+              ['vw', 'member_weekly', CalendarClock, t('membership.perk.weekly'), 'weekly'],
+              ['vo', 'member_once', Gift, t('membership.perk.once'), 'once'],
+            ].map(([key, kind, Icon, title, k]) => {
+              const vp = perks.vipIncluded.perks
+              return (
+                <BonusTile key={key} icon={Icon} title={`VIP · ${title}`} detail={`${formatCoins(vp[`${k}Ac`])} AC + ${formatCoins(vp[`${k}Ag`])} AG`} claimed={perks.vipIncluded[k]?.claimed} busy={busy === key} onClaim={() => run(key, () => claimPerk(kind, 'vip'), got)} />
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-3 lg:grid-cols-3">
         <Link to="/chat?room=vip" className="flex items-center gap-3 rounded-xl bg-white/[0.03] p-4 ring-1 ring-inset ring-white/[0.06] transition hover:bg-white/[0.05]">
@@ -251,7 +269,7 @@ export default function MembershipPage() {
       {membership && <MemberPerks tier={membership.tier} />}
 
       <div className="grid gap-5 md:grid-cols-2">
-        <TierCard tier="vip" cfg={cfg.vip} rows={rows} active={membership?.tier === 'vip'} onGet={setAsking} />
+        <TierCard tier="vip" cfg={cfg.vip} rows={rows} active={membership?.tier === 'vip' ? true : membership?.tier === 'vvip' ? 'included' : false} onGet={setAsking} />
         <TierCard tier="vvip" cfg={cfg.vvip} rows={rows} active={membership?.tier === 'vvip'} onGet={setAsking} />
       </div>
 

@@ -361,7 +361,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
     home: 'src/pages/HomePage.jsx', games: 'src/pages/GamesPage.jsx', wallet: 'src/pages/WalletPage.jsx', rewards: 'src/pages/RewardsPage.jsx',
     history: 'src/pages/HistoryPage.jsx', profile: 'src/pages/ProfilePage.jsx', settings: 'src/pages/SettingsPage.jsx', inventory: 'src/pages/InventoryPage.jsx',
     leaderboard: 'src/pages/LeaderboardPage.jsx', redeem: 'src/pages/RedeemPage.jsx',
-    shop: 'src/pages/ShopPage.jsx', loyalty: 'src/pages/LoyaltyPage.jsx', membership: 'src/pages/MembershipPage.jsx', chat: 'src/pages/ChatPage.jsx',
+    shop: 'src/pages/ShopPage.jsx', loyalty: 'src/pages/LoyaltyPage.jsx', membership: 'src/pages/MembershipPage.jsx', pass: 'src/pages/BattlePassPage.jsx', chat: 'src/pages/ChatPage.jsx',
   }
   for (const [slug, f] of Object.entries({ 'case-opening': 'CaseOpening', 'case-battle': 'CaseBattle', crash: 'Crash', plinko: 'Plinko', mines: 'Mines', dice: 'Dice', limbo: 'Limbo', coinflip: 'Coinflip', roulette: 'Roulette', blackjack: 'Blackjack' })) pages['g-' + slug] = `src/games/${f}.jsx`
   const AppLayout = L('src/components/layout/AppLayout.jsx').default

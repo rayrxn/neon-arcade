@@ -42,8 +42,8 @@ export function CardTag({ slug, className }) {
   const card = cardOf(catalog, slug)
   return (
     <span className={clsx('id-tag', `card-tag card-tag--${slug}`, className)} style={{ '--tag': card.color }} title={`${card.name} card`}>
-      <span className="card-tag__chip" aria-hidden="true" />
-      {card.name}
+      {slug === 'monarch' ? <span className="card-tag__crown" aria-hidden="true">♛</span> : <span className="card-tag__chip" aria-hidden="true" />}
+      <span className="card-tag__name" data-text={card.name}>{card.name}</span>
     </span>
   )
 }

@@ -88,14 +88,14 @@ tx(fn() => add_loyalty_xp($P1, 25000, 'admin'));
 check('25,000 XP → Gold', extras('p1')['loyalty']['card'] === 'gold');
 $b0 = bal('p1'); $g0 = bal('p1', 'AG');
 $r = call('POST', 'perk/claim', ['kind' => 'card_daily'], 'p1');
-check('Gold daily card bonus: 25,000 AC + 1 AG', $r['ok'] && bal('p1') == $b0 + 25000 && bal('p1', 'AG') == $g0 + 1, $r);
+check('Gold daily card bonus: 50,000 AC + 2 AG', $r['ok'] && bal('p1') == $b0 + 50000 && bal('p1', 'AG') == $g0 + 2, $r);
 expect_error('card bonus only once a day', call('POST', 'perk/claim', ['kind' => 'card_daily'], 'p1'), 'perks.errors.claimed');
 check('Gold: converter limit +50%', extras('p1')['convertCap'] == 300);
 check('Gold: 5% shop discount shown', extras('p1')['perks']['shopDiscount'] === 5);
 setbal($P1, 0, 100);
 $buy = call('POST', 'shop/buy', ['itemId' => 'loyalty-rush', 'requestId' => rid()], 'p1');
 check('Gold: shop price rounded up after 5% discount (5 → 5)', $buy['ok'] && $buy['data']['result']['price'] == 5, $buy);
-check('benefits list per card (Black has 7)', count(array_values(array_filter(catalog_view()['cards'], fn($c) => $c['slug'] === 'black'))[0]['benefits']) === 7);
+check('benefits list per card (Black has 8)', count(array_values(array_filter(catalog_view()['cards'], fn($c) => $c['slug'] === 'black'))[0]['benefits']) === 8);
 
 // ───────── VIP / VVIP perks ─────────
 echo "Membership perks\n";
@@ -153,7 +153,7 @@ q("UPDATE user_docs SET progress = jsonb_set(progress, '{season}', jsonb_build_o
 check('5,200 SXP → tier 5', me('p1')['pass']['tier'] === 5);
 setbal($P1, 0, 0);
 $c = call('POST', 'pass/claim', ['track' => 'free', 'tier' => 1], 'p1');
-check('claim free tier 1 → 5,000 AC', $c['ok'] && bal('p1') == 5000, $c);
+check('claim free tier 1 → 10,000 AC', $c['ok'] && bal('p1') == 10000, $c);
 expect_error('claim twice rejected', call('POST', 'pass/claim', ['track' => 'free', 'tier' => 1], 'p1'), 'pass.errors.claimed');
 expect_error('premium track locked without the pass', call('POST', 'pass/claim', ['track' => 'premium', 'tier' => 1], 'p1'), 'pass.errors.premium');
 expect_error('tier above reached is locked', call('POST', 'pass/claim', ['track' => 'free', 'tier' => 7], 'p1'), 'pass.errors.locked');
@@ -162,7 +162,7 @@ setbal($P1, 0, 7600);
 check('buy premium for 7,500 AG', call('POST', 'pass/buy', [], 'p1')['ok'] && bal('p1', 'AG') == 100 && me('p1')['pass']['premium'] === true);
 expect_error('cannot buy twice', call('POST', 'pass/buy', [], 'p1'), 'pass.errors.owned');
 $all = call('POST', 'pass/claim', ['track' => 'all', 'tier' => 0], 'p1');
-check('claim all: free tiers 3,5 + premium 1–5', $all['ok'] && $all['data']['result']['claimed'] === 7, $all);
+check('claim all: free tiers 2–5 + premium 1–5', $all['ok'] && $all['data']['result']['claimed'] === 9, $all);
 check('premium boost item granted at tier 5', (int) qv("SELECT qty FROM shop_inventory WHERE user_id = ? AND item_id = 'feeling-lucky'", [$P1]) >= 1);
 check('VVIP gets premium without buying', me('p2')['pass']['premium'] === true && me('p2')['pass']['viaVvip'] === true);
 q("UPDATE user_docs SET progress = jsonb_set(progress, '{season}', jsonb_build_object('id', ?::int, 'xp', 999999, 'tiersClaimed', '[]'::jsonb)) WHERE user_id = ?", [$sid, $P3]);

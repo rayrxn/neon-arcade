@@ -28,7 +28,7 @@ export const favoriteEmote = (code, on) => call('emotes/favorite', { code, on })
 export const claimMission = (missionId, proof) => call('missions/claim', { missionId, proof: String(proof ?? '').trim() })
 export const requestMembership = (tier) => call('membership/request', { tier }).then((r) => (sync(), r))
 // ── v3: perks, battle pass, banner, manager ──
-export const claimPerk = (kind) => call('perk/claim', { kind }).then((r) => (r?.ac || r?.ag ? play('reward') : null, r))
+export const claimPerk = (kind, tier) => call('perk/claim', tier ? { kind, tier } : { kind }).then((r) => (r?.ac || r?.ag ? play('reward') : null, r))
 export const setNameAffix = (prefix, suffix) => call('profile/affix', { prefix, suffix })
 export const uploadBanner = (image) => call('profile/banner', { image })
 export const buyPass = () => call('pass/buy').then((r) => (play('levelup'), r))

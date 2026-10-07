@@ -17,8 +17,15 @@ import { errorKey } from '@/utils/errors'
 import { formatCoins, formatLeft } from '@/utils/format'
 import { useT } from '@/i18n'
 
-/** A reward chip: AC / AG amount or a shop item. */
+/** A reward chip: AC / AG amount, Loyalty XP, a membership or a shop item. */
 export function RewardChip({ r, catalog, dim }) {
+  if (r.kind === 'membership') {
+    return (
+      <span className={clsx('pass-chip-member flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide', r.tier === 'vvip' ? 'pass-chip-member--vvip' : 'pass-chip-member--vip', dim && 'opacity-60')}>
+        <Crown className="h-3 w-3" /> {r.tier} · {r.days}d
+      </span>
+    )
+  }
   if (r.kind === 'item') {
     const item = itemOf(catalog, r.id)
     return (
@@ -27,10 +34,52 @@ export function RewardChip({ r, catalog, dim }) {
       </span>
     )
   }
+  if (r.kind === 'LXP') {
+    return <span className={clsx('num flex items-center gap-1 font-mono text-[11px] font-bold text-violet-300', dim && 'opacity-60')}>✦ {formatCoins(r.amount)} LXP</span>
+  }
   return (
     <span className={clsx('num flex items-center gap-1 font-mono text-[11px] font-bold', r.kind === 'AG' ? 'text-neon-purple' : 'text-neon-gold', dim && 'opacity-60')}>
       <CurrencyIcon currency={r.kind} size={12} /> {formatCoins(r.amount)}
     </span>
+  )
+}
+
+/** Milestone = a membership or a pass-exclusive cosmetic. */
+const isMilestone = (list) => list.some((r) => r.kind === 'membership' || (r.kind === 'item' && r.id.startsWith('pass-')))
+
+/** Showcase of the best rewards in the season, so players see what they're climbing for. */
+function PassHighlights({ def, pass, catalog, onJump }) {
+  const { t } = useT()
+  const picks = []
+  for (const row of def.rewards) {
+    for (const track of ['free', 'premium']) {
+      for (const r of row[track]) {
+        if (r.kind === 'membership' || (r.kind === 'item' && r.id.startsWith('pass-'))) picks.push({ tier: row.tier, track, r })
+      }
+    }
+  }
+  picks.sort((a, b) => (b.r.kind === 'membership') - (a.r.kind === 'membership') || b.tier - a.tier)
+  return (
+    <section className="glass rounded-2xl p-4 sm:p-5">
+      <p className="flex items-center gap-2 text-sm font-bold text-white"><Sparkles className="h-4 w-4 text-amber-300" /> {t('pass.highlights')}</p>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {picks.slice(0, 10).map(({ tier, track, r }) => {
+          const item = r.kind === 'item' ? itemOf(catalog, r.id) : null
+          const got = pass.claimed[track].includes(tier)
+          const ready = !got && pass.tier >= tier && (track === 'free' || pass.premium)
+          return (
+            <button key={`${track}-${tier}-${r.id ?? r.tier}`} type="button" onClick={() => onJump(tier)} className={clsx('pass-pick relative flex flex-col items-start gap-1.5 overflow-hidden rounded-xl p-3 text-left ring-1 ring-inset transition hover:-translate-y-0.5', r.kind === 'membership' ? (r.tier === 'vvip' ? 'pass-pick--vvip' : 'pass-pick--vip') : 'pass-pick--item', ready && 'pass-pick--ready')}>
+              <span className="text-2xl leading-none" aria-hidden="true">{r.kind === 'membership' ? '👑' : item?.style?.glyph ?? (item?.kind === 'frame' ? '◎' : item?.kind === 'nameEffect' ? 'Aa' : item?.kind === 'chatEffect' ? '💬' : item?.kind === 'theme' ? '🎨' : '✨')}</span>
+              <span className="text-sm font-bold text-white">{r.kind === 'membership' ? t('pass.memberReward', { tier: r.tier.toUpperCase(), days: r.days }) : item?.name ?? r.id}</span>
+              <span className="text-[11px] font-semibold text-slate-400">{t('pass.tier', { tier })} · {track === 'premium' ? t('pass.premiumTrack') : t('pass.freeTrack')}</span>
+              {got ? <span className="absolute right-2 top-2 grid h-5 w-5 place-items-center rounded-full bg-neon-green text-ink-950"><Check className="h-3 w-3" strokeWidth={3.5} /></span>
+                : ready ? <span className="absolute right-2 top-2 rounded bg-neon-cyan px-1.5 text-[9px] font-extrabold uppercase text-onaccent">{t('pass.claim')}</span>
+                : <Lock className="absolute right-2 top-2 h-3.5 w-3.5 text-slate-500" />}
+            </button>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
@@ -47,8 +96,9 @@ function TierColumn({ row, tier, premium, claimed, catalog, onClaim, busy }) {
         disabled={!can || busy}
         onClick={() => onClaim(track, row.tier)}
         className={clsx(
-          'relative flex h-[84px] w-full flex-col items-center justify-center gap-1 rounded-xl px-1.5 text-center ring-1 ring-inset transition',
+          'relative flex h-[96px] w-full flex-col items-center justify-center gap-1 rounded-xl px-1.5 text-center ring-1 ring-inset transition',
           !list.length ? 'bg-white/[0.015] ring-white/[0.04]' : track === 'premium' ? 'bg-amber-400/[0.06] ring-amber-300/20' : 'bg-white/[0.03] ring-white/[0.07]',
+          isMilestone(list) && 'pass-cell--milestone',
           can && 'cursor-pointer ring-2 ring-neon-cyan/60 hover:bg-neon-cyan/10',
           got && 'opacity-55',
         )}
@@ -98,6 +148,13 @@ export default function BattlePassPage() {
     )
   }
 
+  const jump = (tier) => {
+    const el = strip.current?.querySelector(`[data-tier="${tier}"]`)
+    if (el) {
+      strip.current.scrollTo({ left: el.offsetLeft - strip.current.clientWidth / 2 + 52, behavior: 'smooth' })
+      strip.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
   const xpPer = def.xpPerTier
   const into = pass.tier >= def.tiers ? xpPer : pass.xp % xpPer
   const claimable = def.rewards.filter((r) => r.tier <= pass.tier).reduce((n, r) => n + (r.free.length && !pass.claimed.free.includes(r.tier) ? 1 : 0) + (pass.premium && !pass.claimed.premium.includes(r.tier) ? 1 : 0), 0)
@@ -106,7 +163,7 @@ export default function BattlePassPage() {
     setBusy(true)
     try {
       const r = await claimPass(track, tier)
-      toast({ tone: 'success', title: t('pass.claimed', { n: r.claimed }), body: [r.ac > 0 && `${formatCoins(r.ac)} AC`, r.ag > 0 && `${formatCoins(r.ag)} AG`, r.items.length && t('pass.items', { n: r.items.length })].filter(Boolean).join(' · ') })
+      toast({ tone: 'success', title: t('pass.claimed', { n: r.claimed }), body: [r.ac > 0 && `${formatCoins(r.ac)} AC`, r.ag > 0 && `${formatCoins(r.ag)} AG`, r.lxp > 0 && `${formatCoins(r.lxp)} LXP`, r.items?.length && t('pass.items', { n: r.items.length }), ...(r.memberships ?? []).map((m) => t('pass.memberGot', { tier: m.tier.toUpperCase(), days: m.days }))].filter(Boolean).join(' · ') })
     } catch (err) {
       toast({ tone: 'error', title: t(errorKey(err), err?.vars) })
     } finally {
@@ -156,6 +213,8 @@ export default function BattlePassPage() {
           </div>
         </div>
       </section>
+
+      <PassHighlights def={def} pass={pass} catalog={catalog} onJump={jump} />
 
       <section className="glass rounded-2xl">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b hairline px-4 py-3.5 sm:px-5">

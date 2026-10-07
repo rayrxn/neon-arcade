@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, BadgeCheck, Check, ChevronRight, Gauge, Gift, Lock, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
+import { ArrowRight, BadgeCheck, CalendarRange, Check, Crown, ChevronRight, Gauge, Gift, Lock, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -86,18 +86,23 @@ export default function LoyaltyPage() {
   const catalog = useCatalog()
   const { loyalty, perks } = useExtras()
   const [inspect, setInspect] = useState(null)
-  const [claiming, setClaiming] = useState(false)
+  const [claiming, setClaiming] = useState(null)
   const [unlocking, setUnlocking] = useState(false)
   const bonus = perks?.card
-  const claimBonus = async () => {
-    setClaiming(true)
+  const claim = async (kind) => {
+    setClaiming(kind)
     try {
-      const r = await claimPerk('card_daily')
-      toast({ tone: 'success', title: t('loyalty.bonusGot', { ac: formatCoins(r.ac), ag: formatCoins(r.ag) }) })
+      const r = await claimPerk(kind)
+      if (kind === 'card_once') {
+        const list = (r.memberships ?? []).map((m) => t('loyalty.onceGot', { card: m.name, tier: m.tier.toUpperCase(), days: m.days })).join(' · ')
+        toast({ tone: 'success', title: t('loyalty.onceTitle'), body: list })
+      } else {
+        toast({ tone: 'success', title: t('loyalty.bonusGot', { ac: formatCoins(r.ac), ag: formatCoins(r.ag) }) })
+      }
     } catch (err) {
       toast({ tone: 'error', title: t(errorKey(err), err?.vars) })
     } finally {
-      setClaiming(false)
+      setClaiming(null)
     }
   }
 
@@ -152,23 +157,39 @@ export default function LoyaltyPage() {
               </div>
             )}
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06]">
+          {bonus?.onceDue?.length > 0 && (
+            <div className="loyalty-once mt-4 flex flex-wrap items-center gap-3 rounded-xl px-3.5 py-3">
+              <Crown className="h-5 w-5 shrink-0 text-neon-gold" />
+              <p className="min-w-0 flex-1 text-xs text-slate-200">
+                <b className="block text-sm text-white">{t('loyalty.onceReady')}</b>
+                {bonus.onceDue.map((d) => t('loyalty.onceItem', { card: d.name, tier: d.tier.toUpperCase(), days: d.days })).join(' · ')}
+              </p>
+              <Button size="sm" variant="gold" loading={claiming === 'card_once'} onClick={() => claim('card_once')}>{t('loyalty.onceClaim')}</Button>
+            </div>
+          )}
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="col-span-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06] sm:col-span-1">
               <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500"><Gauge className="h-3.5 w-3.5" /> {t('loyalty.maxBet')}</p>
               <p className="num mt-1 font-mono text-sm font-bold text-white">{formatCoins(loyalty.maxBetAC ?? current.maxBetAC)} AC</p>
               <p className="num font-mono text-sm font-bold text-neon-purple">{formatCoins(loyalty.maxBetAG ?? current.maxBetAG)} AG</p>
+              {bonus?.xpPct > 0 && <p className="mt-1.5 text-[11px] font-semibold text-neon-cyan">{t('loyalty.xpBonus', { xp: bonus.xpPct, lxp: bonus.lxpPct })}</p>}
             </div>
-            <div className="flex flex-col justify-between rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06]">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500"><Gift className="h-3.5 w-3.5" /> {t('loyalty.dailyBonus')}</p>
-              {bonus && (bonus.dailyAc > 0 || bonus.dailyAg > 0) ? (
-                <>
-                  <p className="num mt-1 font-mono text-xs font-bold text-white">{formatCoins(bonus.dailyAc)} AC{bonus.dailyAg > 0 && <span className="text-neon-purple"> + {formatCoins(bonus.dailyAg)} AG</span>}</p>
-                  <Button size="sm" variant={bonus.claimed ? 'ghost' : 'gold'} className="mt-2 w-full" disabled={bonus.claimed} loading={claiming} onClick={claimBonus}>{bonus.claimed ? t('loyalty.bonusClaimed') : t('loyalty.bonusClaim')}</Button>
-                </>
-              ) : (
-                <p className="mt-1 text-xs text-slate-400">{t('loyalty.bonusFromSilver')}</p>
-              )}
-            </div>
+            {[
+              ['card_daily', t('loyalty.dailyBonus'), bonus?.dailyAc, bonus?.dailyAg, bonus?.claimed, t('loyalty.bonusClaimed')],
+              ['card_weekly', t('loyalty.weeklyBonus'), bonus?.weeklyAc, bonus?.weeklyAg, bonus?.weeklyClaimed, t('loyalty.weeklyClaimed')],
+            ].map(([kind, label, ac, ag, claimed, claimedLabel]) => (
+              <div key={kind} className="flex flex-col justify-between rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06]">
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">{kind === 'card_daily' ? <Gift className="h-3.5 w-3.5" /> : <CalendarRange className="h-3.5 w-3.5" />} {label}</p>
+                {ac > 0 || ag > 0 ? (
+                  <>
+                    <p className="num mt-1 font-mono text-xs font-bold text-white">{formatCoins(ac)} AC{ag > 0 && <span className="text-neon-purple"> + {formatCoins(ag)} AG</span>}</p>
+                    <Button size="sm" variant={claimed ? 'ghost' : 'gold'} className="mt-2 w-full" disabled={claimed} loading={claiming === kind} onClick={() => claim(kind)}>{claimed ? claimedLabel : t('loyalty.bonusClaim')}</Button>
+                  </>
+                ) : (
+                  <p className="mt-1 text-xs text-slate-400">{t('loyalty.bonusFromSilver')}</p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>

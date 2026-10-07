@@ -151,6 +151,8 @@ function add_loyalty_xp(string $userId, int $amount, string $source, ?string $re
     $u['loyalty_xp'] = $next;
     $after = effective_card($u);
     if (card_rank($after) > card_rank($before)) notify($userId, 'loyaltyUp', ['card' => $after, 'name' => cards_all()[$after]['name']]);
+    // Reaching a card with Loyalty XP hands out its one-time membership reward (Platinum, Infinite, Black, Monarch).
+    if ($amount > 0 && card_rank(card_for_xp($next)) > card_rank(card_for_xp($next - $amount))) card_once_grant_all($userId);
     return $amount;
 }
 
