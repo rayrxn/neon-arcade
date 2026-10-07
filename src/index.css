@@ -234,103 +234,134 @@
   }
 }
 
-/* ───────── Tag role staf (Owner, Admin, Moderator, Helper, Tester) ───────── */
+/* ───────── Staff tags (Owner, Admin, Moderator, Helper, Tester): each role has its own theme ───────── */
+@property --rt-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 .role-tag {
   --rt-a: #94a3b8;
   --rt-b: #ffffff;
+  --rt-c: #94a3b8;
+  --rt-bg: #111827;
   position: relative;
   isolation: isolate;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 3px;
-  height: 17px;
-  padding: 0 6px 0 5px;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px 0 6px;
   border-radius: 6px;
   overflow: hidden;
   vertical-align: middle;
   white-space: nowrap;
-  font-size: 9.5px;
-  font-weight: 800;
+  font-size: 10.5px;
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--rt-a);
-  background: color-mix(in srgb, var(--rt-a) 13%, transparent);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--rt-a) 40%, transparent),
-    0 0 12px -3px color-mix(in srgb, var(--rt-a) 55%, transparent);
+  background: var(--rt-bg);
+  box-shadow: 0 0 14px -3px color-mix(in srgb, var(--rt-a) 70%, transparent), 0 0 0 1px color-mix(in srgb, var(--rt-a) 25%, transparent);
 }
-.role-tag__icon {
-  width: 10px;
-  height: 10px;
-  flex-shrink: 0;
+/* Rotating gradient ring around the plate. */
+.role-tag__ring {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit; padding: 1px;
+  background: conic-gradient(from var(--rt-angle), var(--rt-a), var(--rt-b), var(--rt-c), var(--rt-a) 70%, var(--rt-b));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: rt-spin 3.2s linear infinite;
 }
+.role-tag__fx { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.role-tag__fx i { position: absolute; display: block; }
+.role-tag__icon { position: relative; width: 11px; height: 11px; flex-shrink: 0; filter: drop-shadow(0 0 3px var(--rt-a)); }
 .role-tag__text {
-  background: linear-gradient(100deg, var(--rt-a) 0%, var(--rt-a) 38%, var(--rt-b) 50%, var(--rt-a) 62%, var(--rt-a) 100%);
+  position: relative;
+  background: linear-gradient(100deg, var(--rt-a) 0%, var(--rt-a) 36%, var(--rt-b) 50%, var(--rt-a) 64%, var(--rt-a) 100%);
   background-size: 260% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--rt-a) 65%, transparent));
   animation: role-shimmer 2.6s linear infinite;
 }
-.role-tag::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--rt-b) 22%, transparent) 50%, transparent 70%);
-  transform: translateX(-130%);
-  animation: role-sweep 2.6s ease-in-out infinite;
-}
-@keyframes role-shimmer {
-  from {
-    background-position: 130% 0;
-  }
-  to {
-    background-position: -130% 0;
-  }
-}
-@keyframes role-sweep {
-  0% {
-    transform: translateX(-130%);
-  }
-  55%,
-  100% {
-    transform: translateX(130%);
-  }
-}
+@keyframes rt-spin { to { --rt-angle: 360deg; } }
+@keyframes role-shimmer { from { background-position: 130% 0; } to { background-position: -130% 0; } }
+@keyframes role-sweep { 0% { transform: translateX(-130%); } 55%, 100% { transform: translateX(130%); } }
+
+/* Owner — emerald sovereign: gold-tipped aurora ring, crown that floats, sparks rising, breathing glow */
 .role-tag--super_admin {
-  --rt-a: #2ef59a;
-  --rt-b: #e9fff4;
+  --rt-a: #2ef59a; --rt-b: #f0fff8; --rt-c: #facc15;
+  --rt-bg: radial-gradient(120% 140% at 0% 0%, #0d6b43 0%, #053320 45%, #021a10 100%);
+  animation: rt-breathe 3s ease-in-out infinite;
 }
+.role-tag--super_admin .role-tag__icon { color: #fde68a; filter: drop-shadow(0 0 4px #facc15); animation: rt-float 2.4s ease-in-out infinite; }
+.role-tag--super_admin .role-tag__fx i { width: 2px; height: 2px; border-radius: 50%; bottom: -2px; background: #fde68a; box-shadow: 0 0 4px #facc15; animation: rt-spark 2.2s ease-in infinite; }
+.role-tag--super_admin .role-tag__fx i:nth-child(1) { left: 22%; }
+.role-tag--super_admin .role-tag__fx i:nth-child(2) { left: 55%; animation-delay: 0.7s; background: #a7f3d0; box-shadow: 0 0 4px #2ef59a; }
+.role-tag--super_admin .role-tag__fx i:nth-child(3) { left: 82%; animation-delay: 1.4s; }
+
+/* Admin — crimson enforcer: beveled plate, energy stripes racing through */
 .role-tag--admin {
-  --rt-a: #ff4d6a;
-  --rt-b: #ffe3e8;
+  --rt-a: #ff4d6a; --rt-b: #ffe3e8; --rt-c: #ff9f43;
+  --rt-bg: linear-gradient(135deg, #5c0a17, #2a050b 70%);
+  border-radius: 3px;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
 }
+.role-tag--admin .role-tag__fx i:nth-child(1) { inset: 0; background: repeating-linear-gradient(-45deg, rgba(255, 77, 106, 0.22) 0 3px, transparent 3px 8px); background-size: 22px 22px; animation: rt-stripes 1.2s linear infinite; }
+.role-tag--admin .role-tag__fx i:nth-child(2) { inset: 0; background: linear-gradient(100deg, transparent 35%, rgba(255, 227, 232, 0.35) 50%, transparent 65%); animation: role-sweep 2s ease-in-out infinite; }
+.role-tag--admin .role-tag__icon { animation: rt-pulse-scale 1.6s ease-in-out infinite; }
+
+/* Moderator — gold justice: gavel strikes, scan bar */
 .role-tag--moderator {
-  --rt-a: #ffd23a;
-  --rt-b: #fff8dc;
+  --rt-a: #ffd23a; --rt-b: #fffbe6; --rt-c: #f97316;
+  --rt-bg: linear-gradient(135deg, #4a3500, #1f1600 70%);
 }
+.role-tag--moderator .role-tag__icon { transform-origin: 80% 80%; animation: rt-gavel 2.4s ease-in-out infinite; }
+.role-tag--moderator .role-tag__fx i:nth-child(1) { top: 0; bottom: 0; width: 30%; background: linear-gradient(90deg, transparent, rgba(255, 210, 58, 0.3), transparent); animation: rt-scan 2.4s ease-in-out infinite; }
+.role-tag--moderator .role-tag__fx i:nth-child(2) { inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 210, 58, 0.08) 0 1px, transparent 1px 3px); }
+
+/* Helper — ocean lifeline: rolling water, lifebuoy turning */
 .role-tag--support {
-  --rt-a: #3ea8ff;
-  --rt-b: #e3f2ff;
+  --rt-a: #3ea8ff; --rt-b: #e6f4ff; --rt-c: #22d3ee;
+  --rt-bg: linear-gradient(180deg, #082a52, #04162e);
 }
+.role-tag--support .role-tag__icon { animation: rt-turn 6s linear infinite; }
+.role-tag--support .role-tag__fx i:nth-child(1),
+.role-tag--support .role-tag__fx i:nth-child(2) {
+  left: -50%; width: 200%; height: 60%; bottom: -25%;
+  background: radial-gradient(10px 5px at 10px 0, transparent 5px, rgba(62, 168, 255, 0.35) 5.5px) 0 0 / 20px 100% repeat-x;
+  animation: rt-wave 2.4s linear infinite;
+}
+.role-tag--support .role-tag__fx i:nth-child(2) { bottom: -35%; opacity: 0.6; animation-duration: 3.6s; animation-direction: reverse; }
+
+/* Tester — orange lab: bubbles rising, flask wobbling, code glitch on the label */
 .role-tag--developer {
-  --rt-a: #ff8b2c;
-  --rt-b: #ffeadb;
+  --rt-a: #ff8b2c; --rt-b: #fff1e6; --rt-c: #a3e635;
+  --rt-bg: linear-gradient(135deg, #4a1d02, #1f0b00 70%);
 }
-:root[data-appearance='light'] .role-tag--super_admin { --rt-a: #059a5c; --rt-b: #7dffc4; }
-:root[data-appearance='light'] .role-tag--admin { --rt-a: #d7193a; --rt-b: #ff9aab; }
-:root[data-appearance='light'] .role-tag--moderator { --rt-a: #a57700; --rt-b: #ffd84d; }
-:root[data-appearance='light'] .role-tag--support { --rt-a: #0b6fd0; --rt-b: #8fcbff; }
-:root[data-appearance='light'] .role-tag--developer { --rt-a: #c75a00; --rt-b: #ffb77a; }
+.role-tag--developer .role-tag__icon { transform-origin: 50% 90%; animation: rt-wobble 2s ease-in-out infinite; }
+.role-tag--developer .role-tag__fx i { width: 3px; height: 3px; border-radius: 50%; bottom: -3px; border: 1px solid rgba(163, 230, 53, 0.8); animation: rt-bubble 2.6s ease-in infinite; }
+.role-tag--developer .role-tag__fx i:nth-child(1) { left: 15%; }
+.role-tag--developer .role-tag__fx i:nth-child(2) { left: 48%; animation-delay: 0.9s; border-color: rgba(255, 139, 44, 0.9); }
+.role-tag--developer .role-tag__fx i:nth-child(3) { left: 78%; animation-delay: 1.7s; }
+.role-tag--developer .role-tag__text::after { content: attr(data-text); position: absolute; inset: 0; color: #a3e635; -webkit-text-fill-color: #a3e635; opacity: 0; animation: lc-glitch-b 3.2s steps(1) infinite; }
+
+@keyframes rt-breathe { 0%, 100% { box-shadow: 0 0 12px -3px rgba(46, 245, 154, 0.7), 0 0 0 1px rgba(46, 245, 154, 0.25); } 50% { box-shadow: 0 0 20px -2px rgba(46, 245, 154, 0.95), 0 0 0 1px rgba(250, 204, 21, 0.45); } }
+@keyframes rt-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+@keyframes rt-spark { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-20px); opacity: 0; } }
+@keyframes rt-stripes { to { background-position: 22px 0; } }
+@keyframes rt-pulse-scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+@keyframes rt-gavel { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-35deg); } 78% { transform: rotate(12deg); } 86% { transform: rotate(0); } }
+@keyframes rt-scan { 0% { left: -30%; } 100% { left: 100%; } }
+@keyframes rt-turn { to { transform: rotate(360deg); } }
+@keyframes rt-wave { to { transform: translateX(20px); } }
+@keyframes rt-wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(10deg); } }
+@keyframes rt-bubble { 0% { transform: translateY(0) scale(0.6); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-18px) scale(1.2); opacity: 0; } }
+
+:root[data-appearance='light'] .role-tag--super_admin { --rt-a: #34f5a0; }
+:root[data-appearance='light'] .role-tag--moderator { --rt-a: #ffd23a; }
 @media (prefers-reduced-motion: reduce) {
-  .role-tag__text,
-  .role-tag::after {
-    animation: none;
-  }
+  .role-tag, .role-tag *, .role-tag__ring, .role-tag__text, .role-tag__text::after, .role-tag__fx i { animation: none !important; }
 }
 
 /* ───────── Identity: tags, name effects, chat effects, emotes, profile effects ───────── */
@@ -738,7 +769,8 @@
 @media (prefers-reduced-motion: reduce) { .event-banner__shine { animation: none; } }
 
 /* VVIP: prefix/suffix and highlighted chat messages */
-.name-affix { font-size: 0.85em; font-weight: 800; color: rgb(165 243 252); text-shadow: 0 0 10px rgb(34 211 238 / 0.45); }
+.name-run { font: inherit; }
+.name-affix { font: inherit; color: rgb(165 243 252); text-shadow: 0 0 10px rgb(34 211 238 / 0.45); }
 .chat-highlight {
   border-radius: 0.6rem;
   background: linear-gradient(90deg, rgb(34 211 238 / 0.14), rgb(168 85 247 / 0.08) 70%, transparent);
@@ -894,3 +926,36 @@
 .pass-pick--ready { box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.6), 0 0 22px -6px rgba(34, 211, 238, 0.7); }
 .pass-pick::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.14) 50%, transparent 65%); transform: translateX(-120%); animation: lc-shine 7s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .pass-pick::after, .pass-chip-member--vvip { animation: none; } }
+
+/* ── Name effects: flow (default), glitch, wave (watery), pulse (neon), fire, shine, electric ── */
+.name-fx { position: relative; }
+.name-fx--glitch { animation: name-flow 3s linear infinite, name-glitch 2.4s steps(1) infinite; }
+.name-fx--glitch::before, .name-fx--glitch::after {
+  content: attr(data-text); position: absolute; inset: 0; pointer-events: none; -webkit-background-clip: initial; background: none;
+}
+.name-fx--glitch::before { -webkit-text-fill-color: #ef4444; color: #ef4444; opacity: 0; animation: lc-glitch-a 2.4s steps(1) infinite; }
+.name-fx--glitch::after { -webkit-text-fill-color: #22d3ee; color: #22d3ee; opacity: 0; animation: lc-glitch-b 2.4s steps(1) infinite; }
+.name-fx--pulse { animation: name-flow 5s linear infinite, name-pulse 2s ease-in-out infinite; }
+@keyframes name-pulse { 0%, 100% { filter: drop-shadow(0 0 0 transparent); } 50% { filter: drop-shadow(0 0 6px var(--fx-a)) drop-shadow(0 0 12px var(--fx-b)); } }
+.name-fx--fire { background-image: linear-gradient(0deg, var(--fx-c), var(--fx-b), var(--fx-a), var(--fx-b), var(--fx-c)) !important; background-size: 100% 260%; animation: name-fire 1.6s ease-in-out infinite alternate, name-flicker 3s steps(1) infinite; filter: drop-shadow(0 -1px 4px var(--fx-a)); }
+@keyframes name-fire { from { background-position: 0 100%; } to { background-position: 0 0%; } }
+@keyframes name-flicker { 0%, 100% { opacity: 1; } 47% { opacity: 0.85; } 49% { opacity: 1; } 73% { opacity: 0.9; } }
+.name-fx--shine { animation: name-flow 6s linear infinite; }
+.name-fx--shine::after {
+  content: attr(data-text); position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%); background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  animation: role-shimmer 2.4s ease-in-out infinite;
+}
+.name-fx--electric { animation: name-flow 1.4s linear infinite, name-zap 2.2s steps(1) infinite; }
+@keyframes name-zap { 0%, 100% { filter: drop-shadow(0 0 2px var(--fx-a)); } 30% { filter: drop-shadow(0 0 8px var(--fx-b)) brightness(1.4); } 32% { filter: drop-shadow(0 0 2px var(--fx-a)); } 64% { filter: drop-shadow(0 0 10px var(--fx-a)) brightness(1.5); } 66% { filter: drop-shadow(0 0 2px var(--fx-a)); } }
+.name-fx-wave { display: inline-flex; white-space: nowrap; }
+.name-fx-wave .name-fx__ch {
+  display: inline-block; animation: name-wave 1.8s ease-in-out infinite, name-ripple 3.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.12s), calc(var(--i) * -0.18s);
+}
+@keyframes name-wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.12em); } }
+@keyframes name-ripple { 0%, 100% { text-shadow: 0 0 0 transparent; opacity: 1; } 50% { text-shadow: 0 0.12em 6px currentColor; opacity: 0.85; } }
+@media (prefers-reduced-motion: reduce) {
+  .name-fx--glitch::before, .name-fx--glitch::after, .name-fx--shine::after, .name-fx-wave .name-fx__ch, .name-fx--pulse, .name-fx--fire, .name-fx--electric { animation: none; }
+}

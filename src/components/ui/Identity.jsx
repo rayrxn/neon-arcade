@@ -15,24 +15,58 @@ export const roleIcon = (name) => ROLE_ICONS[name] ?? Sparkles
 
 const gradient = (colors = []) => `linear-gradient(90deg, ${[...colors, colors[0]].filter(Boolean).join(', ')})`
 
-/** Display name with the equipped name effect (gradient + motion). */
+/** Effect styles a name item can carry (style.anim). "glitch: true" on older items maps to glitch. */
+const NAME_ANIMS = new Set(['flow', 'glitch', 'wave', 'pulse', 'fire', 'shine', 'electric'])
+
+/** Per-letter effects (watery wave) animate each character; the colors cycle through the item's palette. */
+function Letters({ text, colors }) {
+  return Array.from(text).map((ch, i) => (
+    <span key={i} className="name-fx__ch" style={{ '--i': i, color: colors[i % colors.length] }}>{ch === ' ' ? '\u00a0' : ch}</span>
+  ))
+}
+
+/**
+ * Display name with the equipped name effect. The VVIP prefix / suffix are part of the same run:
+ * same font, same baseline, and the effect (gradient, glitch, watery wave, …) covers all of it.
+ */
 export function StyledName({ user, className, children }) {
   const catalog = useCatalog()
   const fx = itemOf(catalog, user?.style?.nameEffect)
   const colors = fx?.style?.colors
-  const text = children ?? user?.displayName ?? '—'
-  // VVIP prefix / suffix around the name (only when the name itself is shown).
-  const pre = children == null && user?.namePrefix ? <span className="name-affix">{user.namePrefix}</span> : null
-  const suf = children == null && user?.nameSuffix ? <span className="name-affix">{user.nameSuffix}</span> : null
-  const name = !colors || colors.length < 2 ? (
-    <span className={pre || suf ? undefined : className}>{text}</span>
-  ) : (
-    <span className={clsx('name-fx', fx.style.glitch && 'name-fx--glitch', !(pre || suf) && className)} style={{ backgroundImage: gradient(colors) }} data-text={typeof text === 'string' ? text : undefined}>
-      {text}
+  const base = children ?? user?.displayName ?? '—'
+  const pre = children == null ? user?.namePrefix || null : null
+  const suf = children == null ? user?.nameSuffix || null : null
+  const hasFx = Array.isArray(colors) && colors.length >= 2
+  const anim = hasFx ? (NAME_ANIMS.has(fx.style.anim) ? fx.style.anim : fx.style.glitch ? 'glitch' : 'flow') : null
+
+  if (!hasFx) {
+    if (!pre && !suf) return <span className={className}>{base}</span>
+    return (
+      <span className={clsx('name-run', className)}>
+        {pre && <span className="name-affix">{pre}</span>}
+        {pre && ' '}
+        {base}
+        {suf && ' '}
+        {suf && <span className="name-affix">{suf}</span>}
+      </span>
+    )
+  }
+  const full = typeof base === 'string' ? [pre, base, suf].filter(Boolean).join(' ') : null
+  const style = { backgroundImage: gradient(colors), '--fx-a': colors[0], '--fx-b': colors[1], '--fx-c': colors[2] ?? colors[0] }
+  if (anim === 'wave' && full) {
+    return <span className={clsx('name-fx-wave', className)} style={{ '--fx-a': colors[0], '--fx-b': colors[1] }} aria-label={full}><Letters text={full} colors={colors} /></span>
+  }
+  return (
+    <span className={clsx('name-fx', `name-fx--${anim}`, className)} style={style} data-text={full ?? undefined}>
+      {full ?? (
+        <>
+          {pre && `${pre} `}
+          {base}
+          {suf && ` ${suf}`}
+        </>
+      )}
     </span>
   )
-  if (!pre && !suf) return name
-  return <span className={clsx('inline-flex min-w-0 items-baseline gap-1', className)}>{pre}{name}{suf}</span>
 }
 
 /** Small loyalty card tag ([SILVER], [GOLD], ...). Hidden for "No Card". */
