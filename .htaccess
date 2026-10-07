@@ -9,7 +9,7 @@ RedirectMatch 404 /\.git
 </FilesMatch>
 
 # index.html selalu dicek ulang supaya update langsung terlihat
-<FilesMatch "^(index\.html)?$">
+<FilesMatch "^(index\.html|version\.json)?$">
   Header set Cache-Control "no-cache, must-revalidate"
 </FilesMatch>
 
