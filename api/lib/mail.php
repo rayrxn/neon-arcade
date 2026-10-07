@@ -105,7 +105,8 @@ function mail_render(string $kind, string $lang, array $vars): array
     $fill = fn(string $s) => strtr($s, ['{user}' => $vars['user'] ?? '', '{email}' => $vars['email'] ?? '']);
     $e = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
     $url = (string) $vars['url'];
-    $accent = $kind === 'reset' ? '#22d3ee' : '#34d399';
+    $accent = $kind === 'reset' ? '#0891b2' : '#059669';      // button: white text needs a deep tone
+    $accentText = $kind === 'reset' ? '#0e7490' : '#047857';
     $icon = $kind === 'reset' ? '&#128273;' : '&#9993;&#65039;';
     $year = date('Y');
     $html = <<<HTML
@@ -114,47 +115,47 @@ function mail_render(string $kind, string $lang, array $vars): array
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark light">
-<meta name="supported-color-schemes" content="dark light">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>{$e($c['subject'])}</title>
 </head>
-<body style="margin:0;padding:0;background:#07080c;-webkit-text-size-adjust:100%;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#07080c;">{$e($c['preheader'])}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#07080c;">
+<body style="margin:0;padding:0;background:#f3f4f7;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f3f4f7;">{$e($c['preheader'])}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f4f7;">
   <tr><td align="center" style="padding:32px 16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
       <tr><td style="padding:0 4px 20px 4px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-        <span style="font-size:17px;font-weight:800;letter-spacing:-0.2px;color:#ffffff;">NEON<span style="color:#22d3ee;">/</span>ARCADE</span>
+        <span style="font-size:17px;font-weight:800;letter-spacing:-0.2px;color:#0b0d14;">NEON<span style="color:#06b6d4;">/</span>ARCADE</span>
       </td></tr>
-      <tr><td style="background:#11131a;border:1px solid #232634;border-radius:18px;overflow:hidden;">
+      <tr><td style="background:#ffffff;border:1px solid #e4e7ee;border-radius:18px;overflow:hidden;box-shadow:0 8px 28px rgba(15,23,42,0.06);">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr><td style="height:3px;background:{$accent};background-image:linear-gradient(90deg,#22d3ee,#a78bfa,#f472b6);font-size:0;line-height:0;">&nbsp;</td></tr>
           <tr><td style="padding:32px 28px 8px 28px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            <div style="width:48px;height:48px;border-radius:14px;background:#1a1d27;border:1px solid #2b2f3f;text-align:center;line-height:48px;font-size:22px;">{$icon}</div>
-            <p style="margin:20px 0 0 0;font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:{$accent};">{$e($c['eyebrow'])}</p>
-            <h1 style="margin:6px 0 0 0;font-size:24px;line-height:1.25;font-weight:800;color:#ffffff;">{$e($c['title'])}</h1>
-            <p style="margin:14px 0 0 0;font-size:15px;line-height:1.6;color:#b4bccb;">{$e($fill($c['intro']))}</p>
+            <div style="width:48px;height:48px;border-radius:14px;background:#f1f5f9;border:1px solid #e2e8f0;text-align:center;line-height:48px;font-size:22px;">{$icon}</div>
+            <p style="margin:20px 0 0 0;font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:{$accentText};">{$e($c['eyebrow'])}</p>
+            <h1 style="margin:6px 0 0 0;font-size:24px;line-height:1.25;font-weight:800;color:#0b0d14;">{$e($c['title'])}</h1>
+            <p style="margin:14px 0 0 0;font-size:15px;line-height:1.6;color:#475569;">{$e($fill($c['intro']))}</p>
           </td></tr>
           <tr><td style="padding:24px 28px 8px 28px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
               <td style="border-radius:12px;background:{$accent};">
-                <a href="{$e($url)}" target="_blank" style="display:inline-block;padding:14px 26px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:800;color:#07080c;text-decoration:none;border-radius:12px;">{$e($c['cta'])} &rarr;</a>
+                <a href="{$e($url)}" target="_blank" style="display:inline-block;padding:14px 26px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:800;color:#ffffff;text-decoration:none;border-radius:12px;">{$e($c['cta'])} &rarr;</a>
               </td>
             </tr></table>
-            <p style="margin:14px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;color:#8a93a6;">&#9201; {$e($c['expires'])}</p>
+            <p style="margin:14px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;color:#64748b;">&#9201; {$e($c['expires'])}</p>
           </td></tr>
           <tr><td style="padding:20px 28px 28px 28px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            <div style="border-top:1px solid #232634;padding-top:18px;">
-              <p style="margin:0;font-size:12px;line-height:1.6;color:#6b7385;">{$e($c['fallback'])}</p>
-              <p style="margin:6px 0 0 0;font-size:12px;line-height:1.5;word-break:break-all;"><a href="{$e($url)}" style="color:#67e8f9;text-decoration:underline;">{$e($url)}</a></p>
-              <p style="margin:16px 0 0 0;font-size:13px;line-height:1.6;color:#8a93a6;">{$e($c['ignore'])}</p>
+            <div style="border-top:1px solid #eef0f4;padding-top:18px;">
+              <p style="margin:0;font-size:12px;line-height:1.6;color:#64748b;">{$e($c['fallback'])}</p>
+              <p style="margin:6px 0 0 0;font-size:12px;line-height:1.5;word-break:break-all;"><a href="{$e($url)}" style="color:#0891b2;text-decoration:underline;">{$e($url)}</a></p>
+              <p style="margin:16px 0 0 0;font-size:13px;line-height:1.6;color:#64748b;">{$e($c['ignore'])}</p>
             </div>
           </td></tr>
         </table>
       </td></tr>
       <tr><td style="padding:20px 8px 0 8px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-align:center;">
-        <p style="margin:0;font-size:12px;color:#5b6273;">{$e($c['support'])}</p>
-        <p style="margin:6px 0 0 0;font-size:11px;color:#454b5a;">{$e($c['footer'])} · &copy; {$year}<br>{$e($c['auto'])}</p>
+        <p style="margin:0;font-size:12px;color:#64748b;">{$e($c['support'])}</p>
+        <p style="margin:6px 0 0 0;font-size:11px;color:#94a3b8;">{$e($c['footer'])} · &copy; {$year}<br>{$e($c['auto'])}</p>
       </td></tr>
     </table>
   </td></tr>

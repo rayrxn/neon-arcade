@@ -45,7 +45,57 @@ function member_card_floor(string $userId): ?string
 function card_perks(string $slug): array
 {
     $c = cards_all()[$slug] ?? null;
-    return array_replace(['dailyAc' => 0, 'dailyAg' => 0, 'convertPct' => 0, 'shopDiscount' => 0, 'lxpPct' => 0], $c ? jdec($c['perks'] ?? null, []) : []);
+    return array_replace(['dailyAc' => 0, 'dailyAg' => 0, 'weeklyAc' => 0, 'weeklyAg' => 0, 'convertPct' => 0, 'shopDiscount' => 0, 'lxpPct' => 0, 'xpPct' => 0, 'onceTier' => null, 'onceDays' => 0], $c ? jdec($c['perks'] ?? null, []) : []);
+}
+
+/**
+ * Give a membership as a reward (loyalty card, battle pass). Never shortens what the player already has:
+ * same or higher tier active → extend it; lower tier active → upgrade and carry the remaining days over.
+ */
+function membership_grant(string $userId, string $tier, int $days, string $note): array
+{
+    if (!in_array($tier, ['vip', 'vvip'], true) || $days < 1) fail('errors.invalidRequest');
+    $cur = q1('SELECT * FROM memberships WHERE user_id = ? AND active AND (ends_at IS NULL OR ends_at > now()) FOR UPDATE', [$userId]);
+    if ($cur && tier_rank($cur['tier']) >= tier_rank($tier)) {
+        if ($cur['ends_at'] !== null) q('UPDATE memberships SET ends_at = ends_at + make_interval(days => ?) WHERE id = ?', [$days, $cur['id']]);
+        $result = ['tier' => $cur['tier'], 'days' => $days, 'extended' => true];
+    } else {
+        $carry = $cur && $cur['ends_at'] !== null ? max(0, strtotime((string) $cur['ends_at']) - time()) : 0;
+        q('UPDATE memberships SET active = FALSE WHERE user_id = ? AND active', [$userId]);
+        q("INSERT INTO memberships (user_id, tier, ends_at, note) VALUES (?, ?, now() + make_interval(days => ?) + make_interval(secs => ?), ?)", [$userId, $tier, $days, $carry, mb_substr($note, 0, 200)]);
+        $result = ['tier' => $tier, 'days' => $days, 'extended' => false];
+    }
+    $GLOBALS['NEON_MEMBERSHIPS_DIRTY'] = true;
+    notify($userId, 'membership', ['tier' => $result['tier'], 'days' => $days, 'reward' => $note]);
+    log_event('MEMBERSHIP_REWARD', $userId, $result + ['note' => $note]);
+    return $result;
+}
+
+/** Cards reached with Loyalty XP whose one-time membership reward hasn't been given yet. */
+function card_once_due(array $u): array
+{
+    $xpRank = card_rank(card_for_xp((int) ($u['loyalty_xp'] ?? 0)));
+    $due = [];
+    foreach (cards_all() as $slug => $c) {
+        if ((int) $c['rank'] > $xpRank) continue;
+        $cp = card_perks($slug);
+        if (empty($cp['onceTier']) || (int) $cp['onceDays'] < 1) continue;
+        if (!perk_claimed($u['id'], 'card_once', $slug)) $due[] = ['card' => $slug, 'name' => $c['name'], 'tier' => $cp['onceTier'], 'days' => (int) $cp['onceDays']];
+    }
+    return $due;
+}
+
+/** Hand out every due card reward (called when a card is reached, and from the Loyalty page). */
+function card_once_grant_all(string $userId): array
+{
+    $u = q1('SELECT * FROM users WHERE id = ?', [$userId]);
+    if (!$u) return [];
+    $out = [];
+    foreach (card_once_due($u) as $d) {
+        q('INSERT INTO perk_claims (user_id, kind, period) VALUES (?, ?, ?) ON CONFLICT DO NOTHING', [$userId, 'card_once', $d['card']]);
+        $out[] = $d + membership_grant($userId, $d['tier'], $d['days'], $d['name'] . ' card reward');
+    }
+    return $out;
 }
 
 function shop_discount_of(array $u): int
@@ -79,7 +129,18 @@ function perks_view(array $u, array $meta): array
     return [
         'tier' => $tier,
         'perks' => $tier ? MEMBER_PERKS[$tier] : null,
-        'card' => ['slug' => $card, 'dailyAc' => (float) $cp['dailyAc'], 'dailyAg' => (float) $cp['dailyAg'], 'claimed' => perk_claimed($id, 'card_daily', day_key($now))],
+        'card' => [
+            'slug' => $card, 'dailyAc' => (float) $cp['dailyAc'], 'dailyAg' => (float) $cp['dailyAg'], 'claimed' => perk_claimed($id, 'card_daily', day_key($now)),
+            'weeklyAc' => (float) $cp['weeklyAc'], 'weeklyAg' => (float) $cp['weeklyAg'], 'weeklyClaimed' => perk_claimed($id, 'card_weekly', week_key($now)),
+            'xpPct' => (int) $cp['xpPct'], 'lxpPct' => (int) $cp['lxpPct'], 'onceDue' => card_once_due($u),
+        ],
+        // VVIP includes VIP: its VIP daily / weekly / welcome bonuses can be claimed too.
+        'vipIncluded' => $tier === 'vvip' ? [
+            'perks' => MEMBER_PERKS['vip'],
+            'daily' => ['claimed' => perk_claimed($id, 'member_daily', 'vip:' . day_key($now))],
+            'weekly' => ['claimed' => perk_claimed($id, 'member_weekly', 'vip:' . week_key($now))],
+            'once' => $m ? ['claimed' => perk_claimed($id, 'member_once', 'vip:' . $m['id'])] : null,
+        ] : null,
         'daily' => $tier ? ['claimed' => perk_claimed($id, 'member_daily', day_key($now))] : null,
         'weekly' => $tier ? ['claimed' => perk_claimed($id, 'member_weekly', week_key($now))] : null,
         'once' => $m ? ['claimed' => perk_claimed($id, 'member_once', $m['id'])] : null,
@@ -92,8 +153,8 @@ function perks_view(array $u, array $meta): array
     ];
 }
 
-/** Claim a bonus: card_daily, member_daily, member_weekly, member_once, endless. */
-function perk_claim(array $me, string $kind): array
+/** Claim a bonus: card_daily, card_weekly, card_once, member_daily, member_weekly, member_once, endless. */
+function perk_claim(array $me, string $kind, ?string $asTier = null): array
 {
     $now = now_ms();
     $u = q1('SELECT * FROM users WHERE id = ? FOR UPDATE', [$me['id']]);
@@ -109,17 +170,33 @@ function perk_claim(array $me, string $kind): array
             $period = day_key($now);
             [$ac, $ag] = [(float) $cp['dailyAc'], (float) $cp['dailyAg']];
             break;
+        case 'card_weekly':
+            $cp = card_perks(effective_card($u));
+            if ($cp['weeklyAc'] <= 0 && $cp['weeklyAg'] <= 0) fail('perks.errors.none');
+            $period = week_key($now);
+            [$ac, $ag] = [(float) $cp['weeklyAc'], (float) $cp['weeklyAg']];
+            break;
+        case 'card_once':
+            $granted = card_once_grant_all($u['id']);
+            if (!$granted) fail('perks.errors.nothing');
+            return ['kind' => $kind, 'memberships' => $granted, 'ac' => 0, 'ag' => 0, 'lxp' => 0];
         case 'member_daily':
         case 'member_weekly':
-            if (!$tier) fail('perks.errors.members');
-            $weekly = $kind === 'member_weekly';
-            $period = $weekly ? week_key($now) : day_key($now);
-            [$ac, $ag] = [(float) MEMBER_PERKS[$tier][$weekly ? 'weeklyAc' : 'dailyAc'], (float) MEMBER_PERKS[$tier][$weekly ? 'weeklyAg' : 'dailyAg']];
-            break;
         case 'member_once':
             if (!$tier) fail('perks.errors.members');
-            $period = (string) qv('SELECT id FROM memberships WHERE user_id = ? AND active', [$u['id']]);
-            [$ac, $ag] = [(float) MEMBER_PERKS[$tier]['onceAc'], (float) MEMBER_PERKS[$tier]['onceAg']];
+            // A VVIP member also has VIP active: the VIP bonuses are separate claims ("vip:" periods).
+            $use = $asTier ?: $tier;
+            if (!isset(MEMBER_PERKS[$use]) || tier_rank($use) > tier_rank($tier)) fail('perks.errors.members');
+            $prefix = $use !== $tier ? $use . ':' : '';
+            if ($kind === 'member_once') {
+                $period = $prefix . (string) qv('SELECT id FROM memberships WHERE user_id = ? AND active', [$u['id']]);
+                [$ac, $ag] = [(float) MEMBER_PERKS[$use]['onceAc'], (float) MEMBER_PERKS[$use]['onceAg']];
+            } else {
+                $weekly = $kind === 'member_weekly';
+                $period = $prefix . ($weekly ? week_key($now) : day_key($now));
+                [$ac, $ag] = [(float) MEMBER_PERKS[$use][$weekly ? 'weeklyAc' : 'dailyAc'], (float) MEMBER_PERKS[$use][$weekly ? 'weeklyAg' : 'dailyAg']];
+            }
+            $tier = $use;
             break;
         case 'endless':
             if (!$tier || !MEMBER_PERKS[$tier]['endless']) fail('perks.errors.vvip');
@@ -143,7 +220,7 @@ function perk_claim(array $me, string $kind): array
     }
     if (perk_claimed($u['id'], $kind, $period)) fail('perks.errors.claimed');
     q('INSERT INTO perk_claims (user_id, kind, period) VALUES (?, ?, ?)', [$u['id'], $kind, $period]);
-    $label = ['card_daily' => 'Loyalty card daily bonus', 'member_daily' => strtoupper((string) $tier) . ' daily bonus', 'member_weekly' => strtoupper((string) $tier) . ' weekly bonus', 'member_once' => strtoupper((string) $tier) . ' welcome reward', 'endless' => 'Endless quest'][$kind];
+    $label = ['card_daily' => 'Loyalty card daily bonus', 'card_weekly' => 'Loyalty card weekly bonus', 'member_daily' => strtoupper((string) $tier) . ' daily bonus', 'member_weekly' => strtoupper((string) $tier) . ' weekly bonus', 'member_once' => strtoupper((string) $tier) . ' welcome reward', 'endless' => 'Endless quest'][$kind];
     if ($ac > 0) wallet_post($u['id'], 'AC', $ac, 'reward', 'perk', $kind, $label, null, "perk:$kind:$period:AC");
     if ($ag > 0) wallet_post($u['id'], 'AG', $ag, 'reward', 'perk', $kind, $label, null, "perk:$kind:$period:AG");
     if ($lxp > 0) add_loyalty_xp($u['id'], $lxp, 'perk', "$kind:$period");
@@ -258,17 +335,24 @@ function pass_rewards(): array
     if ($out) return $out;
     $free = [];
     $prem = [];
+    // Free track: something every tier, cosmetics along the way, VIP for 30 days at the end.
+    $freeItems = [5 => 'feeling-lucky', 10 => 'pass-badge', 15 => 'double-daily', 20 => 'loyalty-rush', 25 => 'feeling-lucky', 30 => 'pass-theme', 35 => 'double-daily', 40 => 'mega-lucky', 45 => 'loyalty-rush'];
+    // Premium track: AC + AG every tier, a boost or an exclusive cosmetic every few tiers, VVIP at the end.
+    $premItems = [
+        3 => 'feeling-lucky', 6 => 'loyalty-rush', 8 => 'double-daily', 12 => 'pass-frame', 15 => 'mega-lucky', 18 => 'triple-daily',
+        21 => 'loyalty-overdrive', 24 => 'pass-name', 27 => 'mega-lucky', 30 => 'pass-chat', 33 => 'triple-daily', 36 => 'pass-fx',
+        39 => 'loyalty-overdrive', 42 => 'mega-lucky', 45 => 'triple-daily', 48 => 'loyalty-overdrive',
+    ];
     for ($t = 1; $t <= PASS_TIERS; $t++) {
-        $f = [];
-        if ($t % 2 === 1) $f[] = ['kind' => 'AC', 'amount' => 5000 * $t];
-        if ($t % 10 === 0) $f[] = ['kind' => 'AG', 'amount' => 2 * ($t / 10)];
-        if ($t === PASS_TIERS) $f = [['kind' => 'AC', 'amount' => 1000000], ['kind' => 'AG', 'amount' => 25]];
-        if ($f) $free[$t] = $f;
-        $pr = [['kind' => 'AC', 'amount' => 40000 * $t], ['kind' => 'AG', 'amount' => 20 + 4 * $t]];
-        if (in_array($t, [5, 15, 25, 35, 45], true)) $pr[] = ['kind' => 'item', 'id' => 'feeling-lucky'];
-        if (in_array($t, [10, 30], true)) $pr[] = ['kind' => 'item', 'id' => 'loyalty-rush'];
-        if (in_array($t, [20, 40], true)) $pr[] = ['kind' => 'item', 'id' => 'double-daily'];
-        if ($t === PASS_TIERS) $pr = [['kind' => 'AC', 'amount' => 10000000], ['kind' => 'AG', 'amount' => 1500], ['kind' => 'item', 'id' => 'feeling-lucky']];
+        $f = [['kind' => 'AC', 'amount' => 10000 * $t]];
+        if ($t % 5 === 0) $f[] = ['kind' => 'AG', 'amount' => $t / 5 * 3];
+        if (isset($freeItems[$t])) $f[] = ['kind' => 'item', 'id' => $freeItems[$t]];
+        if ($t === PASS_TIERS) $f = [['kind' => 'membership', 'tier' => 'vip', 'days' => 30], ['kind' => 'AC', 'amount' => 2500000], ['kind' => 'AG', 'amount' => 75]];
+        $free[$t] = $f;
+        $pr = [['kind' => 'AC', 'amount' => 60000 * $t], ['kind' => 'AG', 'amount' => 25 + 5 * $t]];
+        if (isset($premItems[$t])) $pr[] = ['kind' => 'item', 'id' => $premItems[$t]];
+        if ($t % 10 === 0) $pr[] = ['kind' => 'LXP', 'amount' => 2500 * ($t / 10)];
+        if ($t === PASS_TIERS) $pr = [['kind' => 'membership', 'tier' => 'vvip', 'days' => 14], ['kind' => 'AC', 'amount' => 25000000], ['kind' => 'AG', 'amount' => 3000], ['kind' => 'item', 'id' => 'pass-crown'], ['kind' => 'LXP', 'amount' => 25000]];
         $prem[$t] = $pr;
     }
     return $out = ['free' => $free, 'premium' => $prem];
@@ -350,13 +434,16 @@ function pass_claim(array $me, string $track, int $tier): array
         }
     }
     if (!$todo) fail('pass.errors.nothing');
-    $total = ['AC' => 0, 'AG' => 0, 'items' => []];
+    $total = ['AC' => 0, 'AG' => 0, 'LXP' => 0, 'items' => [], 'memberships' => []];
+    $grants = [];
     foreach ($todo as [$tr, $t]) {
         $p['season']['pass'][$tr][] = $t;
         foreach ($rewards[$tr][$t] as $r) {
             if ($r['kind'] === 'item') {
                 q("INSERT INTO shop_inventory (user_id, item_id, qty, source) VALUES (?, ?, 1, 'season') ON CONFLICT (user_id, item_id) DO UPDATE SET qty = shop_inventory.qty + 1", [$me['id'], $r['id']]);
                 $total['items'][] = $r['id'];
+            } elseif ($r['kind'] === 'membership') {
+                $grants[] = $r;
             } else {
                 $total[$r['kind']] += $r['amount'];
             }
@@ -366,7 +453,10 @@ function pass_claim(array $me, string $track, int $tier): array
     if ($total['AC'] > 0) wallet_post($me['id'], 'AC', $total['AC'], 'reward', 'season', 'battle_pass', "Season {$season['id']} pass rewards", null, "$key:AC");
     if ($total['AG'] > 0) wallet_post($me['id'], 'AG', $total['AG'], 'reward', 'season', 'battle_pass', "Season {$season['id']} pass rewards", null, "$key:AG");
     save_docs($me['id'], $p, $meta);
-    return ['claimed' => count($todo), 'ac' => num($total['AC']), 'ag' => num($total['AG']), 'items' => $total['items']];
+    // After the pass doc is saved: Loyalty XP and memberships load/write their own rows.
+    if ($total['LXP'] > 0) add_loyalty_xp($me['id'], (int) $total['LXP'], 'season', "pass:{$season['id']}");
+    foreach ($grants as $g) $total['memberships'][] = membership_grant($me['id'], $g['tier'], (int) $g['days'], "Season {$season['id']} battle pass");
+    return ['claimed' => count($todo), 'ac' => num($total['AC']), 'ag' => num($total['AG']), 'lxp' => $total['LXP'], 'items' => $total['items'], 'memberships' => $total['memberships']];
 }
 
 // ───────────────────────────── Global Crash ─────────────────────────────

@@ -374,7 +374,8 @@ function record_game(string $userId, array &$p, array &$meta, array &$session, i
     $best = 0;
     $counts = empty($session['isTest']) && $session['status'] !== 'INVALID';
     $value = (float) ($session['valueAc'] ?? $session['bet']);
-    $xp = $counts ? (int) floor(game_xp($value, $session['result'] === 'win') * boost_mult($userId, 'xp')) : 0;
+    $cardXp = function_exists('card_perks') ? 1 + card_perks(effective_card(q1('SELECT * FROM users WHERE id = ?', [$userId]) ?? []))['xpPct'] / 100 : 1;
+    $xp = $counts ? (int) floor(game_xp($value, $session['result'] === 'win') * boost_mult($userId, 'xp') * $cardXp) : 0;
     $session['xp'] = $xp;
     roll_periods($p, $now);
     array_unshift($p['sessions'], $session);

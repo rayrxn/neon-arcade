@@ -161,7 +161,7 @@ function route(string $method, string $path): array
                     'emotes/favorite' => emote_favorite($u, (string) arg('code', ''), (bool) arg('on', true)),
                     'missions/claim' => mission_claim($u, (string) arg('missionId', ''), arg('proof', '')),
                     'membership/request' => membership_request($u, (string) arg('tier', '')),
-                    'perk/claim' => perk_claim($u, (string) arg('kind', '')),
+                    'perk/claim' => perk_claim($u, (string) arg('kind', ''), arg('tier', null) ? (string) arg('tier') : null),
                     'profile/affix' => set_name_affix($u, arg('prefix', null), arg('suffix', null)),
                     'profile/banner' => banner_upload($u, arg('image', null)),
                     'pass/buy' => pass_buy($u),
