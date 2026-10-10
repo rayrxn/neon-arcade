@@ -60,6 +60,14 @@ function route(string $method, string $path): array
         $u = current_user();
         return tx(fn() => activity_view($u, (string) ($_GET['kind'] ?? 'all')));
     }
+    if ($method === 'GET' && $path === 'pulse') {
+        $u = current_user(false);
+        return pulse_view($u);
+    }
+    if ($method === 'GET' && $path === 'horse/state') {
+        $u = current_user(false);
+        return tx(fn() => horse_state($u));
+    }
     if ($method === 'GET' && $path === 'stats/pnl') {
         $u = current_user();
         return tx(fn() => pnl_stats($u, (int) ($_GET['days'] ?? 7)));

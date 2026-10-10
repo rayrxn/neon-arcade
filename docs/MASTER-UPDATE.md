@@ -77,7 +77,7 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [ ] Case opening + battle expansion
 - [ ] Chess PvP (+ Normal / Medium / Hard practice engine)
 - [ ] Racing PvP
-- [ ] Horse Racing (shared rounds)
+- [x] Horse Racing (shared rounds, migration 018)
 - [x] Keno, Tower, Cross the Road, Pump (server-settled, RTP-checked in stage8)
 - [x] Tarot, Sweet (tumble slot, RTP via api/tests/sweet_rtp.php)
 - [ ] Snake, Slice, Layer, Moles

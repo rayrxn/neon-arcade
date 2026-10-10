@@ -751,3 +751,16 @@ export const ladderStep = (game, id, pick) =>
 export const ladderCashout = (game, id) => (SERVER_MODE ? remote(`${game}-cashout`, { id }) : serverOnly())
 export const playTarot = ({ bet, risk }) => (SERVER_MODE ? remoteStart('tarot', { bet, risk }) : serverOnly())
 export const playSweet = ({ bet }) => (SERVER_MODE ? remoteStart('sweet', { bet }) : serverOnly())
+
+/** True while a game request is on its way (a live refresh then would show the balance before the result). */
+export const gameBusy = () => inflight.size > 0
+
+// ── Horse Racing (shared rounds, server only) ──
+export async function horseState() {
+  if (!SERVER_MODE) serverOnly()
+  const data = await api('horse/state')
+  const local = (ms) => (ms == null ? null : toLocalTime(ms))
+  return { ...data, round: { ...data.round, startAt: local(data.round.startAt), endAt: local(data.round.endAt), nextAt: local(data.round.nextAt) } }
+}
+export const horseBet = ({ bet, horse }) => (SERVER_MODE ? remoteStart('horse-bet', { bet, horse }) : serverOnly())
+

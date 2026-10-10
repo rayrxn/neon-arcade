@@ -1,6 +1,7 @@
 /** Phase 13 — v2.0 master update. */
 export default {
   play: {
+    horse: { pick: 'Pick a horse', choose: 'Choose a horse', bet: 'Bet on {horse}', closed: 'Bets closed', yourBet: 'Your bet: {amount} {cur} on {horse}', startsIn: 'Race starts in {s}s', racing: 'They are off!', winner: '{horse} wins', nextIn: 'next race in {s}s', already: 'You already have a bet in this race.', rule: 'One race for everyone. Odds come from the round seed; the winner pays its odds. Bets close when the gates open.' },
     crash: { eventRound: 'event round (set by staff)' },
     tarot: { risk: 'Risk', risks: { low: 'Low', medium: 'Medium', high: 'High' }, max: 'Max', draw: 'Draw 3 cards', idle: 'Three cards. Their multipliers multiply.', rule: 'Each card carries a multiplier. Your payout is all three multiplied together.',
       cards: { tower: 'The Tower', death: 'Death', devil: 'The Devil', hanged: 'Hanged Man', moon: 'The Moon', hermit: 'The Hermit', fool: 'The Fool', temperance: 'Temperance', justice: 'Justice', hierophant: 'Hierophant', priestess: 'High Priestess', strength: 'Strength', emperor: 'The Emperor', empress: 'The Empress', lovers: 'The Lovers', chariot: 'The Chariot', magician: 'Magician', judgement: 'Judgement', wheel: 'Wheel of Fortune', star: 'The Star', sun: 'The Sun', world: 'The World' } },
@@ -52,7 +53,7 @@ export default {
   chat: { mod: { ban: '{user} was banned by {by} ({duration})', unban: '{user} was unbanned by {by}', kick: '{user} was kicked by {by}', mute: '{user} was muted by {by} ({duration})', unmute: '{user} can chat again', forever: 'permanent', gacor: '🔥 Jam Gacor ×{mult} is live for {minutes} minutes!' } },
   gacor: { global: 'Jam Gacor ×{mult} is live', personal: 'Your luck boost ×{mult} is on', hint: 'wins pay extra' },
   games: {
-    list: { tarot: 'Three cards, multiplied together.', sweet: 'Tumbling candy, bombs up to ×100.', keno: 'Pick up to 10 numbers, 10 balls drop.', tower: 'Climb floor by floor, avoid the bomb.', cross: 'Lane by lane. Cash out before the car comes.', pump: 'Pump the balloon. Stop before it pops.' },
+    list: { horse: 'Race horses. Pick the winner, get paid its odds.', tarot: 'Three cards, multiplied together.', sweet: 'Tumbling candy, bombs up to ×100.', keno: 'Pick up to 10 numbers, 10 balls drop.', tower: 'Climb floor by floor, avoid the bomb.', cross: 'Lane by lane. Cash out before the car comes.', pump: 'Pump the balloon. Stop before it pops.' },
     categories: { slots: 'Slots' },
   },
   openRound: { text: 'You have an unfinished {game} round.', resume: 'Resume' },

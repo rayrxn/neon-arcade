@@ -1,6 +1,18 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.5.0",
+    "date": "2026-10-10",
+    "emoji": "🏇",
+    "colors": ["#22c55e", "#f59e0b", "#06b6d4"],
+    "title": { "en": "Horse Racing & live updates", "id": "Balap Kuda & update langsung" },
+    "tagline": { "en": "One race for everyone, and no more refreshing.", "id": "Satu balapan untuk semua, dan tidak perlu refresh lagi." },
+    "items": [
+      { "tag": "new", "en": "Horse Racing: six horses, one shared race every half minute. Pick the winner, get paid its odds.", "id": "Balap Kuda: enam kuda, satu balapan bersama tiap setengah menit. Tebak pemenang, dibayar sesuai odds." },
+      { "tag": "improve", "en": "Balance, rewards and notifications update by themselves within a few seconds. No reload needed.", "id": "Saldo, hadiah, dan notifikasi update sendiri dalam beberapa detik. Tidak perlu reload." }
+    ]
+  },
+  {
     "version": "2.4.0",
     "date": "2026-10-10",
     "emoji": "🍭",

@@ -314,6 +314,15 @@ check('that round crashes exactly there and is marked as an event', (int) $nr['i
 $GLOBALS['NEON_KV_DIRTY']['crash_sched'] = true;
 check('the schedule entry is used up', empty(kv_get('crash_sched')['rounds'][(string) ($cur + 1)]));
 
+echo "Live pulse\n";
+$p1 = call('GET', 'pulse', [], 'a');
+setbal($A, 4321, 7);
+$p2 = call('GET', 'pulse', [], 'a');
+check('pulse account fingerprint changes when the balance changes', $p1['ok'] && $p2['ok'] && $p1['data']['account'] !== $p2['data']['account'], [$p1, $p2]);
+$p3 = call('GET', 'pulse', [], 'a');
+check('…and stays the same when nothing changed', $p3['data']['account'] === $p2['data']['account']);
+check('guests get the shared fingerprint only', ($g = call('GET', 'pulse'))['ok'] && !isset($g['data']['account']) && isset($g['data']['shared']));
+
 echo "Owner console\n";
 $_SERVER['REMOTE_ADDR'] = '10.9.8.7';
 $con = fn(string $path, array $body = []) => call('POST', $path, $body);
@@ -394,6 +403,29 @@ check('Sweet: all-same grid pays and tumbles, capped', $sp['base'] > 0 && count(
 $r = call('POST', 'game/sweet', ['bet' => 100], 'a');
 $last = $r['ok'] ? end($r['data']['result']['steps']) : null;
 check('Sweet spin settles; last grid has no more wins (or 20 tumbles)', $r['ok'] && ($last['wins'] === [] || count($r['data']['result']['steps']) === 20) && $r['data']['result']['session']['multiplier'] == $r['data']['result']['mult'], $r['ok'] ? ['mult' => $r['data']['result']['mult']] : $r);
+
+echo "Horse Racing\n";
+$d = horse_draw(str_repeat('ab', 32), 7);
+$rtp = 0; foreach ($d['p'] as $i => $pp) $rtp = max($rtp, $pp * $d['odds'][$i]);
+check('horse odds pay ≤ 96% and finishing order is a permutation', $rtp <= 0.96 + 1e-9 && $rtp > 0.94 && count(array_unique($d['finish'])) === 6, ['rtp' => $rtp]);
+check('same seed → same race (verifiable)', horse_draw(str_repeat('ab', 32), 7) === $d);
+setbal($A, 1000000, 100);
+$st = call('GET', 'horse/state', [], 'a');
+check('state: betting phase with 6 odds, order hidden', $st['ok'] && $st['data']['round']['phase'] === 'betting' && count($st['data']['round']['odds']) === 6 && $st['data']['round']['finish'] === null, $st);
+$b = call('POST', 'game/horse-bet', ['bet' => 100, 'horse' => 2], 'a');
+check('bet placed on horse 3', $b['ok'] && $b['data']['result']['horse'] === 2, $b);
+expect_error('one bet per race', call('POST', 'game/horse-bet', ['bet' => 100, 'horse' => 1], 'a'), 'play.horse.already');
+expect_error('horse 7 does not exist', call('POST', 'game/horse-bet', ['bet' => 100, 'horse' => 6], 'v'), 'play.errors.invalid');
+$rid = $b['data']['result']['roundId'];
+q("UPDATE horse_rounds SET start_at = now() - interval '30 seconds', end_at = now() - interval '10 seconds' WHERE id = ?", [$rid]);
+$st = call('GET', 'horse/state', [], 'a');
+$hr = q1('SELECT * FROM horse_rounds WHERE id = ?', [$rid]);
+$won = (int) jdec($hr['finish'], [])[0] === 2;
+$sess = q1('SELECT status, payout FROM game_sessions WHERE id = ?', [$b['data']['result']['id']]);
+check('race settles: bet paid at the odds if horse 3 won, else lost', $hr['settled'] && ($won ? $sess['status'] === 'WON' && abs((float) $sess['payout'] - 100 * jdec($hr['odds'], [])[2]) < 0.01 : $sess['status'] === 'LOST'), [$sess, $won]);
+$hh = array_values(array_filter($st['data']['history'], fn($h) => $h['id'] === $rid))[0] ?? null;
+check('seed revealed after the race, matches the hash and the result', $hh && hash('sha256', $hh['seed']) === $hh['hash'] && horse_draw($hh['seed'], $rid)['finish'][0] === $hh['winner'], $hh);
+expect_error('bets closed while racing', (function () use ($rid) { q("UPDATE horse_rounds SET start_at = now() - interval '1 second', end_at = now() + interval '10 seconds' WHERE id = (SELECT max(id) FROM horse_rounds)"); return call('POST', 'game/horse-bet', ['bet' => 100, 'horse' => 0], 'v'); })(), 'play.horse.closed');
 
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

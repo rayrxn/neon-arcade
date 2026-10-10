@@ -1,6 +1,7 @@
 /** Fase 13 — master update v2.0. */
 export default {
   play: {
+    horse: { pick: 'Pilih kuda', choose: 'Pilih kudanya', bet: 'Pasang di {horse}', closed: 'Taruhan ditutup', yourBet: 'Taruhanmu: {amount} {cur} di {horse}', startsIn: 'Balapan mulai {s} dtk', racing: 'Mereka berlari!', winner: '{horse} menang', nextIn: 'balapan berikut {s} dtk', already: 'Kamu sudah pasang di balapan ini.', rule: 'Satu balapan untuk semua. Odds dari seed ronde; pemenang dibayar sesuai odds-nya. Taruhan ditutup saat gerbang dibuka.' },
     crash: { eventRound: 'ronde event (diatur staf)' },
     tarot: { risk: 'Risiko', risks: { low: 'Rendah', medium: 'Sedang', high: 'Tinggi' }, max: 'Maks', draw: 'Tarik 3 kartu', idle: 'Tiga kartu. Multiplier-nya dikalikan.', rule: 'Tiap kartu punya multiplier. Bayaranmu = ketiganya dikalikan.',
       cards: { tower: 'The Tower', death: 'Death', devil: 'The Devil', hanged: 'Hanged Man', moon: 'The Moon', hermit: 'The Hermit', fool: 'The Fool', temperance: 'Temperance', justice: 'Justice', hierophant: 'Hierophant', priestess: 'High Priestess', strength: 'Strength', emperor: 'The Emperor', empress: 'The Empress', lovers: 'The Lovers', chariot: 'The Chariot', magician: 'Magician', judgement: 'Judgement', wheel: 'Wheel of Fortune', star: 'The Star', sun: 'The Sun', world: 'The World' } },
@@ -52,7 +53,7 @@ export default {
   chat: { mod: { ban: '{user} di-ban oleh {by} ({duration})', unban: '{user} di-unban oleh {by}', kick: '{user} di-kick oleh {by}', mute: '{user} di-mute oleh {by} ({duration})', unmute: '{user} bisa chat lagi', forever: 'permanen', gacor: '🔥 Jam Gacor ×{mult} aktif {minutes} menit!' } },
   gacor: { global: 'Jam Gacor ×{mult} sedang aktif', personal: 'Boost hoki ×{mult} kamu aktif', hint: 'menang dapat bonus' },
   games: {
-    list: { tarot: 'Tiga kartu, dikalikan.', sweet: 'Permen berjatuhan, bom sampai ×100.', keno: 'Pilih sampai 10 angka, 10 bola jatuh.', tower: 'Naik lantai demi lantai, hindari bom.', cross: 'Lajur demi lajur. Cash out sebelum mobil datang.', pump: 'Pompa balonnya. Berhenti sebelum meletus.' },
+    list: { horse: 'Balap kuda. Tebak pemenang, dibayar sesuai odds.', tarot: 'Tiga kartu, dikalikan.', sweet: 'Permen berjatuhan, bom sampai ×100.', keno: 'Pilih sampai 10 angka, 10 bola jatuh.', tower: 'Naik lantai demi lantai, hindari bom.', cross: 'Lajur demi lajur. Cash out sebelum mobil datang.', pump: 'Pompa balonnya. Berhenti sebelum meletus.' },
     categories: { slots: 'Slot' },
   },
   openRound: { text: 'Ada ronde {game} yang belum selesai.', resume: 'Lanjutkan' },

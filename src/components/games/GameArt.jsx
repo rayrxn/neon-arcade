@@ -80,6 +80,15 @@ const ART = {
       <path d="M102 44.5l2.5-2.5" {...S} strokeWidth="1.5" />
     </>
   ),
+  horse: () => (
+    <>
+      {[0, 1, 2].map((r) => <path key={r} d={`M44 ${32 + r * 16}H116`} {...S} strokeOpacity="0.25" />)}
+      <path d="M112 24V76" {...S} strokeDasharray="3 3" />
+      <circle cx="96" cy="32" r="5" {...S} {...soft(0.5)} />
+      <circle cx="76" cy="48" r="5" {...S} {...soft(0.3)} />
+      <circle cx="64" cy="64" r="5" {...S} {...soft(0.2)} />
+    </>
+  ),
   tarot: () => (
     <>
       {[-14, 0, 14].map((r, i) => (

@@ -258,3 +258,118 @@ function play_sweet(Ctx $c, array $a): array
     $m = $spin['mult'];
     return $spin + finish($c, $round, $m, $m > 1 ? 'win' : ($m == 1 ? 'push' : 'loss'), ['tumbles' => count($spin['steps']) - 1, 'bombs' => $spin['bombs']]);
 }
+
+// ───────────────────────────── Horse Racing (shared rounds) ─────────────────────────────
+// Every round: 6 horses with odds from the round seed, one race for everyone. Bets close when the race starts.
+// Win probability p_i = w_i / Σw, payout = 0.96 / p_i (4% edge). Winner and finishing order come from the same
+// seed (HMAC "horse:<id>:<n>"), published as a hash before and revealed after the race.
+const HORSE_COUNT = 6;
+const HORSE_BET_MS = 15000;
+const HORSE_RACE_MS = 12000;
+const HORSE_PAUSE_MS = 5000;
+const HORSE_EDGE = 0.04;
+
+function horse_float(string $seed, int $id, int $n): float
+{
+    return hexdec(substr(hash_hmac('sha256', "horse:$id:$n", $seed), 0, 13)) / 4503599627370496;
+}
+
+/** Odds and finishing order for a round, fully determined by its seed. */
+function horse_draw(string $seed, int $id): array
+{
+    $w = [];
+    for ($i = 0; $i < HORSE_COUNT; $i++) $w[] = 1 + 7 * horse_float($seed, $id, $i) ** 2;
+    $sum = array_sum($w);
+    $p = array_map(fn($x) => $x / $sum, $w);
+    $odds = array_map(fn($x) => floor((1 - HORSE_EDGE) / $x * 100) / 100, $p);
+    $t = horse_float($seed, $id, 6);
+    $winner = HORSE_COUNT - 1;
+    foreach ($p as $i => $x) { if ($t < $x) { $winner = $i; break; } $t -= $x; }
+    $rest = array_values(array_diff(range(0, HORSE_COUNT - 1), [$winner]));
+    $key = [];
+    foreach ($rest as $i) $key[$i] = $p[$i] * horse_float($seed, $id, 7 + $i);
+    usort($rest, fn($a, $b) => $key[$b] <=> $key[$a]);
+    return ['odds' => $odds, 'p' => $p, 'finish' => array_merge([$winner], $rest)];
+}
+
+/** Current round; settles the finished one and opens the next when it is time. */
+function horse_current(int $now): array
+{
+    $r = q1('SELECT * FROM horse_rounds ORDER BY id DESC LIMIT 1');
+    if ($r && $now < iso_to_ms($r['end_at']) + HORSE_PAUSE_MS) {
+        if (!$r['settled'] && $now >= iso_to_ms($r['end_at'])) { q('SELECT pg_advisory_xact_lock(424243)'); horse_settle((int) $r['id']); }
+        return $r;
+    }
+    q('SELECT pg_advisory_xact_lock(424243)');
+    $r = q1('SELECT * FROM horse_rounds ORDER BY id DESC LIMIT 1');
+    if ($r && $now < iso_to_ms($r['end_at']) + HORSE_PAUSE_MS) return $r;
+    if ($r && !$r['settled']) horse_settle((int) $r['id']);
+    $seed = rand_hex(32);
+    $id = (int) qv("SELECT nextval(pg_get_serial_sequence('horse_rounds', 'id'))");
+    $d = horse_draw($seed, $id);
+    $start = $now + HORSE_BET_MS;
+    q('INSERT INTO horse_rounds (id, server_seed, seed_hash, odds, finish, start_at, end_at) VALUES (?, ?, ?, ?::jsonb, ?::jsonb, to_timestamp(? / 1000.0), to_timestamp(? / 1000.0))',
+        [$id, $seed, hash('sha256', $seed), jenc($d['odds']), jenc($d['finish']), $start, $start + HORSE_RACE_MS]);
+    return q1('SELECT * FROM horse_rounds WHERE id = ?', [$id]);
+}
+
+function horse_settle(int $roundId): void
+{
+    $r = q1('SELECT * FROM horse_rounds WHERE id = ? FOR UPDATE', [$roundId]);
+    if (!$r || $r['settled']) return;
+    $odds = jdec($r['odds'], []);
+    $winner = (int) jdec($r['finish'], [])[0];
+    foreach (q("SELECT b.* FROM horse_bets b JOIN game_sessions s ON s.id = b.session_id WHERE b.round_id = ? AND s.status = 'OPEN'", [$roundId])->fetchAll() as $b) {
+        $u = q1('SELECT * FROM users WHERE id = ?', [$b['user_id']]);
+        [$p, $meta] = load_docs($b['user_id']);
+        $c = new Ctx($u, $p, $meta, now_ms());
+        $c->currency = $b['currency'];
+        $round = load_open($c, 'horse', $b['session_id']);
+        if (!$round) continue;
+        $win = (int) $b['horse'] === $winner;
+        $m = $win ? (float) $odds[(int) $b['horse']] : 0;
+        finish($c, $round, $m, $win ? 'win' : 'loss', ['round' => $roundId, 'horse' => (int) $b['horse'], 'winner' => $winner]);
+        q('UPDATE horse_bets SET payout = ? WHERE round_id = ? AND user_id = ?', [(string) round2($round['bet'] * $m), $roundId, $b['user_id']]);
+        save_docs($b['user_id'], $c->p, $c->meta);
+    }
+    q('UPDATE horse_rounds SET settled = TRUE WHERE id = ?', [$roundId]);
+}
+
+function horse_bet(Ctx $c, array $a): array
+{
+    $horse = $a['horse'] ?? null;
+    if (!(is_int($horse) && $horse >= 0 && $horse < HORSE_COUNT)) fail('play.errors.invalid');
+    $r = horse_current($c->now);
+    if ($c->now >= iso_to_ms($r['start_at'])) fail('play.horse.closed');
+    if (qv('SELECT 1 FROM horse_bets WHERE round_id = ? AND user_id = ?', [$r['id'], $c->user['id']])) fail('play.horse.already');
+    $round = begin($c, 'horse', $a['bet'] ?? null, 1, ['horse' => $horse, 'globalRound' => (int) $r['id']]);
+    $round['proof']['serverSeedHash'] = $r['seed_hash'];
+    save_open($round);
+    q('INSERT INTO horse_bets (round_id, user_id, session_id, horse, bet, currency) VALUES (?, ?, ?, ?, ?, ?::currency_code)',
+        [$r['id'], $c->user['id'], $round['id'], $horse, (string) $round['bet'], $round['currency']]);
+    return ['id' => $round['id'], 'roundId' => (int) $r['id'], 'horse' => $horse, 'bet' => $round['bet'], 'currency' => $round['currency']];
+}
+
+/** Public state. Finishing order and seed only after the race ends. */
+function horse_state(?array $me): array
+{
+    $now = now_ms();
+    $r = horse_current($now);
+    $start = iso_to_ms($r['start_at']);
+    $end = iso_to_ms($r['end_at']);
+    $done = $now >= $end;
+    $bets = array_map(fn($b) => ['username' => $b['username'], 'horse' => (int) $b['horse'], 'bet' => num($b['bet']), 'currency' => $b['currency'], 'payout' => $b['payout'] === null ? null : num($b['payout'])],
+        q('SELECT b.horse, b.bet, b.currency, b.payout, u.username FROM horse_bets b JOIN users u ON u.id = b.user_id WHERE b.round_id = ? ORDER BY b.bet DESC LIMIT 50', [$r['id']])->fetchAll());
+    $mine = $me ? q1('SELECT horse, bet, currency, payout FROM horse_bets WHERE round_id = ? AND user_id = ?', [$r['id'], $me['id']]) : null;
+    $history = array_map(fn($h) => ['id' => (int) $h['id'], 'winner' => (int) jdec($h['finish'], [0])[0], 'odds' => jdec($h['odds'], []), 'seed' => $h['server_seed'], 'hash' => $h['seed_hash']],
+        q('SELECT id, finish, odds, server_seed, seed_hash FROM horse_rounds WHERE end_at <= now() ORDER BY id DESC LIMIT 12')->fetchAll());
+    return [
+        'round' => ['id' => (int) $r['id'], 'phase' => $now < $start ? 'betting' : ($done ? 'finished' : 'racing'), 'startAt' => $start, 'endAt' => $end,
+            'nextAt' => $end + HORSE_PAUSE_MS, 'odds' => jdec($r['odds'], []), 'seedHash' => $r['seed_hash'],
+            'finish' => $now >= $start ? jdec($r['finish'], []) : null, 'seed' => $done ? $r['server_seed'] : null],
+        'bets' => $bets,
+        'mine' => $mine ? ['horse' => (int) $mine['horse'], 'bet' => num($mine['bet']), 'currency' => $mine['currency'], 'payout' => $mine['payout'] === null ? null : num($mine['payout'])] : null,
+        'history' => $history,
+        'serverTime' => $now,
+    ];
+}

@@ -4,7 +4,8 @@ import CoinIcon from '@/components/ui/CoinIcon'
 import Logo from '@/components/ui/Logo'
 import Button from '@/components/ui/Button'
 import { SERVER_MODE } from '@/config/runtime'
-import { hydrate, sync, LOGOUT_KEY } from '@/services/server'
+import { api, hydrate, sync, LOGOUT_KEY } from '@/services/server'
+import { gameBusy } from '@/services/games'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useT } from '@/i18n'
 
@@ -34,13 +35,23 @@ export default function ServerGate({ children }) {
     if (!SERVER_MODE || status !== 'ready') return
     // Data akun penuh tiap 60 detik; data bersama (chat, teman, notifikasi) lebih sering —
     // 4 detik saat halaman chat terbuka, 15 detik di halaman lain. Berhenti saat tab disembunyikan.
+    // Live updates without reloading: every 4 s a tiny /pulse call returns fingerprints of the account
+    // (balance, progress, notifications…) and of shared data (chat, announcements, games). Only what
+    // changed is pulled. Full refresh stays as a safety net (60 s account, 16 s shared).
     let tick = 0
-    const loop = () => {
+    let last = null
+    const loop = async () => {
       if (document.visibilityState !== 'visible' || !useAuthStore.getState().session) return
       tick++
       const onChat = /chat/.test(window.location.hash || window.location.pathname)
-      if (tick % 15 === 0) hydrate()
-      if (onChat || tick % 4 === 0) sync()
+      let pulse = null
+      try { pulse = await api('pulse') } catch { /* offline: fall back to the timers below */ }
+      const acct = tick % 15 === 0 || (pulse && last && pulse.account !== last.account)
+      const shared = onChat || tick % 4 === 0 || (pulse && last && pulse.shared !== last.shared)
+      const wait = acct && gameBusy() // retry on the next tick instead of losing the change
+      if (pulse && !wait) last = pulse
+      if (acct && !wait) await hydrate()
+      if (shared || acct) sync()
     }
     const id = setInterval(loop, 4_000)
     const onVisible = () => {
