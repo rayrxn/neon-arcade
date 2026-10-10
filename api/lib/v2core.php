@@ -636,3 +636,39 @@ function ticket_close_by_user(array $me, string $id): array
     log_event('TICKET_UPDATED', $me['id'], ['ticketId' => $id, 'status' => 'CLOSED']);
     return ['ok' => true];
 }
+
+/**
+ * Player activity history: wallet entries (games, rewards, cases, transfers, AC/AG), Loyalty XP and sign-ins.
+ * Newest first, max 200 rows, last 90 days. IPs are masked.
+ */
+function activity_view(array $u, string $kind): array
+{
+    if (!in_array($kind, ['all', 'ac', 'ag', 'rewards', 'games', 'lxp', 'security'], true)) $kind = 'all';
+    $rows = [];
+    if ($kind !== 'lxp' && $kind !== 'security') {
+        $where = ['user_id = ?', "created_at > now() - interval '90 days'"];
+        $args = [$u['id']];
+        if ($kind === 'ac' || $kind === 'ag') { $where[] = 'currency = ?'; $args[] = strtoupper($kind); }
+        if ($kind === 'rewards') $where[] = "type = 'reward'";
+        if ($kind === 'games') $where[] = 'session_id IS NOT NULL';
+        foreach (q('SELECT currency, amount, balance_after, type, category, source, reason, status, created_at FROM wallet_transactions WHERE ' . implode(' AND ', $where) . ' ORDER BY created_at DESC LIMIT 200', $args) as $r) {
+            $rows[] = ['kind' => 'wallet', 'type' => $r['type'], 'category' => $r['category'], 'source' => $r['source'], 'reason' => $r['reason'],
+                'currency' => $r['currency'], 'amount' => num((float) $r['amount']), 'balance' => num((float) $r['balance_after']), 'status' => $r['status'], 'at' => iso_to_ms($r['created_at'])];
+        }
+    }
+    if ($kind === 'all' || $kind === 'lxp') {
+        foreach (q("SELECT amount, source, at FROM loyalty_xp_log WHERE user_id = ? AND at > now() - interval '90 days' ORDER BY at DESC LIMIT 200", [$u['id']]) as $r) {
+            $rows[] = ['kind' => 'lxp', 'amount' => (int) $r['amount'], 'source' => $r['source'], 'at' => iso_to_ms($r['at'])];
+        }
+    }
+    if ($kind === 'all' || $kind === 'security') {
+        foreach (q("SELECT ok, host(ip) AS ip, at FROM login_attempts WHERE email = ? AND at > now() - interval '90 days' ORDER BY at DESC LIMIT 50", [$u['email']]) as $r) {
+            $ip = (string) $r['ip'];
+            $masked = str_contains($ip, ':') ? implode(':', array_slice(explode(':', $ip), 0, 3)) . ':…' : preg_replace('/\.\d+$/', '.x', $ip);
+            $rows[] = ['kind' => 'login', 'ok' => (bool) $r['ok'], 'ip' => $masked, 'at' => iso_to_ms($r['at'])];
+        }
+    }
+    usort($rows, fn($a, $b) => $b['at'] <=> $a['at']);
+    return array_slice($rows, 0, 200);
+}
+

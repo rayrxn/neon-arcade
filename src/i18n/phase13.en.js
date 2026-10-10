@@ -38,6 +38,13 @@ export default {
     none: 'None',
   },
   membership: { affixInSettings: 'Edit in Settings → Name display', perk: { monthly: 'Monthly bonus' } },
+  notifications: { filters: { system: 'System' } },
+  activity: {
+    title: 'Activity', error: 'Could not load activity. Try again later.', empty: 'Nothing here yet', emptyBody: 'Your games, rewards and sign-ins from the last 90 days show up here.',
+    loginOk: 'Signed in', loginFail: 'Failed sign-in attempt', lxp: 'Loyalty XP · {source}',
+    kind: { all: 'All', games: 'Games', rewards: 'Rewards', ac: 'AC', ag: 'AG', lxp: 'Loyalty XP', security: 'Security' },
+    type: { bet: 'Bet', win: 'Win', reward: 'Reward', adjust: 'Staff adjustment', reversal: 'Reversed', send: 'Sent', receive: 'Received', redeem: 'Code redeemed', refund: 'Refund', convert: 'AC → AG', purchase: 'Purchase', grant: 'Welcome bonus' },
+  },
   loyalty: { monthlyBonus: 'Monthly card bonus', monthlyClaimed: 'Claimed this month' },
   perks: { errors: { affixReserved: '“{word}” is reserved for staff with that role.' } },
   profile: { status: 'Status', bio: 'Bio' },

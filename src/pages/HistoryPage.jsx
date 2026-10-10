@@ -14,6 +14,7 @@ import { GAMES, getGameName } from '@/config/games'
 import { formatCoins, formatDateTime, shortHash } from '@/utils/format'
 import { useT } from '@/i18n'
 import PnlChart from '@/components/stats/PnlChart'
+import ActivityPanel from '@/components/stats/ActivityPanel'
 
 export const SESSION_TONE = {
   WON: 'bg-neon-green/10 text-neon-green',
@@ -153,6 +154,7 @@ export default function HistoryPage() {
           )}
         </QueryView>
       </Panel>
+      <ActivityPanel />
       <SessionDetail session={selected} onClose={() => navigate('/history')} onReport={() => setReport(selected)} />
       <ReportDialog open={!!report} onClose={() => setReport(null)} preset={{ targetType: 'technical', sessionId: report?.id, reason: 'bug' }} />
     </div>

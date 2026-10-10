@@ -9,8 +9,8 @@
 | T5 | Light-mode audit of remaining dark panels (BUG-004) | partial | medium | T1 | screenshots readable in light |
 | T6 | Placeholder / icon / spacing / responsive sweep | planned | medium | T1 | no `{var}` or raw keys (i18n check + window.__missingI18n) |
 | T7 | Reward rebalance (daily/weekly/monthly/one-time AC/AG) in central config | done (migration 014, v2.1) | medium | – | values in one config; tests updated |
-| T8 | Notification center categories + filters | planned | medium | – | categories on /notifications |
-| T9 | Activity history page (games, AG, LXP, rewards, cases, security) | planned | medium | – | page lists server events |
+| T8 | Notification center categories + filters | done (System group, unread count per filter) | medium | – | categories on /notifications |
+| T9 | Activity history page (games, AG, LXP, rewards, cases, security) | done (`GET activity`, History → Activity) | medium | – | page lists server events |
 | T10 | Session recovery UI (resume open round after reload) | planned | medium | – | reload mid-round restores state |
 | T11 | Music on mobile (unlock on gesture) | planned | low | – | plays on iOS/Android after tap |
 | T12 | New games, each server-settled (Keno, Pump, Tower, Cross the Road, Sweet, Tarot first; then Horse shared rounds; Chess/Racing PvP; skill arcades Snake/Slice/Layer/Moles with capped XP) | planned | high | T3 (flags per game) | API tests per game + RTP check in QA |

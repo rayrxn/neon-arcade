@@ -38,6 +38,13 @@ export default {
     none: 'Tidak ada',
   },
   membership: { affixInSettings: 'Atur di Settings → Tampilan nama', perk: { monthly: 'Bonus bulanan' } },
+  notifications: { filters: { system: 'Sistem' } },
+  activity: {
+    title: 'Aktivitas', error: 'Aktivitas gagal dimuat. Coba lagi nanti.', empty: 'Belum ada aktivitas', emptyBody: 'Game, hadiah, dan login 90 hari terakhir muncul di sini.',
+    loginOk: 'Login berhasil', loginFail: 'Percobaan login gagal', lxp: 'Loyalty XP · {source}',
+    kind: { all: 'Semua', games: 'Game', rewards: 'Hadiah', ac: 'AC', ag: 'AG', lxp: 'Loyalty XP', security: 'Keamanan' },
+    type: { bet: 'Taruhan', win: 'Menang', reward: 'Hadiah', adjust: 'Penyesuaian staf', reversal: 'Dibatalkan', send: 'Dikirim', receive: 'Diterima', redeem: 'Kode ditukar', refund: 'Refund', convert: 'AC → AG', purchase: 'Pembelian', grant: 'Bonus awal' },
+  },
   loyalty: { monthlyBonus: 'Bonus bulanan kartu', monthlyClaimed: 'Sudah diklaim bulan ini' },
   perks: { errors: { affixReserved: '“{word}” khusus untuk staf dengan role itu.' } },
   profile: { status: 'Status', bio: 'Bio' },

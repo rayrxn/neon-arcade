@@ -63,8 +63,8 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 ## F. Systems
 - [x] Announcements @HERE/@ALL/@VIP/@VVIP/@VIP+VVIP/@TESTER/@MODERATOR, priority, sound, schedule, preview, history
 - [x] Feature flags OFF / TESTER ONLY / VIP ONLY / PUBLIC (backend enforced)
-- [ ] Notification center categories
-- [ ] Activity history (games, AG, LXP, rewards, cases, bets, security)
+- [x] Notification center categories
+- [x] Activity history (games, AG, LXP, rewards, cases, bets, security)
 - [ ] Session recovery
 - [x] Error monitoring (API errors, failed requests, client crashes, auth failures)
 - [ ] Music on mobile/tablet (unlock on gesture, fallback)

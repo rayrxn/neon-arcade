@@ -12,10 +12,11 @@ import { formatDateTime, timeAgo } from '@/utils/format'
 import { useT } from '@/i18n'
 
 const GROUPS = {
-  progress: ['levelUp', 'quest', 'achievement', 'daily', 'reward'],
+  progress: ['levelUp', 'quest', 'achievement', 'daily', 'reward', 'loyaltyUp', 'mission', 'membership'],
   social: ['friendRequest', 'friendAccept', 'mention'],
   account: ['security', 'reportUpdate', 'ticket', 'adminCredit', 'adminDebit'],
   wallet: ['transferIn', 'transferOut', 'transferPending', 'transferFailed', 'redeem', 'jackpot'],
+  system: ['announcement', 'releaseReset', 'maintenance'],
 }
 
 export default function NotificationsPage() {
@@ -27,6 +28,8 @@ export default function NotificationsPage() {
   const now = useNow(30_000)
   const query = useQuery(() => items, [items])
   const unread = items.filter((n) => !n.read).length
+  const inGroup = (n, g) => (g === 'all' || g === 'unread' ? true : g === 'other' ? !Object.values(GROUPS).flat().includes(n.kind) : GROUPS[g]?.includes(n.kind))
+  const unreadIn = (g) => (g === 'unread' ? 0 : (query.data ?? []).filter((n) => !n.read && inGroup(n, g)).length)
   const list = useMemo(
     () => (query.data ?? []).filter((n) => (filter === 'all' ? true : filter === 'unread' ? !n.read : filter === 'other' ? !Object.values(GROUPS).flat().includes(n.kind) : GROUPS[filter]?.includes(n.kind))),
     [query.data, filter],
@@ -46,7 +49,7 @@ export default function NotificationsPage() {
       />
       <div className="-mx-4 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0">
         <Segmented size="sm" layoutId="notif-filter" value={filter} onChange={setFilter} className="w-max"
-          options={['all', 'unread', 'progress', 'social', 'account', 'wallet', 'other'].map((v) => ({ value: v, label: t(`notifications.filters.${v}`) }))} />
+          options={['all', 'unread', 'progress', 'social', 'account', 'wallet', 'system', 'other'].map((v) => ({ value: v, label: unreadIn(v) ? `${t(`notifications.filters.${v}`)} · ${unreadIn(v)}` : t(`notifications.filters.${v}`) }))} />
       </div>
       <Panel title={t('notifications.history')} icon={Bell}>
         <QueryView query={{ ...query, data: query.data && list }} rows={5} empty={<EmptyState icon={BellOff} title={t('notifications.empty')} body={t('notifications.emptyBody')} />}>

@@ -256,6 +256,19 @@ check('crash config changes are audited', (int) qv("SELECT count(*) FROM admin_a
 expect_error('moderators cannot change it', admin('mod', 'setCrashConfig', ['preset' => 'wild', 'reason' => 'x']), 'admin.errors.forbidden');
 admin('own', 'setCrashConfig', ['preset' => 'standard', 'reason' => 'reset']);
 
+echo "Activity history\n";
+$_GET['kind'] = 'all';
+$r = call('GET', 'activity', [], 'v');
+check('activity lists wallet + Loyalty XP rows, newest first', $r['ok'] && count($r['data']) > 0 && $r['data'][0]['at'] >= end($r['data'])['at'], $r);
+$_GET['kind'] = 'lxp';
+$r = call('GET', 'activity', [], 'v');
+check('kind filter: only Loyalty XP', $r['ok'] && !array_filter($r['data'], fn($x) => $x['kind'] !== 'lxp'), $r);
+$_GET['kind'] = 'ag';
+$r = call('GET', 'activity', [], 'v');
+check('kind filter: only AG wallet rows', $r['ok'] && !array_filter($r['data'], fn($x) => ($x['currency'] ?? '') !== 'AG'), $r);
+expect_error('needs a session', call('GET', 'activity'), 'errors.sessionExpired');
+unset($_GET['kind']);
+
 echo "Owner console\n";
 $_SERVER['REMOTE_ADDR'] = '10.9.8.7';
 $con = fn(string $path, array $body = []) => call('POST', $path, $body);

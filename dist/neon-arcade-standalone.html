@@ -2047,6 +2047,7 @@ __defs["src/services/platform2.js"] = { deps: {"@/store/useAuthStore":{"id":"src
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.emoteMap = exports.itemOf = exports.roleOf = exports.cardOf = exports.getCatalog = exports.getExtras = exports.contactManager = exports.claimPass = exports.buyPass = exports.uploadBanner = exports.setNameAffix = exports.claimPerk = exports.requestMembership = exports.claimMission = exports.favoriteEmote = exports.equipStyle = exports.activateBoost = exports.buyItem = exports.unlockLoyaltyCard = exports.convertAcToAg = void 0;
+exports.fetchActivity = fetchActivity;
 exports.fetchPnl = fetchPnl;
 exports.useCatalog = useCatalog;
 exports.useExtras = useExtras;
@@ -2098,6 +2099,11 @@ const claimPass = (track = 'all', tier = 0) => call('pass/claim', { track, tier 
 exports.claimPass = claimPass;
 const contactManager = (text) => call('manager/contact', { text }).then((r) => ((0, server_1.sync)(), r));
 exports.contactManager = contactManager;
+async function fetchActivity(kind = 'all') {
+    if (!runtime_1.SERVER_MODE)
+        throw new errors_1.AppError('errors.serverOnly');
+    return (0, server_1.api)(`activity?kind=${encodeURIComponent(kind)}`);
+}
 async function fetchPnl(days) {
     if (!runtime_1.SERVER_MODE)
         throw new errors_1.AppError('errors.serverOnly');
@@ -7055,6 +7061,13 @@ exports.default = {
         none: 'Tidak ada',
     },
     membership: { affixInSettings: 'Atur di Settings → Tampilan nama', perk: { monthly: 'Bonus bulanan' } },
+    notifications: { filters: { system: 'Sistem' } },
+    activity: {
+        title: 'Aktivitas', error: 'Aktivitas gagal dimuat. Coba lagi nanti.', empty: 'Belum ada aktivitas', emptyBody: 'Game, hadiah, dan login 90 hari terakhir muncul di sini.',
+        loginOk: 'Login berhasil', loginFail: 'Percobaan login gagal', lxp: 'Loyalty XP · {source}',
+        kind: { all: 'Semua', games: 'Game', rewards: 'Hadiah', ac: 'AC', ag: 'AG', lxp: 'Loyalty XP', security: 'Keamanan' },
+        type: { bet: 'Taruhan', win: 'Menang', reward: 'Hadiah', adjust: 'Penyesuaian staf', reversal: 'Dibatalkan', send: 'Dikirim', receive: 'Diterima', redeem: 'Kode ditukar', refund: 'Refund', convert: 'AC → AG', purchase: 'Pembelian', grant: 'Bonus awal' },
+    },
     loyalty: { monthlyBonus: 'Bonus bulanan kartu', monthlyClaimed: 'Sudah diklaim bulan ini' },
     perks: { errors: { affixReserved: '“{word}” khusus untuk staf dengan role itu.' } },
     profile: { status: 'Status', bio: 'Bio' },
@@ -7191,6 +7204,13 @@ exports.default = {
         none: 'None',
     },
     membership: { affixInSettings: 'Edit in Settings → Name display', perk: { monthly: 'Monthly bonus' } },
+    notifications: { filters: { system: 'System' } },
+    activity: {
+        title: 'Activity', error: 'Could not load activity. Try again later.', empty: 'Nothing here yet', emptyBody: 'Your games, rewards and sign-ins from the last 90 days show up here.',
+        loginOk: 'Signed in', loginFail: 'Failed sign-in attempt', lxp: 'Loyalty XP · {source}',
+        kind: { all: 'All', games: 'Games', rewards: 'Rewards', ac: 'AC', ag: 'AG', lxp: 'Loyalty XP', security: 'Security' },
+        type: { bet: 'Bet', win: 'Win', reward: 'Reward', adjust: 'Staff adjustment', reversal: 'Reversed', send: 'Sent', receive: 'Received', redeem: 'Code redeemed', refund: 'Refund', convert: 'AC → AG', purchase: 'Purchase', grant: 'Welcome bonus' },
+    },
     loyalty: { monthlyBonus: 'Monthly card bonus', monthlyClaimed: 'Claimed this month' },
     perks: { errors: { affixReserved: '“{word}” is reserved for staff with that role.' } },
     profile: { status: 'Status', bio: 'Bio' },
@@ -15955,7 +15975,7 @@ function MembershipPage() {
 }
 
 } };
-__defs["src/pages/HistoryPage.jsx"] = { deps: {"react/jsx-runtime":{"ext":"react/jsx-runtime"},"react":{"ext":"react"},"react-router-dom":{"ext":"react-router-dom"},"lucide-react":{"ext":"lucide-react"},"clsx":{"ext":"clsx"},"@/components/ui/Modal":{"id":"src/components/ui/Modal.jsx"},"@/components/ui/Button":{"id":"src/components/ui/Button.jsx"},"@/components/ui/Controls":{"id":"src/components/ui/Controls.jsx"},"@/components/ui/PageKit":{"id":"src/components/ui/PageKit.jsx"},"@/components/social/ReportDialog":{"id":"src/components/social/ReportDialog.jsx"},"@/components/ui/Currency":{"id":"src/components/ui/Currency.jsx"},"@/store/useAuthStore":{"id":"src/store/useAuthStore.js"},"@/store/useProgressStore":{"id":"src/store/useProgressStore.js"},"@/config/games":{"id":"src/config/games.js"},"@/utils/format":{"id":"src/utils/format.js"},"@/i18n":{"id":"src/i18n/index.js"},"@/components/stats/PnlChart":{"id":"src/components/stats/PnlChart.jsx"}}, fn: function (require, module, exports) {
+__defs["src/pages/HistoryPage.jsx"] = { deps: {"react/jsx-runtime":{"ext":"react/jsx-runtime"},"react":{"ext":"react"},"react-router-dom":{"ext":"react-router-dom"},"lucide-react":{"ext":"lucide-react"},"clsx":{"ext":"clsx"},"@/components/ui/Modal":{"id":"src/components/ui/Modal.jsx"},"@/components/ui/Button":{"id":"src/components/ui/Button.jsx"},"@/components/ui/Controls":{"id":"src/components/ui/Controls.jsx"},"@/components/ui/PageKit":{"id":"src/components/ui/PageKit.jsx"},"@/components/social/ReportDialog":{"id":"src/components/social/ReportDialog.jsx"},"@/components/ui/Currency":{"id":"src/components/ui/Currency.jsx"},"@/store/useAuthStore":{"id":"src/store/useAuthStore.js"},"@/store/useProgressStore":{"id":"src/store/useProgressStore.js"},"@/config/games":{"id":"src/config/games.js"},"@/utils/format":{"id":"src/utils/format.js"},"@/i18n":{"id":"src/i18n/index.js"},"@/components/stats/PnlChart":{"id":"src/components/stats/PnlChart.jsx"},"@/components/stats/ActivityPanel":{"id":"src/components/stats/ActivityPanel.jsx"}}, fn: function (require, module, exports) {
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -15982,6 +16002,7 @@ const games_1 = require("@/config/games");
 const format_1 = require("@/utils/format");
 const i18n_1 = require("@/i18n");
 const PnlChart_1 = __importDefault(require("@/components/stats/PnlChart"));
+const ActivityPanel_1 = __importDefault(require("@/components/stats/ActivityPanel"));
 exports.SESSION_TONE = {
     WON: 'bg-neon-green/10 text-neon-green',
     LOST: 'bg-neon-red/10 text-neon-red',
@@ -16027,7 +16048,7 @@ function HistoryPage() {
                     [t('history.kpi.wins'), (0, format_1.formatCoins)(totals.wins)],
                     [t('history.kpi.wagered'), `${(0, format_1.formatCoins)(totals.wagered)} AC`],
                     [t('history.kpi.returned'), `${(0, format_1.formatCoins)(totals.won)} AC`],
-                ].map(([label, value]) => ((0, jsx_runtime_1.jsxs)("div", { className: "glass rounded-2xl px-4 py-3", children: [(0, jsx_runtime_1.jsx)("p", { className: "label-caps", children: label }), (0, jsx_runtime_1.jsx)("p", { className: "mt-1 font-display text-lg font-bold text-white num", children: value })] }, label))) }), (0, jsx_runtime_1.jsxs)(Controls_1.Panel, { title: t('history.sessions'), icon: lucide_react_1.History, action: (0, jsx_runtime_1.jsxs)("select", { "aria-label": t('history.filterGame'), value: game, onChange: (e) => setGame(e.target.value), className: "input-shell h-8 max-w-[150px] px-2 text-xs text-white outline-none", children: [(0, jsx_runtime_1.jsx)("option", { value: "all", children: t('history.allGames') }), games_1.GAMES.filter((g) => g.load).map((g) => (0, jsx_runtime_1.jsx)("option", { value: g.slug, children: g.name }, g.slug))] }), children: [(0, jsx_runtime_1.jsx)("div", { className: "overflow-x-auto border-b hairline px-3 py-2.5 scrollbar-none sm:px-4", children: (0, jsx_runtime_1.jsx)(Controls_1.Segmented, { size: "sm", layoutId: "hist-status", value: status, onChange: setStatus, className: "w-max", options: STATUSES.map((s) => ({ value: s, label: s === 'all' ? t('common.all') : t(`history.status.${s}`) })) }) }), (0, jsx_runtime_1.jsx)(PageKit_1.QueryView, { query: { ...query, data: query.data && list }, rows: 5, empty: (0, jsx_runtime_1.jsx)(Controls_1.EmptyState, { icon: lucide_react_1.History, title: t('history.empty'), body: t('history.emptyBody') }), children: (rows) => ((0, jsx_runtime_1.jsx)("ul", { className: "divide-y divide-white/[0.05]", children: rows.map((s) => ((0, jsx_runtime_1.jsx)("li", { children: (0, jsx_runtime_1.jsxs)("button", { onClick: () => navigate(`/history/${s.id}`), className: "flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] focus-ring sm:px-5", children: [(0, jsx_runtime_1.jsxs)("div", { className: "min-w-0 flex-1", children: [(0, jsx_runtime_1.jsxs)("p", { className: "flex flex-wrap items-center gap-2 text-sm font-bold text-slate-200", children: [(0, games_1.getGameName)(s.game), " ", (0, jsx_runtime_1.jsx)(SessionStatus, { session: s }), s.isTest && (0, jsx_runtime_1.jsx)("span", { className: "rounded bg-neon-gold/15 px-1 text-[9px] font-extrabold text-neon-gold", children: "TEST" })] }), (0, jsx_runtime_1.jsxs)("p", { className: "mt-0.5 truncate text-xs text-slate-500", children: [(0, format_1.formatDateTime)(s.at), " \u00B7 ", (s.multiplier ?? 0).toFixed(2), "\u00D7 \u00B7 ", (0, jsx_runtime_1.jsx)("span", { className: "font-mono", children: s.id })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "text-right", children: [(0, jsx_runtime_1.jsxs)("p", { className: (0, clsx_1.default)('text-sm font-bold num', s.payout - s.bet > 0 ? 'text-neon-green' : s.payout - s.bet < 0 ? 'text-slate-400' : 'text-slate-300'), children: [s.payout - s.bet > 0 ? '+' : '', (0, format_1.formatCoins)(s.payout - s.bet)] }), (0, jsx_runtime_1.jsx)("p", { className: "text-[11px] text-slate-500", children: t('history.betShort', { amount: (0, format_1.formatCoins)(s.bet) }) })] })] }) }, s.id))) })) })] }), (0, jsx_runtime_1.jsx)(SessionDetail, { session: selected, onClose: () => navigate('/history'), onReport: () => setReport(selected) }), (0, jsx_runtime_1.jsx)(ReportDialog_1.default, { open: !!report, onClose: () => setReport(null), preset: { targetType: 'technical', sessionId: report?.id, reason: 'bug' } })] }));
+                ].map(([label, value]) => ((0, jsx_runtime_1.jsxs)("div", { className: "glass rounded-2xl px-4 py-3", children: [(0, jsx_runtime_1.jsx)("p", { className: "label-caps", children: label }), (0, jsx_runtime_1.jsx)("p", { className: "mt-1 font-display text-lg font-bold text-white num", children: value })] }, label))) }), (0, jsx_runtime_1.jsxs)(Controls_1.Panel, { title: t('history.sessions'), icon: lucide_react_1.History, action: (0, jsx_runtime_1.jsxs)("select", { "aria-label": t('history.filterGame'), value: game, onChange: (e) => setGame(e.target.value), className: "input-shell h-8 max-w-[150px] px-2 text-xs text-white outline-none", children: [(0, jsx_runtime_1.jsx)("option", { value: "all", children: t('history.allGames') }), games_1.GAMES.filter((g) => g.load).map((g) => (0, jsx_runtime_1.jsx)("option", { value: g.slug, children: g.name }, g.slug))] }), children: [(0, jsx_runtime_1.jsx)("div", { className: "overflow-x-auto border-b hairline px-3 py-2.5 scrollbar-none sm:px-4", children: (0, jsx_runtime_1.jsx)(Controls_1.Segmented, { size: "sm", layoutId: "hist-status", value: status, onChange: setStatus, className: "w-max", options: STATUSES.map((s) => ({ value: s, label: s === 'all' ? t('common.all') : t(`history.status.${s}`) })) }) }), (0, jsx_runtime_1.jsx)(PageKit_1.QueryView, { query: { ...query, data: query.data && list }, rows: 5, empty: (0, jsx_runtime_1.jsx)(Controls_1.EmptyState, { icon: lucide_react_1.History, title: t('history.empty'), body: t('history.emptyBody') }), children: (rows) => ((0, jsx_runtime_1.jsx)("ul", { className: "divide-y divide-white/[0.05]", children: rows.map((s) => ((0, jsx_runtime_1.jsx)("li", { children: (0, jsx_runtime_1.jsxs)("button", { onClick: () => navigate(`/history/${s.id}`), className: "flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] focus-ring sm:px-5", children: [(0, jsx_runtime_1.jsxs)("div", { className: "min-w-0 flex-1", children: [(0, jsx_runtime_1.jsxs)("p", { className: "flex flex-wrap items-center gap-2 text-sm font-bold text-slate-200", children: [(0, games_1.getGameName)(s.game), " ", (0, jsx_runtime_1.jsx)(SessionStatus, { session: s }), s.isTest && (0, jsx_runtime_1.jsx)("span", { className: "rounded bg-neon-gold/15 px-1 text-[9px] font-extrabold text-neon-gold", children: "TEST" })] }), (0, jsx_runtime_1.jsxs)("p", { className: "mt-0.5 truncate text-xs text-slate-500", children: [(0, format_1.formatDateTime)(s.at), " \u00B7 ", (s.multiplier ?? 0).toFixed(2), "\u00D7 \u00B7 ", (0, jsx_runtime_1.jsx)("span", { className: "font-mono", children: s.id })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "text-right", children: [(0, jsx_runtime_1.jsxs)("p", { className: (0, clsx_1.default)('text-sm font-bold num', s.payout - s.bet > 0 ? 'text-neon-green' : s.payout - s.bet < 0 ? 'text-slate-400' : 'text-slate-300'), children: [s.payout - s.bet > 0 ? '+' : '', (0, format_1.formatCoins)(s.payout - s.bet)] }), (0, jsx_runtime_1.jsx)("p", { className: "text-[11px] text-slate-500", children: t('history.betShort', { amount: (0, format_1.formatCoins)(s.bet) }) })] })] }) }, s.id))) })) })] }), (0, jsx_runtime_1.jsx)(ActivityPanel_1.default, {}), (0, jsx_runtime_1.jsx)(SessionDetail, { session: selected, onClose: () => navigate('/history'), onReport: () => setReport(selected) }), (0, jsx_runtime_1.jsx)(ReportDialog_1.default, { open: !!report, onClose: () => setReport(null), preset: { targetType: 'technical', sessionId: report?.id, reason: 'bug' } })] }));
 }
 
 } };
@@ -16106,6 +16127,55 @@ function PnlChart() {
                                 const y = d.net >= 0 ? mid - h : mid;
                                 return ((0, jsx_runtime_1.jsxs)("g", { onMouseEnter: () => setHover(i), children: [(0, jsx_runtime_1.jsx)("rect", { x: x, y: 0, width: bw + gap, height: H, fill: "transparent" }), d.net !== 0 && (0, jsx_runtime_1.jsx)("rect", { x: x, y: y, width: Math.max(1, bw), height: Math.max(1, h), rx: Math.min(3, bw / 2), className: (0, clsx_1.default)(d.net >= 0 ? 'fill-neon-green' : 'fill-neon-red', hover !== null && hover !== i && 'opacity-40') })] }, d.day));
                             })] })), hover !== null && series[hover] && ((0, jsx_runtime_1.jsxs)("div", { className: "pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-lg bg-ink-950/95 px-2.5 py-1.5 text-[11px] shadow-lg ring-1 ring-white/10", style: { left: `${((hover + 0.5) / series.length) * 100}%` }, children: [(0, jsx_runtime_1.jsx)("p", { className: "font-semibold text-slate-300", children: fmtDay(series[hover].date) }), (0, jsx_runtime_1.jsxs)("p", { className: (0, clsx_1.default)('num font-mono font-bold', series[hover].net >= 0 ? 'text-neon-green' : 'text-neon-red'), children: [(0, format_1.formatSigned)(series[hover].net), " ", currency] }), (0, jsx_runtime_1.jsx)("p", { className: "text-slate-500", children: t('pnl.roundsN', { n: series[hover].rounds }) })] })), series.length > 0 && ((0, jsx_runtime_1.jsxs)("div", { className: "mt-1 flex justify-between text-[10px] text-slate-500", children: [(0, jsx_runtime_1.jsx)("span", { children: fmtDay(series[0].date) }), (0, jsx_runtime_1.jsx)("span", { children: fmtDay(series[series.length - 1].date) })] }))] }), maxDays < 90 && (0, jsx_runtime_1.jsxs)("p", { className: "mt-3 text-[11px] text-slate-500", children: [t('pnl.more'), " ", (0, jsx_runtime_1.jsx)(react_router_dom_1.Link, { to: "/membership", className: "font-semibold text-slate-300 underline", children: t('pnl.membership') })] })] }));
+}
+
+} };
+__defs["src/components/stats/ActivityPanel.jsx"] = { deps: {"react/jsx-runtime":{"ext":"react/jsx-runtime"},"react":{"ext":"react"},"lucide-react":{"ext":"lucide-react"},"clsx":{"ext":"clsx"},"@/components/ui/Controls":{"id":"src/components/ui/Controls.jsx"},"@/services/platform2":{"id":"src/services/platform2.js"},"@/config/runtime":{"id":"src/config/runtime.js"},"@/utils/format":{"id":"src/utils/format.js"},"@/i18n":{"id":"src/i18n/index.js"}}, fn: function (require, module, exports) {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ActivityPanel;
+const jsx_runtime_1 = require("react/jsx-runtime");
+const react_1 = require("react");
+const lucide_react_1 = require("lucide-react");
+const clsx_1 = __importDefault(require("clsx"));
+const Controls_1 = require("@/components/ui/Controls");
+const platform2_1 = require("@/services/platform2");
+const runtime_1 = require("@/config/runtime");
+const format_1 = require("@/utils/format");
+const i18n_1 = require("@/i18n");
+const KINDS = ['all', 'games', 'rewards', 'ac', 'ag', 'lxp', 'security'];
+/** One merged timeline of wallet entries, Loyalty XP and sign-ins (server only, last 90 days). */
+function ActivityPanel() {
+    const { t, lang } = (0, i18n_1.useT)();
+    const [kind, setKind] = (0, react_1.useState)('all');
+    const [rows, setRows] = (0, react_1.useState)(null);
+    const [error, setError] = (0, react_1.useState)(false);
+    (0, react_1.useEffect)(() => {
+        if (!runtime_1.SERVER_MODE)
+            return;
+        let alive = true;
+        setRows(null);
+        setError(false);
+        (0, platform2_1.fetchActivity)(kind).then((d) => alive && setRows(d)).catch(() => alive && setError(true));
+        return () => { alive = false; };
+    }, [kind]);
+    if (!runtime_1.SERVER_MODE)
+        return null;
+    const label = (r) => {
+        if (r.kind === 'login')
+            return r.ok ? t('activity.loginOk') : t('activity.loginFail');
+        if (r.kind === 'lxp')
+            return t('activity.lxp', { source: r.source });
+        return r.reason && r.type !== 'bet' && r.type !== 'win' ? r.reason : t(`activity.type.${r.type}`);
+    };
+    return ((0, jsx_runtime_1.jsxs)(Controls_1.Panel, { title: t('activity.title'), icon: lucide_react_1.Activity, children: [(0, jsx_runtime_1.jsx)("div", { className: "overflow-x-auto border-b hairline px-3 py-2.5 scrollbar-none sm:px-4", children: (0, jsx_runtime_1.jsx)(Controls_1.Segmented, { size: "sm", layoutId: "act-kind", value: kind, onChange: setKind, className: "w-max", options: KINDS.map((k) => ({ value: k, label: t(`activity.kind.${k}`) })) }) }), error ? ((0, jsx_runtime_1.jsx)("p", { className: "p-4 text-sm text-slate-400", children: t('activity.error') })) : rows === null ? ((0, jsx_runtime_1.jsx)("div", { className: "space-y-2 p-4", children: [0, 1, 2, 3].map((i) => (0, jsx_runtime_1.jsx)("div", { className: "h-9 animate-pulse rounded-lg bg-white/[0.04]" }, i)) })) : rows.length === 0 ? ((0, jsx_runtime_1.jsx)(Controls_1.EmptyState, { icon: lucide_react_1.Activity, title: t('activity.empty'), body: t('activity.emptyBody') })) : ((0, jsx_runtime_1.jsx)("ul", { className: "divide-y divide-white/[0.05]", children: rows.map((r, i) => {
+                    const plus = r.kind === 'lxp' || (r.kind === 'wallet' && r.amount > 0);
+                    const Icon = r.kind === 'login' ? (r.ok ? lucide_react_1.KeyRound : lucide_react_1.ShieldAlert) : r.kind === 'lxp' ? lucide_react_1.Sparkles : null;
+                    return ((0, jsx_runtime_1.jsxs)("li", { className: "flex items-center gap-3 px-4 py-2.5 text-sm", children: [Icon ? (0, jsx_runtime_1.jsx)(Icon, { className: (0, clsx_1.default)('h-4 w-4 shrink-0', r.kind === 'login' && !r.ok ? 'text-neon-red' : 'text-slate-400') }) : (0, jsx_runtime_1.jsx)("span", { className: (0, clsx_1.default)('h-2 w-2 shrink-0 rounded-full', plus ? 'bg-neon-green' : 'bg-neon-red') }), (0, jsx_runtime_1.jsxs)("div", { className: "min-w-0 flex-1", children: [(0, jsx_runtime_1.jsx)("p", { className: "truncate text-slate-200", children: label(r) }), (0, jsx_runtime_1.jsxs)("p", { className: "text-[11px] text-slate-500", children: [(0, format_1.formatDateTime)(r.at, lang), r.kind === 'login' && r.ip ? ` · ${r.ip}` : ''] })] }), r.kind === 'wallet' && ((0, jsx_runtime_1.jsxs)("span", { className: (0, clsx_1.default)('num shrink-0 font-mono text-xs font-bold', plus ? 'text-neon-green' : 'text-slate-300'), children: [plus ? '+' : '−', (0, format_1.formatCoins)(Math.abs(r.amount)), " ", r.currency] })), r.kind === 'lxp' && (0, jsx_runtime_1.jsxs)("span", { className: "num shrink-0 font-mono text-xs font-bold text-neon-cyan", children: ["+", (0, format_1.formatCoins)(r.amount), " LXP"] })] }, `${r.at}-${i}`));
+                }) }))] }));
 }
 
 } };
@@ -16399,10 +16469,11 @@ const useNow_1 = require("@/hooks/useNow");
 const format_1 = require("@/utils/format");
 const i18n_1 = require("@/i18n");
 const GROUPS = {
-    progress: ['levelUp', 'quest', 'achievement', 'daily', 'reward'],
+    progress: ['levelUp', 'quest', 'achievement', 'daily', 'reward', 'loyaltyUp', 'mission', 'membership'],
     social: ['friendRequest', 'friendAccept', 'mention'],
     account: ['security', 'reportUpdate', 'ticket', 'adminCredit', 'adminDebit'],
     wallet: ['transferIn', 'transferOut', 'transferPending', 'transferFailed', 'redeem', 'jackpot'],
+    system: ['announcement', 'releaseReset', 'maintenance'],
 };
 function NotificationsPage() {
     const { t, lang } = (0, i18n_1.useT)();
@@ -16413,8 +16484,10 @@ function NotificationsPage() {
     const now = (0, useNow_1.useNow)(30000);
     const query = (0, PageKit_1.useQuery)(() => items, [items]);
     const unread = items.filter((n) => !n.read).length;
+    const inGroup = (n, g) => (g === 'all' || g === 'unread' ? true : g === 'other' ? !Object.values(GROUPS).flat().includes(n.kind) : GROUPS[g]?.includes(n.kind));
+    const unreadIn = (g) => (g === 'unread' ? 0 : (query.data ?? []).filter((n) => !n.read && inGroup(n, g)).length);
     const list = (0, react_1.useMemo)(() => (query.data ?? []).filter((n) => (filter === 'all' ? true : filter === 'unread' ? !n.read : filter === 'other' ? !Object.values(GROUPS).flat().includes(n.kind) : GROUPS[filter]?.includes(n.kind))), [query.data, filter]);
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsx)(PageKit_1.PageHeader, { title: t('notifications.title'), subtitle: t('notifications.subtitle', { n: unread }), actions: (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)(Button_1.default, { size: "sm", variant: "ghost", disabled: !unread, onClick: () => markAllRead(user.id), children: [(0, jsx_runtime_1.jsx)(lucide_react_1.CheckCheck, { className: "h-4 w-4" }), " ", t('notifications.markAll')] }), (0, jsx_runtime_1.jsxs)(Button_1.default, { size: "sm", variant: "subtle", disabled: !items.length, onClick: () => clear(user.id), children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Trash2, { className: "h-4 w-4" }), " ", t('notifications.clear')] })] }) }), (0, jsx_runtime_1.jsx)("div", { className: "-mx-4 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0", children: (0, jsx_runtime_1.jsx)(Controls_1.Segmented, { size: "sm", layoutId: "notif-filter", value: filter, onChange: setFilter, className: "w-max", options: ['all', 'unread', 'progress', 'social', 'account', 'wallet', 'other'].map((v) => ({ value: v, label: t(`notifications.filters.${v}`) })) }) }), (0, jsx_runtime_1.jsx)(Controls_1.Panel, { title: t('notifications.history'), icon: lucide_react_1.Bell, children: (0, jsx_runtime_1.jsx)(PageKit_1.QueryView, { query: { ...query, data: query.data && list }, rows: 5, empty: (0, jsx_runtime_1.jsx)(Controls_1.EmptyState, { icon: lucide_react_1.BellOff, title: t('notifications.empty'), body: t('notifications.emptyBody') }), children: (rows) => ((0, jsx_runtime_1.jsx)("ul", { className: "divide-y divide-white/[0.05]", children: rows.map((n) => {
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsx)(PageKit_1.PageHeader, { title: t('notifications.title'), subtitle: t('notifications.subtitle', { n: unread }), actions: (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)(Button_1.default, { size: "sm", variant: "ghost", disabled: !unread, onClick: () => markAllRead(user.id), children: [(0, jsx_runtime_1.jsx)(lucide_react_1.CheckCheck, { className: "h-4 w-4" }), " ", t('notifications.markAll')] }), (0, jsx_runtime_1.jsxs)(Button_1.default, { size: "sm", variant: "subtle", disabled: !items.length, onClick: () => clear(user.id), children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Trash2, { className: "h-4 w-4" }), " ", t('notifications.clear')] })] }) }), (0, jsx_runtime_1.jsx)("div", { className: "-mx-4 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0", children: (0, jsx_runtime_1.jsx)(Controls_1.Segmented, { size: "sm", layoutId: "notif-filter", value: filter, onChange: setFilter, className: "w-max", options: ['all', 'unread', 'progress', 'social', 'account', 'wallet', 'system', 'other'].map((v) => ({ value: v, label: unreadIn(v) ? `${t(`notifications.filters.${v}`)} · ${unreadIn(v)}` : t(`notifications.filters.${v}`) })) }) }), (0, jsx_runtime_1.jsx)(Controls_1.Panel, { title: t('notifications.history'), icon: lucide_react_1.Bell, children: (0, jsx_runtime_1.jsx)(PageKit_1.QueryView, { query: { ...query, data: query.data && list }, rows: 5, empty: (0, jsx_runtime_1.jsx)(Controls_1.EmptyState, { icon: lucide_react_1.BellOff, title: t('notifications.empty'), body: t('notifications.emptyBody') }), children: (rows) => ((0, jsx_runtime_1.jsx)("ul", { className: "divide-y divide-white/[0.05]", children: rows.map((n) => {
                             const info = (0, describe_1.describeNotification)(t, lang, n);
                             const Icon = info.icon;
                             return ((0, jsx_runtime_1.jsxs)("li", { className: (0, clsx_1.default)('flex gap-3 px-4 py-3 sm:px-5', !n.read && 'bg-white/[0.03]'), children: [(0, jsx_runtime_1.jsx)("span", { className: (0, clsx_1.default)('grid h-9 w-9 shrink-0 place-items-center rounded-lg', info.tone), children: (0, jsx_runtime_1.jsx)(Icon, { className: "h-4 w-4" }) }), (0, jsx_runtime_1.jsxs)("div", { className: "min-w-0 flex-1", children: [(0, jsx_runtime_1.jsx)("p", { className: "text-sm font-bold text-white", children: info.title }), (0, jsx_runtime_1.jsx)("p", { className: "mt-0.5 break-words text-xs text-slate-400", children: info.body }), (0, jsx_runtime_1.jsx)("p", { className: "mt-1 text-[11px] text-slate-600", title: (0, format_1.formatDateTime)(n.at), children: (0, format_1.timeAgo)(n.at, now) })] }), !n.read ? ((0, jsx_runtime_1.jsx)("button", { onClick: () => markRead(user.id, n.id), className: "self-start rounded-lg px-2 py-1 text-[11px] font-bold text-neon-cyan hover:bg-neon-cyan/10 focus-ring", children: t('notifications.markRead') })) : ((0, jsx_runtime_1.jsx)("span", { className: "self-start text-[11px] text-slate-600", children: t('notifications.read') }))] }, n.id));

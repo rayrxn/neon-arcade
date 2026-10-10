@@ -34,6 +34,10 @@ export const uploadBanner = (image) => call('profile/banner', { image })
 export const buyPass = () => call('pass/buy').then((r) => (play('levelup'), r))
 export const claimPass = (track = 'all', tier = 0) => call('pass/claim', { track, tier }).then((r) => (play('reward'), r))
 export const contactManager = (text) => call('manager/contact', { text }).then((r) => (sync(), r))
+export async function fetchActivity(kind = 'all') {
+  if (!SERVER_MODE) throw new AppError('errors.serverOnly')
+  return api(`activity?kind=${encodeURIComponent(kind)}`)
+}
 export async function fetchPnl(days) {
   if (!SERVER_MODE) throw new AppError('errors.serverOnly')
   return api(`stats/pnl?days=${days}`)
