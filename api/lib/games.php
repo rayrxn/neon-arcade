@@ -7,7 +7,7 @@ const LIMITS = ['minBet' => 1];
 const MAX_MULTIPLIER = [
     'dice' => 49.5, 'limbo' => 1000000, 'coinflip' => 1.98, 'plinko' => 1000, 'roulette' => 36, 'case-opening' => 20,
     'case-battle' => 40, 'crash' => 1000000000, 'mines' => 6000000, 'blackjack' => 2.5,
-    'keno' => 1000, 'tower' => 1000000, 'cross' => 1000000, 'pump' => 1000000,
+    'keno' => 1000, 'tarot' => 110, 'sweet' => 5000, 'tower' => 1000000, 'cross' => 1000000, 'pump' => 1000000,
 ];
 const STATUS_OF = ['win' => 'WON', 'loss' => 'LOST', 'push' => 'DRAW'];
 
@@ -665,7 +665,7 @@ const GAME_ACTIONS = [
     'crash-start' => 'crash_bet', 'crash-bet' => 'crash_bet', 'crash-tick' => 'crash_tick', 'crash-cashout' => 'crash_cashout',
     'mines-start' => 'mines_start', 'mines-reveal' => 'mines_reveal', 'mines-cashout' => 'mines_cashout',
     'blackjack-start' => 'blackjack_start', 'blackjack-action' => 'blackjack_action', 'open' => 'open_round',
-    'keno' => 'play_keno',
+    'keno' => 'play_keno', 'tarot' => 'play_tarot', 'sweet' => 'play_sweet',
     'tower-start' => 'tower_start', 'tower-step' => 'tower_step', 'tower-cashout' => 'tower_cashout',
     'cross-start' => 'cross_start', 'cross-step' => 'cross_step', 'cross-cashout' => 'cross_cashout',
     'pump-start' => 'pump_start', 'pump-step' => 'pump_step', 'pump-cashout' => 'pump_cashout',

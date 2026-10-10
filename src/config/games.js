@@ -1,4 +1,4 @@
-import { Bird, Bomb, Castle, CircleDot, Coins, Dice5, Grid3x3, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy, Wind } from 'lucide-react'
+import { Bird, Bomb, Candy, Castle, CircleDot, Coins, Dice5, Grid3x3, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy, Wand2, Wind } from 'lucide-react'
 
 /**
  * Registry game — satu-satunya tempat mendaftarkan mode baru.
@@ -14,6 +14,7 @@ export const GAME_CATEGORIES = [
   { id: 'cases', labelKey: 'games.categories.cases' },
   { id: 'originals', labelKey: 'games.categories.originals' },
   { id: 'table', labelKey: 'games.categories.table' },
+  { id: 'slots', labelKey: 'games.categories.slots' },
 ]
 
 /** Kelas Tailwind lengkap per aksen (ditulis utuh supaya terdeteksi JIT). */
@@ -36,6 +37,8 @@ export const GAMES = [
   { slug: 'tower', name: 'Tower', category: 'originals', icon: Castle, accent: 'cyan', load: () => import('@/games/Ladder.jsx') },
   { slug: 'cross', name: 'Cross the Road', category: 'originals', icon: Bird, accent: 'gold', load: () => import('@/games/Ladder.jsx') },
   { slug: 'pump', name: 'Pump', category: 'originals', icon: Wind, accent: 'pink', load: () => import('@/games/Ladder.jsx') },
+  { slug: 'tarot', name: 'Tarot', category: 'originals', icon: Wand2, accent: 'purple', load: () => import('@/games/Tarot.jsx') },
+  { slug: 'sweet', name: 'Sweet', category: 'slots', icon: Candy, accent: 'pink', featured: true, load: () => import('@/games/Sweet.jsx') },
   { slug: 'dice', name: 'Dice', category: 'originals', icon: Dice5, accent: 'cyan', load: () => import('@/games/Dice.jsx') },
   { slug: 'limbo', name: 'Limbo', category: 'originals', icon: Target, accent: 'purple', load: () => import('@/games/Limbo.jsx') },
   { slug: 'coinflip', name: 'Coinflip', category: 'originals', icon: Coins, accent: 'gold', load: () => import('@/games/Coinflip.jsx') },

@@ -1,6 +1,9 @@
 /** Phase 13 — v2.0 master update. */
 export default {
   play: {
+    tarot: { risk: 'Risk', risks: { low: 'Low', medium: 'Medium', high: 'High' }, max: 'Max', draw: 'Draw 3 cards', idle: 'Three cards. Their multipliers multiply.', rule: 'Each card carries a multiplier. Your payout is all three multiplied together.',
+      cards: { tower: 'The Tower', death: 'Death', devil: 'The Devil', hanged: 'Hanged Man', moon: 'The Moon', hermit: 'The Hermit', fool: 'The Fool', temperance: 'Temperance', justice: 'Justice', hierophant: 'Hierophant', priestess: 'High Priestess', strength: 'Strength', emperor: 'The Emperor', empress: 'The Empress', lovers: 'The Lovers', chariot: 'The Chariot', magician: 'Magician', judgement: 'Judgement', wheel: 'Wheel of Fortune', star: 'The Star', sun: 'The Sun', world: 'The World' } },
+    sweet: { win: 'Win {mult}', noWin: 'No win this spin.', spin: 'Spin', tumble: 'Tumble', bombs: 'Bombs', idle: '8 or more of a kind anywhere pays.', total: 'Win {base} → {mult} with bombs', rule: '8+ of the same symbol anywhere wins. Winners pop and new ones fall in. Bombs multiply a winning spin.' },
     keno: { picks: 'Your numbers', auto: 'Auto pick', clear: 'Clear', payout: 'Hits → payout', idle: 'Pick 1 to 10 numbers, then play. 10 balls are drawn.', result: '{hits} of {picks} hit' },
     ladder: {
       mode: 'Difficulty', modes: { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', daredevil: 'Daredevil' },
@@ -48,10 +51,8 @@ export default {
   chat: { mod: { ban: '{user} was banned by {by} ({duration})', unban: '{user} was unbanned by {by}', kick: '{user} was kicked by {by}', mute: '{user} was muted by {by} ({duration})', unmute: '{user} can chat again', forever: 'permanent', gacor: '🔥 Jam Gacor ×{mult} is live for {minutes} minutes!' } },
   gacor: { global: 'Jam Gacor ×{mult} is live', personal: 'Your luck boost ×{mult} is on', hint: 'wins pay extra' },
   games: {
-    keno: { tagline: 'Pick up to 10 numbers, 10 balls drop.' },
-    tower: { tagline: 'Climb floor by floor, avoid the bomb.' },
-    cross: { tagline: 'Lane by lane. Cash out before the car comes.' },
-    pump: { tagline: 'Pump the balloon. Stop before it pops.' },
+    list: { tarot: 'Three cards, multiplied together.', sweet: 'Tumbling candy, bombs up to ×100.', keno: 'Pick up to 10 numbers, 10 balls drop.', tower: 'Climb floor by floor, avoid the bomb.', cross: 'Lane by lane. Cash out before the car comes.', pump: 'Pump the balloon. Stop before it pops.' },
+    categories: { slots: 'Slots' },
   },
   openRound: { text: 'You have an unfinished {game} round.', resume: 'Resume' },
   activity: {

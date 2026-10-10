@@ -80,6 +80,23 @@ const ART = {
       <path d="M102 44.5l2.5-2.5" {...S} strokeWidth="1.5" />
     </>
   ),
+  tarot: () => (
+    <>
+      {[-14, 0, 14].map((r, i) => (
+        <rect key={r} x="66" y="22" width="28" height="44" rx="5" transform={`rotate(${r} 80 70)`} {...S} {...soft(i === 1 ? 0.3 : 0.1)} />
+      ))}
+      <Sparkle x={80} y={42} r={6} />
+    </>
+  ),
+  sweet: () => (
+    <>
+      <circle cx="62" cy="50" r="13" {...S} {...soft(0.25)} />
+      <path d="M62 37v26M49 50h26" {...S} strokeOpacity="0.5" />
+      <path d="M86 40h22l-4 22H90z" {...S} {...soft(0.18)} />
+      <path d="M97 40c0-6 4-9 8-9" {...S} />
+      <Sparkle x={112} y={26} r={4} />
+    </>
+  ),
   keno: () => (
     <>
       {[0, 1, 2].map((r) =>

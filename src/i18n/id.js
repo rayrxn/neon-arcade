@@ -86,7 +86,7 @@ export default {
     localNote: 'Akun & saldo disimpan di browser ini. AC dan AG tidak bernilai uang.',
     showcase: {
       eyebrow: 'Arcade · tanpa uang sungguhan',
-      line1: 'Sebelas game.',
+      line1: '{count} game.',
       line2: 'Satu wallet.',
       body: 'Main, kirim saldo ke teman, redeem kode, dan ngobrol di Global Chat. Semua hasil game bisa diverifikasi.',
       games: 'mode game',

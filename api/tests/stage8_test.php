@@ -365,5 +365,20 @@ $c = call('POST', 'game/cross-cashout', ['id' => $st['data']['result']['id']], '
 check('cash out before the first lane refunds the bet', $c['ok'] && $c['data']['result']['session']['status'] === 'CANCELLED', $c);
 expect_error('unknown mode refused', call('POST', 'game/cross-start', ['bet' => 100, 'mode' => 'insane'], 'a'), 'play.errors.invalid');
 
+echo "New games: Tarot + Sweet\n";
+$ok = true; $rt = [];
+foreach (TAROT_PAY as $risk => $vals) { $r = (array_sum($vals) / 22) ** 3; $rt[$risk] = round($r, 4); if ($r < 0.95 || $r > 0.99 || count($vals) !== 22) $ok = false; }
+check('Tarot RTP between 95% and 99% for every risk', $ok, $rt);
+setbal($A, 1000000, 100);
+$r = call('POST', 'game/tarot', ['bet' => 100, 'risk' => 'medium'], 'a');
+$cm = $r['ok'] ? floor(array_product(array_column($r['data']['result']['cards'], 'mult')) * 100) / 100 : -1;
+check('Tarot: 3 cards, payout = product of their multipliers', $r['ok'] && count($r['data']['result']['cards']) === 3 && abs($cm - $r['data']['result']['multiplier']) < 0.011, $r);
+expect_error('Tarot: unknown risk refused', call('POST', 'game/tarot', ['bet' => 100, 'risk' => 'x'], 'a'), 'play.errors.invalid');
+$sp = sweet_spin(array_fill(0, SWEET_FLOATS, 0.01));
+check('Sweet: all-same grid pays and tumbles, capped', $sp['base'] > 0 && count($sp['steps']) > 1 && $sp['mult'] <= SWEET_MAX, ['base' => $sp['base'], 'steps' => count($sp['steps'])]);
+$r = call('POST', 'game/sweet', ['bet' => 100], 'a');
+$last = $r['ok'] ? end($r['data']['result']['steps']) : null;
+check('Sweet spin settles; last grid has no more wins (or 20 tumbles)', $r['ok'] && ($last['wins'] === [] || count($r['data']['result']['steps']) === 20) && $r['data']['result']['session']['multiplier'] == $r['data']['result']['mult'], $r['ok'] ? ['mult' => $r['data']['result']['mult']] : $r);
+
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

@@ -79,7 +79,8 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [ ] Racing PvP
 - [ ] Horse Racing (shared rounds)
 - [x] Keno, Tower, Cross the Road, Pump (server-settled, RTP-checked in stage8)
-- [ ] Snake, Slice, Layer, Sweet, Moles, Tarot
+- [x] Tarot, Sweet (tumble slot, RTP via api/tests/sweet_rtp.php)
+- [ ] Snake, Slice, Layer, Moles
 
 ## H. QA
 - [x] QA center (admin) running real checks

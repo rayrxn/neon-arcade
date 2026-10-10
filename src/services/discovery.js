@@ -8,7 +8,7 @@ import { GAMES, isPlayable } from '@/config/games'
  */
 const DAY = 86_400_000
 /** Game yang ditambahkan di update terakhir (badge "Baru"). */
-export const NEW_GAMES = ['keno', 'tower', 'cross', 'pump']
+export const NEW_GAMES = ['sweet', 'tarot', 'keno', 'tower', 'cross', 'pump']
 
 function realProgress() {
   const users = useAuthStore.getState().users

@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.4.0",
+    "date": "2026-10-10",
+    "emoji": "🍭",
+    "colors": ["#f472b6", "#a855f7", "#facc15"],
+    "title": { "en": "Tarot & Sweet", "id": "Tarot & Sweet" },
+    "tagline": { "en": "Draw the arcana or drop some candy.", "id": "Tarik kartu arcana atau jatuhkan permen." },
+    "items": [
+      { "tag": "new", "en": "Tarot: three cards, their multipliers multiply. Low, Medium or High risk.", "id": "Tarot: tiga kartu, multiplier-nya dikalikan. Risiko Rendah, Sedang, atau Tinggi." },
+      { "tag": "new", "en": "Sweet: tumbling candy slot. 8 of a kind anywhere wins, bombs multiply up to ×100.", "id": "Sweet: slot permen berjatuhan. 8 simbol sama di mana saja menang, bom mengalikan sampai ×100." },
+      { "tag": "fix", "en": "The sign-in page now counts the games correctly.", "id": "Halaman login sekarang menghitung jumlah game dengan benar." }
+    ]
+  },
+  {
     "version": "2.3.0",
     "date": "2026-10-10",
     "emoji": "🎈",

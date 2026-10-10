@@ -86,7 +86,7 @@ export default {
     localNote: 'Accounts and balances are stored in this browser. AC and AG have no cash value.',
     showcase: {
       eyebrow: 'Arcade · no real money',
-      line1: 'Eleven games.',
+      line1: '{count} games.',
       line2: 'One wallet.',
       body: 'Play, send balance to friends, redeem codes, and hang out in Global Chat. Every game result can be verified.',
       games: 'game modes',

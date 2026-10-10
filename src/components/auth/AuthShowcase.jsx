@@ -66,10 +66,12 @@ function CountUp({ value }) {
   return v
 }
 
+const PLAYABLE = GAMES.filter((g) => g.load).length
+
 export default function AuthShowcase() {
   const { t } = useT()
   const stats = [
-    { value: '11', label: t('auth.showcase.games') },
+    { value: String(PLAYABLE), label: t('auth.showcase.games') },
     { value: 'AC + AG', label: t('auth.showcase.currencies') },
     { value: 'SHA-256', label: t('auth.showcase.fair') },
   ]
@@ -107,7 +109,7 @@ export default function AuthShowcase() {
         <div>
           <motion.p className="label-caps text-neon-cyan" initial={{ opacity: 0, letterSpacing: '0.3em' }} animate={{ opacity: 1, letterSpacing: '0.16em' }} transition={{ duration: 0.8, ease: EASE }}>{t('auth.showcase.eyebrow')}</motion.p>
           <h1 className="mt-5 font-display text-5xl font-extrabold leading-[1.04] tracking-tight text-white xl:text-6xl">
-            <Words text={t('auth.showcase.line1')} delay={0.1} />
+            <Words text={t('auth.showcase.line1', { count: PLAYABLE })} delay={0.1} />
             <Words text={t('auth.showcase.line2')} delay={0.3} className="auth-shine" />
           </h1>
           <motion.p className="mt-6 max-w-md text-[15px] leading-relaxed text-slate-400" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.6, ease: EASE }}>{t('auth.showcase.body')}</motion.p>

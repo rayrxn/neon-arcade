@@ -1,3 +1,4 @@
+import { GAMES } from '@/config/games'
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Moon, Sun } from 'lucide-react'
@@ -51,7 +52,7 @@ export default function AuthPage() {
         <motion.div className="mb-8 flex flex-col items-center gap-4 text-center lg:hidden" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
           <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} aria-hidden><CoinIcon size={56} spin /></motion.div>
           <Logo />
-          <p className="max-w-xs text-sm text-slate-400">{t('auth.showcase.line1')} <span className="auth-shine font-semibold">{t('auth.showcase.line2')}</span></p>
+          <p className="max-w-xs text-sm text-slate-400">{t('auth.showcase.line1', { count: GAMES.filter((g) => g.load).length })} <span className="auth-shine font-semibold">{t('auth.showcase.line2')}</span></p>
         </motion.div>
         <AuthForm />
         <p className="mt-6 flex flex-wrap items-center justify-center gap-x-2 text-xs text-slate-500">

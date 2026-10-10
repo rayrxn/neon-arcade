@@ -13,7 +13,7 @@
 | T9 | Activity history page (games, AG, LXP, rewards, cases, security) | done (`GET activity`, History → Activity) | medium | – | page lists server events |
 | T10 | Session recovery UI (resume open round after reload) | done (in-game resume + global OpenRoundBanner) | medium | – | reload mid-round restores state |
 | T11 | Music on mobile (unlock on gesture) | done-unverified (needs a real iOS/Android tap test) | low | – | plays on iOS/Android after tap |
-| T12 | New games, each server-settled — 4a done: Keno, Tower, Cross the Road, Pump (games2.php, migration 015); next: Sweet, Tarot, Horse, Chess/Racing PvP, skill arcades — (Keno, Pump, Tower, Cross the Road, Sweet, Tarot first; then Horse shared rounds; Chess/Racing PvP; skill arcades Snake/Slice/Layer/Moles with capped XP) | planned | high | T3 (flags per game) | API tests per game + RTP check in QA |
+| T12 | New games, each server-settled — 4a done: Keno, Tower, Cross the Road, Pump (migration 015); 4b done: Tarot, Sweet (migration 016); next: Horse, Chess/Racing PvP, skill arcades — (Keno, Pump, Tower, Cross the Road, Sweet, Tarot first; then Horse shared rounds; Chess/Racing PvP; skill arcades Snake/Slice/Layer/Moles with capped XP) | planned | high | T3 (flags per game) | API tests per game + RTP check in QA |
 | T13 | Case opening + battle expansion | planned | medium | – | new cases in catalog, tests |
 | T13.1 | Admin power tools: captcha/Turnstile settings in panel, reset announcements (+3-day default end), ban/kick/mute lines in chat, Crash ×10,000 card in Settings, Jam Gacor luck boost | done (v2.2, stage8 tests) | high | – | stage8 "v2.2" block passes |
 | T15 | Ops: console key (BUG-001), rotate DB password (BUG-002) | user action | high | user | console/state enabled:true |

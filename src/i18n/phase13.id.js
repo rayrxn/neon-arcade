@@ -1,6 +1,9 @@
 /** Fase 13 — master update v2.0. */
 export default {
   play: {
+    tarot: { risk: 'Risiko', risks: { low: 'Rendah', medium: 'Sedang', high: 'Tinggi' }, max: 'Maks', draw: 'Tarik 3 kartu', idle: 'Tiga kartu. Multiplier-nya dikalikan.', rule: 'Tiap kartu punya multiplier. Bayaranmu = ketiganya dikalikan.',
+      cards: { tower: 'The Tower', death: 'Death', devil: 'The Devil', hanged: 'Hanged Man', moon: 'The Moon', hermit: 'The Hermit', fool: 'The Fool', temperance: 'Temperance', justice: 'Justice', hierophant: 'Hierophant', priestess: 'High Priestess', strength: 'Strength', emperor: 'The Emperor', empress: 'The Empress', lovers: 'The Lovers', chariot: 'The Chariot', magician: 'Magician', judgement: 'Judgement', wheel: 'Wheel of Fortune', star: 'The Star', sun: 'The Sun', world: 'The World' } },
+    sweet: { win: 'Menang {mult}', noWin: 'Tidak menang di spin ini.', spin: 'Putar', tumble: 'Tumble', bombs: 'Bom', idle: '8 simbol sama atau lebih di mana saja = menang.', total: 'Menang {base} → {mult} dengan bom', rule: '8+ simbol sama di mana saja menang. Simbol menang pecah, yang baru jatuh. Bom mengalikan spin yang menang.' },
     keno: { picks: 'Angka kamu', auto: 'Pilih acak', clear: 'Hapus', payout: 'Kena → bayaran', idle: 'Pilih 1 sampai 10 angka, lalu main. 10 bola diundi.', result: '{hits} dari {picks} kena' },
     ladder: {
       mode: 'Kesulitan', modes: { easy: 'Mudah', medium: 'Sedang', hard: 'Sulit', expert: 'Ahli', daredevil: 'Nekat' },
@@ -48,10 +51,8 @@ export default {
   chat: { mod: { ban: '{user} di-ban oleh {by} ({duration})', unban: '{user} di-unban oleh {by}', kick: '{user} di-kick oleh {by}', mute: '{user} di-mute oleh {by} ({duration})', unmute: '{user} bisa chat lagi', forever: 'permanen', gacor: '🔥 Jam Gacor ×{mult} aktif {minutes} menit!' } },
   gacor: { global: 'Jam Gacor ×{mult} sedang aktif', personal: 'Boost hoki ×{mult} kamu aktif', hint: 'menang dapat bonus' },
   games: {
-    keno: { tagline: 'Pilih sampai 10 angka, 10 bola jatuh.' },
-    tower: { tagline: 'Naik lantai demi lantai, hindari bom.' },
-    cross: { tagline: 'Lajur demi lajur. Cash out sebelum mobil datang.' },
-    pump: { tagline: 'Pompa balonnya. Berhenti sebelum meletus.' },
+    list: { tarot: 'Tiga kartu, dikalikan.', sweet: 'Permen berjatuhan, bom sampai ×100.', keno: 'Pilih sampai 10 angka, 10 bola jatuh.', tower: 'Naik lantai demi lantai, hindari bom.', cross: 'Lajur demi lajur. Cash out sebelum mobil datang.', pump: 'Pompa balonnya. Berhenti sebelum meletus.' },
+    categories: { slots: 'Slot' },
   },
   openRound: { text: 'Ada ronde {game} yang belum selesai.', resume: 'Lanjutkan' },
   activity: {

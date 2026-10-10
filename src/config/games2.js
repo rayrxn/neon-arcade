@@ -15,3 +15,6 @@ export function ladderP(game, mode) {
 }
 
 export const ladderMult = (game, mode, k) => (k <= 0 ? 1 : Math.floor((0.99 / ladderP(game, mode) ** k) * 100) / 100)
+
+export const TAROT_CARDS = ["tower", "death", "devil", "hanged", "moon", "hermit", "fool", "temperance", "justice", "hierophant", "priestess", "strength", "emperor", "empress", "lovers", "chariot", "magician", "judgement", "wheel", "star", "sun", "world"]
+export const TAROT_PAY = {"low": [0.27, 0.46, 0.55, 0.64, 0.73, 0.73, 0.82, 0.82, 0.91, 0.91, 0.91, 0.91, 1.0, 1.0, 1.09, 1.09, 1.18, 1.28, 1.37, 1.46, 1.64, 2.0], "medium": [0.0, 0.15, 0.3, 0.37, 0.44, 0.52, 0.59, 0.67, 0.74, 0.74, 0.74, 0.89, 0.89, 0.96, 1.11, 1.19, 1.33, 1.48, 1.63, 1.85, 2.22, 2.96], "high": [0.0, 0.0, 0.0, 0.0, 0.0, 0.12, 0.18, 0.3, 0.3, 0.48, 0.6, 0.6, 0.72, 0.89, 0.89, 1.19, 1.49, 1.79, 2.09, 2.39, 2.98, 4.77]}

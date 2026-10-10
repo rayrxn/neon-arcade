@@ -749,4 +749,5 @@ export const ladderStart = (game, { bet, mode }) => (SERVER_MODE ? remoteStart(`
 export const ladderStep = (game, id, pick) =>
   SERVER_MODE ? remote(`${game}-step`, pick == null ? { id } : { id, pick }).then((r) => (play(r?.lost ? 'explode' : 'reveal'), r)) : serverOnly()
 export const ladderCashout = (game, id) => (SERVER_MODE ? remote(`${game}-cashout`, { id }) : serverOnly())
-
+export const playTarot = ({ bet, risk }) => (SERVER_MODE ? remoteStart('tarot', { bet, risk }) : serverOnly())
+export const playSweet = ({ bet }) => (SERVER_MODE ? remoteStart('sweet', { bet }) : serverOnly())
