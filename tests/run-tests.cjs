@@ -265,11 +265,11 @@ const assert = (label, cond, extra = '') => { if (!cond) failures++; console.log
   const dq = P.questView(prog(), 'daily')
   assert('quests: login + play3 done', dq.find((q) => q.id === 'login').done && dq.find((q) => q.id === 'play3').done)
   b0 = bal(); await P.claimQuest(A, 'daily', 'play3')
-  assert('quest claim → +300 AC', bal() === b0 + 300)
+  assert('quest claim → +1,200 AC', bal() === b0 + 1200)
   threw = await P.claimQuest(A, 'daily', 'play3').then(() => null, (e) => e.code)
   assert('quest double claim blocked', threw === 'rewards.errors.claimed')
   b0 = bal(); const d1 = await P.claimDailyReward(A)
-  assert('daily reward day 1 → +250 AC', d1.day === 1 && bal() === b0 + 250)
+  assert('daily reward day 1 → +1,000 AC', d1.day === 1 && bal() === b0 + 1000)
   threw = await P.claimDailyReward(A).then(() => null, (e) => e.code)
   assert('daily reward once per day', threw === 'rewards.errors.claimedToday')
   clock += 86_400_000

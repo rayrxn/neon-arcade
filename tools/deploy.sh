@@ -75,6 +75,8 @@ EOF
 if [ -n "$OUT_ONLY" ]; then
   mkdir -p "$OUT_ONLY"
   assemble "$OUT_ONLY"
+  # Mirror mode: add the cPanel files that live only on the host, so the copy equals public_html 1:1.
+  cp "$ROOT"/tools/hosting/public_html-extra/* "$OUT_ONLY/"
   echo "Isi deploy disusun di $OUT_ONLY (build ${MAIN_SHA})"
   exit 0
 fi

@@ -1,6 +1,21 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.1.0",
+    "date": "2026-10-10",
+    "emoji": "⚖️",
+    "colors": ["#facc15", "#22d3ee", "#a855f7"],
+    "title": { "en": "Fairer rewards", "id": "Hadiah lebih adil" },
+    "tagline": { "en": "Every card now steps up evenly, plus a new monthly bonus.", "id": "Tiap kartu naik lebih rata, plus bonus bulanan baru." },
+    "items": [
+      { "tag": "new", "en": "Monthly bonus for every loyalty card and for VIP / VVIP.", "id": "Bonus bulanan untuk semua kartu loyalty dan VIP / VVIP." },
+      { "tag": "improve", "en": "Loyalty XP needed for Gold and above is lower. Monarch and Vivace are now reachable with steady play.", "id": "XP loyalty untuk Gold ke atas lebih kecil. Monarch dan Vivace bisa dicapai dengan main rutin." },
+      { "tag": "improve", "en": "Card bonuses and bet limits grow evenly between cards. No card ever goes down.", "id": "Bonus dan batas taruhan naik rata antar kartu. Kartu tidak pernah turun." },
+      { "tag": "improve", "en": "Bigger login streak and quest rewards.", "id": "Hadiah login beruntun dan quest lebih besar." },
+      { "tag": "fix", "en": "Features turned off by staff are now really off.", "id": "Fitur yang dimatikan staf sekarang benar-benar mati." }
+    ]
+  },
+  {
     "version": "2.0.0",
     "date": "2026-10-10",
     "emoji": "🎼",
