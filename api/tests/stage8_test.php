@@ -329,5 +329,41 @@ expect_error('locked again', $con('console/exec', ['command' => 'status']), 'con
 for ($i = 0; $i < 5; $i++) $con('console/unlock', ['key' => 'wrong-key-' . $i]);
 expect_error('rate limited after 5 wrong keys', $con('console/unlock', ['key' => 'test-console-key-123']), 'console.errors.tooMany');
 
+echo "New games: Keno + ladder (Tower, Cross the Road, Pump)\n";
+$hyper = fn($n, $k) => (function ($n, $k) { $C = function ($a, $b) { if ($b < 0 || $b > $a) return 0; $r = 1; for ($i = 1; $i <= $b; $i++) $r = $r * ($a - $b + $i) / $i; return $r; }; return $C($n, $k) * $C(40 - $n, 10 - $k) / $C(40, 10); })($n, $k);
+$ok = true; $worst = [];
+foreach (KENO_PAY as $n => $row) { $rtp = 0; foreach ($row as $k => $m) $rtp += $m * $hyper($n, $k); $worst[$n] = round($rtp, 4); if ($rtp < 0.95 || $rtp > 0.99) $ok = false; }
+check('Keno RTP between 95% and 99% for every pick count', $ok, $worst);
+$ok = true;
+foreach (LADDER as $g => $cfg) foreach (array_keys($cfg['modes']) as $mode) for ($k = 1; $k <= $cfg['steps']; $k++) if (ladder_mult($g, $mode, $k) * ladder_p($g, $mode) ** $k > 0.99 + 1e-9 || ladder_mult($g, $mode, $k) > MAX_MULTIPLIER[$g]) $ok = false;
+check('ladder: every step returns ≤ 99% and stays under the max multiplier', $ok);
+$d = keno_draw(array_fill(0, 10, 0.999999));
+check('Keno draws 10 distinct numbers 1..40', count(array_unique($d)) === 10 && min($d) >= 1 && max($d) <= 40);
+setbal($A, 1000000, 100);
+$r = call('POST', 'game/keno', ['bet' => 100, 'picks' => [1, 2, 3, 4, 5]], 'a');
+check('Keno round settles on the server', $r['ok'] && count($r['data']['result']['drawn']) === 10 && $r['data']['result']['multiplier'] == KENO_PAY[5][count($r['data']['result']['hits'])], $r);
+expect_error('Keno: 11 picks refused', call('POST', 'game/keno', ['bet' => 100, 'picks' => range(1, 11)], 'a'), 'play.errors.invalid');
+expect_error('Keno: number 41 refused', call('POST', 'game/keno', ['bet' => 100, 'picks' => [41]], 'a'), 'play.errors.invalid');
+$st = call('POST', 'game/pump-start', ['bet' => 100, 'mode' => 'easy'], 'a');
+check('Pump starts an open round', $st['ok'] && $st['data']['result']['step'] === 0 && $st['data']['result']['next'] == 1.03, $st);
+expect_error('one open Pump round at a time', call('POST', 'game/pump-start', ['bet' => 100, 'mode' => 'easy'], 'a'), 'play.errors.roundOpen');
+$id = $st['data']['result']['id'];
+$res = null;
+for ($i = 0; $i < 25; $i++) { $res = call('POST', 'game/pump-step', ['id' => $id], 'a'); if (!$res['ok'] || $res['data']['result']['done']) break; }
+check('Pump ends by a pop or the last pump', $res['ok'] && $res['data']['result']['done'] === true, $res);
+$fa = $res['data']['result']['failAt'];
+check('reveal matches the result (pop step = first failing float)', $res['data']['result']['lost'] ? $fa === $res['data']['result']['step'] : ($fa === null || $fa >= 25), $res['data']['result']);
+$st = call('POST', 'game/tower-start', ['bet' => 100, 'mode' => 'medium'], 'a');
+expect_error('Tower: column 3 does not exist on medium', call('POST', 'game/tower-step', ['id' => $st['data']['result']['id'], 'pick' => 3], 'a'), 'play.errors.invalid');
+$res = call('POST', 'game/tower-step', ['id' => $st['data']['result']['id'], 'pick' => 0], 'a');
+$lay = $res['data']['result']['layout'] ?? null;
+if (!$res['data']['result']['done']) $res = call('POST', 'game/tower-cashout', ['id' => $st['data']['result']['id']], 'a');
+$lay = $res['data']['result']['layout'];
+check('Tower: survives only when the pick is not the bomb column', count($lay) === 9 && ($res['data']['result']['lost'] ? $lay[0] === 0 : $lay[0] !== 0), $res['data']['result']);
+$st = call('POST', 'game/cross-start', ['bet' => 100, 'mode' => 'hard'], 'a');
+$c = call('POST', 'game/cross-cashout', ['id' => $st['data']['result']['id']], 'a');
+check('cash out before the first lane refunds the bet', $c['ok'] && $c['data']['result']['session']['status'] === 'CANCELLED', $c);
+expect_error('unknown mode refused', call('POST', 'game/cross-start', ['bet' => 100, 'mode' => 'insane'], 'a'), 'play.errors.invalid');
+
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

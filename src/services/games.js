@@ -739,3 +739,14 @@ export async function crashGlobalCashout(id, startAtLocal) {
 
 /** Hasil taruhan saya setelah ronde selesai (diselesaikan server walau halaman ditutup). */
 export const crashGlobalResult = (id) => remote('crash-tick', { id })
+
+// ── v2.2 games (server only) ──
+const serverOnly = () => {
+  throw new AppError('errors.serverOnly')
+}
+export const playKeno = ({ bet, picks }) => (SERVER_MODE ? remoteStart('keno', { bet, picks }) : serverOnly())
+export const ladderStart = (game, { bet, mode }) => (SERVER_MODE ? remoteStart(`${game}-start`, { bet, mode }) : serverOnly())
+export const ladderStep = (game, id, pick) =>
+  SERVER_MODE ? remote(`${game}-step`, pick == null ? { id } : { id, pick }).then((r) => (play(r?.lost ? 'explode' : 'reveal'), r)) : serverOnly()
+export const ladderCashout = (game, id) => (SERVER_MODE ? remote(`${game}-cashout`, { id }) : serverOnly())
+

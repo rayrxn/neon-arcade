@@ -1,4 +1,4 @@
-import { Bomb, CircleDot, Coins, Dice5, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy } from 'lucide-react'
+import { Bird, Bomb, Castle, CircleDot, Coins, Dice5, Grid3x3, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy, Wind } from 'lucide-react'
 
 /**
  * Registry game — satu-satunya tempat mendaftarkan mode baru.
@@ -32,6 +32,10 @@ export const GAMES = [
   { slug: 'crash', name: 'Crash', category: 'originals', icon: TrendingUp, accent: 'red', featured: true, badge: 'hot', load: () => import('@/games/Crash.jsx') },
   { slug: 'plinko', name: 'Plinko', category: 'originals', icon: Triangle, accent: 'pink', featured: true, load: () => import('@/games/Plinko.jsx') },
   { slug: 'mines', name: 'Mines', category: 'originals', icon: Bomb, accent: 'green', load: () => import('@/games/Mines.jsx') },
+  { slug: 'keno', name: 'Keno', category: 'originals', icon: Grid3x3, accent: 'purple', load: () => import('@/games/Keno.jsx') },
+  { slug: 'tower', name: 'Tower', category: 'originals', icon: Castle, accent: 'cyan', load: () => import('@/games/Ladder.jsx') },
+  { slug: 'cross', name: 'Cross the Road', category: 'originals', icon: Bird, accent: 'gold', load: () => import('@/games/Ladder.jsx') },
+  { slug: 'pump', name: 'Pump', category: 'originals', icon: Wind, accent: 'pink', load: () => import('@/games/Ladder.jsx') },
   { slug: 'dice', name: 'Dice', category: 'originals', icon: Dice5, accent: 'cyan', load: () => import('@/games/Dice.jsx') },
   { slug: 'limbo', name: 'Limbo', category: 'originals', icon: Target, accent: 'purple', load: () => import('@/games/Limbo.jsx') },
   { slug: 'coinflip', name: 'Coinflip', category: 'originals', icon: Coins, accent: 'gold', load: () => import('@/games/Coinflip.jsx') },

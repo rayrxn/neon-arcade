@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.3.0",
+    "date": "2026-10-10",
+    "emoji": "🎈",
+    "colors": ["#a855f7", "#22d3ee", "#f472b6"],
+    "title": { "en": "Four new games", "id": "Empat game baru" },
+    "tagline": { "en": "Keno, Tower, Cross the Road and Pump are live.", "id": "Keno, Tower, Cross the Road, dan Pump sudah bisa dimainkan." },
+    "items": [
+      { "tag": "new", "en": "Keno: pick up to 10 numbers, 10 balls are drawn.", "id": "Keno: pilih sampai 10 angka, 10 bola diundi." },
+      { "tag": "new", "en": "Tower, Cross the Road and Pump: go one step further or cash out. Four difficulties each.", "id": "Tower, Cross the Road, dan Pump: maju satu langkah lagi atau cash out. Masing-masing empat tingkat kesulitan." },
+      { "tag": "improve", "en": "Every result is decided on the server and stays provably fair.", "id": "Semua hasil ditentukan di server dan tetap provably fair." }
+    ]
+  },
+  {
     "version": "2.2.0",
     "date": "2026-10-10",
     "emoji": "🧭",

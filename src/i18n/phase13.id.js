@@ -1,6 +1,12 @@
 /** Fase 13 — master update v2.0. */
 export default {
   play: {
+    keno: { picks: 'Angka kamu', auto: 'Pilih acak', clear: 'Hapus', payout: 'Kena → bayaran', idle: 'Pilih 1 sampai 10 angka, lalu main. 10 bola diundi.', result: '{hits} dari {picks} kena' },
+    ladder: {
+      mode: 'Kesulitan', modes: { easy: 'Mudah', medium: 'Sedang', hard: 'Sulit', expert: 'Ahli', daredevil: 'Nekat' },
+      go: { cross: 'Lajur berikut', pump: 'Pompa' }, hint: { tower: 'Pilih satu kotak di lantai yang menyala.', cross: 'Seberangi lajur berikut atau cash out.', pump: 'Pompa terus atau cash out sebelum meletus.' },
+      idle: 'Pilih kesulitan lalu mulai.', lost: 'Kalah di langkah {step}.',
+    },
     errors: {
       maxBet: 'Taruhan maksimal di sini {max} {currency}.',
       loyaltyMaxShort: 'Maks. taruhan di sini: {max} {currency}.',
@@ -41,6 +47,12 @@ export default {
   notifications: { filters: { system: 'Sistem' } },
   chat: { mod: { ban: '{user} di-ban oleh {by} ({duration})', unban: '{user} di-unban oleh {by}', kick: '{user} di-kick oleh {by}', mute: '{user} di-mute oleh {by} ({duration})', unmute: '{user} bisa chat lagi', forever: 'permanen', gacor: '🔥 Jam Gacor ×{mult} aktif {minutes} menit!' } },
   gacor: { global: 'Jam Gacor ×{mult} sedang aktif', personal: 'Boost hoki ×{mult} kamu aktif', hint: 'menang dapat bonus' },
+  games: {
+    keno: { tagline: 'Pilih sampai 10 angka, 10 bola jatuh.' },
+    tower: { tagline: 'Naik lantai demi lantai, hindari bom.' },
+    cross: { tagline: 'Lajur demi lajur. Cash out sebelum mobil datang.' },
+    pump: { tagline: 'Pompa balonnya. Berhenti sebelum meletus.' },
+  },
   openRound: { text: 'Ada ronde {game} yang belum selesai.', resume: 'Lanjutkan' },
   activity: {
     title: 'Aktivitas', error: 'Aktivitas gagal dimuat. Coba lagi nanti.', empty: 'Belum ada aktivitas', emptyBody: 'Game, hadiah, dan login 90 hari terakhir muncul di sini.',

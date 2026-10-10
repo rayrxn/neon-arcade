@@ -80,6 +80,40 @@ const ART = {
       <path d="M102 44.5l2.5-2.5" {...S} strokeWidth="1.5" />
     </>
   ),
+  keno: () => (
+    <>
+      {[0, 1, 2].map((r) =>
+        [0, 1, 2, 3, 4].map((c) => {
+          const on = (r * 5 + c) % 4 === 1
+          return <circle key={`${r}${c}`} cx={50 + c * 15} cy={30 + r * 15} r="5.5" {...S} strokeOpacity={on ? 1 : 0.4} {...soft(on ? 0.45 : 0.06)} />
+        }),
+      )}
+    </>
+  ),
+  tower: () => (
+    <>
+      {[0, 1, 2, 3].map((r) =>
+        [0, 1, 2].map((c) => <rect key={`${r}${c}`} x={57 + c * 16} y={68 - r * 14} width="13" height="10" rx="3" {...S} strokeOpacity={r === 3 ? 1 : 0.45} {...soft(r < 3 && c === (r % 3) ? 0.4 : 0.06)} />),
+      )}
+      <Sparkle x={112} y={24} r={5} />
+    </>
+  ),
+  cross: () => (
+    <>
+      {[0, 1, 2, 3, 4].map((i) => <path key={i} d={`M${46 + i * 17} 22V78`} {...S} strokeOpacity="0.3" strokeDasharray="4 5" />)}
+      <rect x="86" y="30" width="18" height="11" rx="4" {...S} {...soft(0.35)} />
+      <circle cx="62" cy="60" r="7" {...S} {...soft(0.3)} />
+      <path d="M69 59l5-1.5-5-1.5" {...S} strokeWidth="1.5" />
+    </>
+  ),
+  pump: () => (
+    <>
+      <ellipse cx="80" cy="44" rx="20" ry="23" {...S} {...soft(0.22)} />
+      <path d="M72 32a9 9 0 0 1 8-5" {...S} strokeOpacity="0.6" />
+      <path d="M80 67l-3 4h6z" fill="currentColor" />
+      <path d="M80 71c-3 6 3 9 0 14" {...S} strokeWidth="1.5" strokeOpacity="0.6" />
+    </>
+  ),
   dice: () => (
     <>
       <g transform="rotate(-12 62 50)">

@@ -7,7 +7,7 @@ import { useCurrentUser } from '@/store/useAuthStore'
 import { useNow } from '@/hooks/useNow'
 import { useT } from '@/i18n'
 
-const RESUMABLE = ['crash', 'mines', 'blackjack']
+const RESUMABLE = ['crash', 'mines', 'blackjack', 'tower', 'cross', 'pump']
 
 /** Reminds the player of a round still open on the server (after a reload or on another page) and links back to it. */
 export default function OpenRoundBanner() {

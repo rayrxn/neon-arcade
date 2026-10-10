@@ -1,6 +1,12 @@
 /** Phase 13 — v2.0 master update. */
 export default {
   play: {
+    keno: { picks: 'Your numbers', auto: 'Auto pick', clear: 'Clear', payout: 'Hits → payout', idle: 'Pick 1 to 10 numbers, then play. 10 balls are drawn.', result: '{hits} of {picks} hit' },
+    ladder: {
+      mode: 'Difficulty', modes: { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', daredevil: 'Daredevil' },
+      go: { cross: 'Next lane', pump: 'Pump' }, hint: { tower: 'Pick one tile on the glowing floor.', cross: 'Cross the next lane or cash out.', pump: 'Pump it up or cash out before it pops.' },
+      idle: 'Choose a difficulty and start.', lost: 'Lost on step {step}.',
+    },
     errors: {
       maxBet: 'The maximum bet here is {max} {currency}.',
       loyaltyMaxShort: 'Max bet here: {max} {currency}.',
@@ -41,6 +47,12 @@ export default {
   notifications: { filters: { system: 'System' } },
   chat: { mod: { ban: '{user} was banned by {by} ({duration})', unban: '{user} was unbanned by {by}', kick: '{user} was kicked by {by}', mute: '{user} was muted by {by} ({duration})', unmute: '{user} can chat again', forever: 'permanent', gacor: '🔥 Jam Gacor ×{mult} is live for {minutes} minutes!' } },
   gacor: { global: 'Jam Gacor ×{mult} is live', personal: 'Your luck boost ×{mult} is on', hint: 'wins pay extra' },
+  games: {
+    keno: { tagline: 'Pick up to 10 numbers, 10 balls drop.' },
+    tower: { tagline: 'Climb floor by floor, avoid the bomb.' },
+    cross: { tagline: 'Lane by lane. Cash out before the car comes.' },
+    pump: { tagline: 'Pump the balloon. Stop before it pops.' },
+  },
   openRound: { text: 'You have an unfinished {game} round.', resume: 'Resume' },
   activity: {
     title: 'Activity', error: 'Could not load activity. Try again later.', empty: 'Nothing here yet', emptyBody: 'Your games, rewards and sign-ins from the last 90 days show up here.',

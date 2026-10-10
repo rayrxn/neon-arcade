@@ -78,7 +78,8 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [ ] Chess PvP (+ Normal / Medium / Hard practice engine)
 - [ ] Racing PvP
 - [ ] Horse Racing (shared rounds)
-- [ ] Snake, Tower, Slice, Layer, Cross the Road, Sweet, Keno, Moles, Pump, Tarot
+- [x] Keno, Tower, Cross the Road, Pump (server-settled, RTP-checked in stage8)
+- [ ] Snake, Slice, Layer, Sweet, Moles, Tarot
 
 ## H. QA
 - [x] QA center (admin) running real checks
