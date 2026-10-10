@@ -41,7 +41,7 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [~] Economy audit + rebalance (central config), analytics (circulation, generated/spent/removed, avg/median, top, distribution)
 - [x] Economy safeguards FLAG → REVIEW → ACTION
 - [x] Loyalty XP curve: early fast → prestige; existing players never demoted
-- [~] Rewards rebalance (daily / weekly / monthly / one-time / membership / loyalty / quest)
+- [x] Rewards rebalance (daily / weekly / monthly / one-time / membership / loyalty / quest)
 - [x] Vivace tier (above Monarch): card, badge, profile effect, rewards, XP requirement, benefits
 - [x] Card redesign: Platinum, Infinite, Black, Monarch polish, Vivace superior; progressive quality
 

@@ -69,10 +69,10 @@ function lxp(string $id, int $n): void { tx(fn() => add_loyalty_xp($id, $n, 'adm
 
 echo "Monarch card\n";
 $m = array_values(array_filter(catalog_view()['cards'], fn($c) => $c['slug'] === 'monarch'))[0] ?? null;
-check('Monarch exists above Black', $m && $m['rank'] === 6 && $m['xpRequired'] === 25000000, $m);
-check('Monarch limits: 750,000,000 AC / 50,000 AG', $m['maxBetAC'] == 750000000 && $m['maxBetAG'] == 50000);
-check('card thresholds: 24,999,999 → Black, 25,000,000 → Monarch', card_for_xp(24999999) === 'black' && card_for_xp(25000000) === 'monarch');
-check('Monarch perks: 30% Shop, +40% XP, VVIP 180 days once', $m['perks']['shopDiscount'] == 30 && $m['perks']['xpPct'] == 40 && $m['perks']['onceTier'] === 'vvip' && $m['perks']['onceDays'] == 180);
+check('Monarch exists above Black', $m && $m['rank'] === 6 && $m['xpRequired'] === 1500000, $m);
+check('Monarch limits: 50,000,000 AC / 2,000 AG', $m['maxBetAC'] == 50000000 && $m['maxBetAG'] == 2000);
+check('card thresholds: 1,499,999 → Black, 1,500,000 → Monarch', card_for_xp(1499999) === 'black' && card_for_xp(1500000) === 'monarch');
+check('Monarch perks: 18% Shop, +30% XP, VVIP 30 days once', $m['perks']['shopDiscount'] == 18 && $m['perks']['xpPct'] == 30 && $m['perks']['onceTier'] === 'vvip' && $m['perks']['onceDays'] == 30);
 
 echo "One-time card rewards\n";
 lxp($A, 100000);
@@ -81,19 +81,19 @@ check('reaching Platinum with XP gives VIP for 7 days', $x && $x['tier'] === 'vi
 check('a notification tells the player', (int) qv("SELECT count(*) FROM notifications WHERE user_id = ? AND kind = 'membership'", [$A]) >= 1);
 lxp($A, 250000);
 $x = mem($A);
-check('Infinite adds VIP 30 days on top (7 + 30)', $x['tier'] === 'vip' && abs($x['days'] - 37) < 0.01, $x);
+check('Infinite adds VIP 21 days on top (7 + 21)', $x['tier'] === 'vip' && abs($x['days'] - 28) < 0.01, $x);
 lxp($A, 650000);
 $x = mem($A);
-check('Black upgrades to VVIP 14 days and keeps the remaining VIP days (14 + 37)', $x['tier'] === 'vvip' && abs($x['days'] - 51) < 0.02, $x);
-lxp($A, 24000000);
+check('Black upgrades to VVIP 14 days and keeps the remaining VIP days (14 + 28)', $x['tier'] === 'vvip' && abs($x['days'] - 42) < 0.02, $x);
+lxp($A, 1000000);
 $x = mem($A);
-check('Monarch extends VVIP by 180 days', $x['tier'] === 'vvip' && abs($x['days'] - 231) < 0.02, $x);
+check('Monarch extends VVIP by 30 days', $x['tier'] === 'vvip' && abs($x['days'] - 72) < 0.02, $x);
 check('each card reward is given only once', (int) qv("SELECT count(*) FROM perk_claims WHERE user_id = ? AND kind = 'card_once'", [$A]) === 4);
 expect_error('nothing left to claim', call('POST', 'perk/claim', ['kind' => 'card_once'], 'a'), 'perks.errors.nothing');
 // Jumping several cards at once pays every reward on the way.
 lxp($B, 1000000);
 $x = mem($B);
-check('jumping straight to Black pays Platinum + Infinite + Black (VVIP 14 + VIP 37 carried)', $x['tier'] === 'vvip' && abs($x['days'] - 51) < 0.02, $x);
+check('jumping straight to Black pays Platinum + Infinite + Black (VVIP 14 + VIP 28 carried)', $x['tier'] === 'vvip' && abs($x['days'] - 42) < 0.02, $x);
 // Card given by the Owner (override) does not pay the XP reward.
 admin('own', 'setLoyaltyCard', ['userId' => $C, 'card' => 'black', 'mode' => 'override', 'reason' => 'partner']);
 check('Owner override does not pay card rewards', mem($C) === null && extras('c')['perks']['card']['onceDue'] === []);
@@ -110,8 +110,11 @@ q('UPDATE memberships SET active = FALSE WHERE user_id = ?', [$C]);
 $GLOBALS['NEON_MEMBERSHIPS_DIRTY'] = true;
 setbal($C, 0, 0);
 $r = call('POST', 'perk/claim', ['kind' => 'card_weekly'], 'c');
-check('Gold weekly bonus: 250,000 AC + 10 AG', $r['ok'] && bal('c') == 250000 && bal('c', 'AG') == 10, $r);
+check('Gold weekly bonus: 125,000 AC + 1 AG', $r['ok'] && bal('c') == 125000 && bal('c', 'AG') == 1, $r);
 expect_error('weekly bonus once a week', call('POST', 'perk/claim', ['kind' => 'card_weekly'], 'c'), 'perks.errors.claimed');
+$r = call('POST', 'perk/claim', ['kind' => 'card_monthly'], 'c');
+check('Gold monthly bonus: 375,000 AC + 3 AG', $r['ok'] && bal('c') == 500000 && bal('c', 'AG') == 4, $r);
+expect_error('monthly bonus once a month', call('POST', 'perk/claim', ['kind' => 'card_monthly'], 'c'), 'perks.errors.claimed');
 $d = call('POST', 'game/dice', ['bet' => 1000, 'target' => 50, 'over' => true], 'c');
 $base = game_xp(1000, $d['data']['result']['session']['result'] === 'win');
 check('Gold: +10% game XP', $d['data']['result']['session']['xp'] === (int) floor($base * 1.1), [$d['data']['result']['session']['xp'], $base]);
@@ -123,8 +126,8 @@ $GLOBALS['NEON_MEMBERSHIPS_DIRTY'] = true;
 $pv = extras('b')['perks'];
 check('VVIP sees the included VIP bonuses', !empty($pv['vipIncluded']) && $pv['vipIncluded']['daily']['claimed'] === false, $pv['vipIncluded'] ?? null);
 setbal($B, 0, 0);
-check('VVIP daily bonus', call('POST', 'perk/claim', ['kind' => 'member_daily'], 'b')['ok'] && bal('b') == 100000);
-check('…and the VIP daily bonus too', call('POST', 'perk/claim', ['kind' => 'member_daily', 'tier' => 'vip'], 'b')['ok'] && bal('b') == 125000);
+check('VVIP daily bonus', call('POST', 'perk/claim', ['kind' => 'member_daily'], 'b')['ok'] && bal('b') == 75000);
+check('…and the VIP daily bonus too', call('POST', 'perk/claim', ['kind' => 'member_daily', 'tier' => 'vip'], 'b')['ok'] && bal('b') == 95000);
 expect_error('VIP daily only once', call('POST', 'perk/claim', ['kind' => 'member_daily', 'tier' => 'vip'], 'b'), 'perks.errors.claimed');
 check('VIP weekly and VIP welcome reward for VVIP', call('POST', 'perk/claim', ['kind' => 'member_weekly', 'tier' => 'vip'], 'b')['ok'] && call('POST', 'perk/claim', ['kind' => 'member_once', 'tier' => 'vip'], 'b')['ok']);
 check('VVIP can use the VIP room and VIP-only cosmetics', tier_rank(member_tier($B)) >= tier_rank('vip') && owns_style_item(q1('SELECT * FROM users WHERE id = ?', [$B]), 'vip-name', null, 'vvip'));

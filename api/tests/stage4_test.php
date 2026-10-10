@@ -275,7 +275,7 @@ check('owner activates VVIP', admin('own', 'setMembership', ['userId' => $P2, 't
 $ex = extras('p2');
 check('membership state + VIP/VVIP emotes unlocked', $ex['membership']['tier'] === 'vvip' && in_array('vvip', $ex['emotes'], true) && in_array('vip', $ex['emotes'], true));
 check('VVIP cosmetic equippable without buying', call('POST', 'shop/equip', ['slot' => 'nameEffect', 'itemId' => 'vvip-name'], 'p2')['ok']);
-check('VVIP: Platinum card floor + 50% bet limit', extras('p2')['loyalty']['card'] === 'platinum' && extras('p2')['loyalty']['maxBetAC'] == 3750000 && extras('p2')['loyalty']['maxBetAG'] == 187, extras('p2')['loyalty']);
+check('VVIP: Platinum card floor + 50% bet limit', extras('p2')['loyalty']['card'] === 'platinum' && extras('p2')['loyalty']['maxBetAC'] == 3750000 && extras('p2')['loyalty']['maxBetAG'] == 150, extras('p2')['loyalty']);
 check('owner ends membership → cosmetics drop', admin('own', 'setMembership', ['userId' => $P2, 'tier' => null, 'reason' => 'refund'])['ok'] && empty(me('p2')['user']['style']['nameEffect']) && !in_array('vvip', extras('p2')['emotes'], true));
 
 // ───────── Crash minimum cash out ─────────

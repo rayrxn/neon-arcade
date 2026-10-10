@@ -88,14 +88,14 @@ tx(fn() => add_loyalty_xp($P1, 25000, 'admin'));
 check('25,000 XP → Gold', extras('p1')['loyalty']['card'] === 'gold');
 $b0 = bal('p1'); $g0 = bal('p1', 'AG');
 $r = call('POST', 'perk/claim', ['kind' => 'card_daily'], 'p1');
-check('Gold daily card bonus: 50,000 AC + 2 AG', $r['ok'] && bal('p1') == $b0 + 50000 && bal('p1', 'AG') == $g0 + 2, $r);
+check('Gold daily card bonus: 25,000 AC', $r['ok'] && bal('p1') == $b0 + 25000 && bal('p1', 'AG') == $g0, $r);
 expect_error('card bonus only once a day', call('POST', 'perk/claim', ['kind' => 'card_daily'], 'p1'), 'perks.errors.claimed');
 check('Gold: converter limit +50%', extras('p1')['convertCap'] == 300);
 check('Gold: 5% shop discount shown', extras('p1')['perks']['shopDiscount'] === 5);
 setbal($P1, 0, 100);
 $buy = call('POST', 'shop/buy', ['itemId' => 'loyalty-rush', 'requestId' => rid()], 'p1');
 check('Gold: shop price rounded up after 5% discount (5 → 5)', $buy['ok'] && $buy['data']['result']['price'] == 5, $buy);
-check('benefits list per card (Black has 8)', count(array_values(array_filter(catalog_view()['cards'], fn($c) => $c['slug'] === 'black'))[0]['benefits']) === 8);
+check('benefits list per card (Black has 9)', count(array_values(array_filter(catalog_view()['cards'], fn($c) => $c['slug'] === 'black'))[0]['benefits']) === 9);
 
 // ───────── VIP / VVIP perks ─────────
 echo "Membership perks\n";
@@ -103,12 +103,14 @@ expect_error('daily member bonus needs a membership', call('POST', 'perk/claim',
 check('owner activates VVIP for p2', admin('own', 'setMembership', ['userId' => $P2, 'tier' => 'vvip', 'days' => 30])['ok']);
 check('owner activates VIP for p3 (no reason needed)', admin('own', 'setMembership', ['userId' => $P3, 'tier' => 'vip', 'days' => 30])['ok']);
 setbal($P2, 0, 0);
-check('VVIP daily bonus 100,000 AC + 25 AG', call('POST', 'perk/claim', ['kind' => 'member_daily'], 'p2')['ok'] && bal('p2') == 100000 && bal('p2', 'AG') == 25);
-check('VVIP weekly bonus 750,000 AC + 150 AG', call('POST', 'perk/claim', ['kind' => 'member_weekly'], 'p2')['ok'] && bal('p2') == 850000 && bal('p2', 'AG') == 175);
-check('VVIP one-time reward 1,500,000 AC + 500 AG', call('POST', 'perk/claim', ['kind' => 'member_once'], 'p2')['ok'] && bal('p2') == 2350000 && bal('p2', 'AG') == 675);
+check('VVIP daily bonus 75,000 AC + 3 AG', call('POST', 'perk/claim', ['kind' => 'member_daily'], 'p2')['ok'] && bal('p2') == 75000 && bal('p2', 'AG') == 3);
+check('VVIP weekly bonus 375,000 AC + 15 AG', call('POST', 'perk/claim', ['kind' => 'member_weekly'], 'p2')['ok'] && bal('p2') == 450000 && bal('p2', 'AG') == 18);
+check('VVIP one-time reward 750,000 AC + 75 AG', call('POST', 'perk/claim', ['kind' => 'member_once'], 'p2')['ok'] && bal('p2') == 1200000 && bal('p2', 'AG') == 93);
+check('VVIP monthly bonus 1,125,000 AC + 45 AG', call('POST', 'perk/claim', ['kind' => 'member_monthly'], 'p2')['ok'] && bal('p2') == 2325000 && bal('p2', 'AG') == 138);
+expect_error('monthly bonus once a month', call('POST', 'perk/claim', ['kind' => 'member_monthly'], 'p2'), 'perks.errors.claimed');
 expect_error('one-time reward only once', call('POST', 'perk/claim', ['kind' => 'member_once'], 'p2'), 'perks.errors.claimed');
 check('VVIP: converter limit ×5', extras('p2')['convertCap'] == 1000 * 2 && extras('p2')['loyalty']['card'] === 'platinum' || extras('p2')['convertCap'] >= 1000, extras('p2')['convertCap']);
-check('VVIP: 25% shop discount', extras('p2')['perks']['shopDiscount'] === 25);
+check('VVIP: 20% shop discount', extras('p2')['perks']['shopDiscount'] === 20);
 check('VVIP: Platinum floor and +50% bets', extras('p2')['loyalty']['maxBetAC'] == 3750000);
 check('VIP: Gold floor and +20% bets', extras('p3')['loyalty']['card'] === 'gold' && extras('p3')['loyalty']['maxBetAC'] == 1200000);
 expect_error('endless quest is VVIP only', call('POST', 'perk/claim', ['kind' => 'endless'], 'p3'), 'perks.errors.vvip');

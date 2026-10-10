@@ -10,15 +10,15 @@ declare(strict_types=1);
  */
 const MEMBER_PERKS = [
     'vip' => [
-        'dailyAc' => 25000, 'dailyAg' => 5, 'weeklyAc' => 150000, 'weeklyAg' => 30,
+        'dailyAc' => 20000, 'dailyAg' => 1, 'weeklyAc' => 100000, 'weeklyAg' => 5, 'monthlyAc' => 300000, 'monthlyAg' => 15,
         'betPct' => 20, 'convertMult' => 2, 'shopDiscount' => 10, 'cardFloor' => 'gold',
-        'onceAc' => 250000, 'onceAg' => 50, 'statsDays' => 30,
+        'onceAc' => 150000, 'onceAg' => 20, 'statsDays' => 30,
         'endless' => false, 'highlight' => false, 'affix' => false, 'manager' => false, 'pass' => false, 'room' => true, 'priority' => true,
     ],
     'vvip' => [
-        'dailyAc' => 100000, 'dailyAg' => 25, 'weeklyAc' => 750000, 'weeklyAg' => 150,
-        'betPct' => 50, 'convertMult' => 5, 'shopDiscount' => 25, 'cardFloor' => 'platinum',
-        'onceAc' => 1500000, 'onceAg' => 500, 'statsDays' => 90,
+        'dailyAc' => 75000, 'dailyAg' => 3, 'weeklyAc' => 375000, 'weeklyAg' => 15, 'monthlyAc' => 1125000, 'monthlyAg' => 45,
+        'betPct' => 50, 'convertMult' => 4, 'shopDiscount' => 20, 'cardFloor' => 'platinum',
+        'onceAc' => 750000, 'onceAg' => 75, 'statsDays' => 90,
         'endless' => true, 'highlight' => true, 'affix' => true, 'manager' => true, 'pass' => true, 'room' => true, 'priority' => true,
     ],
 ];
@@ -45,7 +45,7 @@ function member_card_floor(string $userId): ?string
 function card_perks(string $slug): array
 {
     $c = cards_all()[$slug] ?? null;
-    return array_replace(['dailyAc' => 0, 'dailyAg' => 0, 'weeklyAc' => 0, 'weeklyAg' => 0, 'convertPct' => 0, 'shopDiscount' => 0, 'lxpPct' => 0, 'xpPct' => 0, 'onceTier' => null, 'onceDays' => 0], $c ? jdec($c['perks'] ?? null, []) : []);
+    return array_replace(['dailyAc' => 0, 'dailyAg' => 0, 'weeklyAc' => 0, 'weeklyAg' => 0, 'monthlyAc' => 0, 'monthlyAg' => 0, 'convertPct' => 0, 'shopDiscount' => 0, 'lxpPct' => 0, 'xpPct' => 0, 'onceTier' => null, 'onceDays' => 0], $c ? jdec($c['perks'] ?? null, []) : []);
 }
 
 /**
@@ -132,6 +132,7 @@ function perks_view(array $u, array $meta): array
         'card' => [
             'slug' => $card, 'dailyAc' => (float) $cp['dailyAc'], 'dailyAg' => (float) $cp['dailyAg'], 'claimed' => perk_claimed($id, 'card_daily', day_key($now)),
             'weeklyAc' => (float) $cp['weeklyAc'], 'weeklyAg' => (float) $cp['weeklyAg'], 'weeklyClaimed' => perk_claimed($id, 'card_weekly', week_key($now)),
+            'monthlyAc' => (float) $cp['monthlyAc'], 'monthlyAg' => (float) $cp['monthlyAg'], 'monthlyClaimed' => perk_claimed($id, 'card_monthly', month_key($now)),
             'xpPct' => (int) $cp['xpPct'], 'lxpPct' => (int) $cp['lxpPct'], 'onceDue' => card_once_due($u),
         ],
         // VVIP includes VIP: its VIP daily / weekly / welcome bonuses can be claimed too.
@@ -139,10 +140,12 @@ function perks_view(array $u, array $meta): array
             'perks' => MEMBER_PERKS['vip'],
             'daily' => ['claimed' => perk_claimed($id, 'member_daily', 'vip:' . day_key($now))],
             'weekly' => ['claimed' => perk_claimed($id, 'member_weekly', 'vip:' . week_key($now))],
+            'monthly' => ['claimed' => perk_claimed($id, 'member_monthly', 'vip:' . month_key($now))],
             'once' => $m ? ['claimed' => perk_claimed($id, 'member_once', 'vip:' . $m['id'])] : null,
         ] : null,
         'daily' => $tier ? ['claimed' => perk_claimed($id, 'member_daily', day_key($now))] : null,
         'weekly' => $tier ? ['claimed' => perk_claimed($id, 'member_weekly', week_key($now))] : null,
+        'monthly' => $tier ? ['claimed' => perk_claimed($id, 'member_monthly', month_key($now))] : null,
         'once' => $m ? ['claimed' => perk_claimed($id, 'member_once', $m['id'])] : null,
         'endless' => $tier && MEMBER_PERKS[$tier]['endless']
             ? ['progress' => $endlessBase < 0 ? 0 : max(0, $games - $endlessBase), 'need' => ENDLESS_ROUNDS, 'started' => $endlessBase >= 0, 'rewardAc' => ENDLESS_REWARD_AC, 'rewardLxp' => ENDLESS_REWARD_LXP]
@@ -176,12 +179,19 @@ function perk_claim(array $me, string $kind, ?string $asTier = null): array
             $period = week_key($now);
             [$ac, $ag] = [(float) $cp['weeklyAc'], (float) $cp['weeklyAg']];
             break;
+        case 'card_monthly':
+            $cp = card_perks(effective_card($u));
+            if ($cp['monthlyAc'] <= 0 && $cp['monthlyAg'] <= 0) fail('perks.errors.none');
+            $period = month_key($now);
+            [$ac, $ag] = [(float) $cp['monthlyAc'], (float) $cp['monthlyAg']];
+            break;
         case 'card_once':
             $granted = card_once_grant_all($u['id']);
             if (!$granted) fail('perks.errors.nothing');
             return ['kind' => $kind, 'memberships' => $granted, 'ac' => 0, 'ag' => 0, 'lxp' => 0];
         case 'member_daily':
         case 'member_weekly':
+        case 'member_monthly':
         case 'member_once':
             if (!$tier) fail('perks.errors.members');
             // A VVIP member also has VIP active: the VIP bonuses are separate claims ("vip:" periods).
@@ -192,9 +202,9 @@ function perk_claim(array $me, string $kind, ?string $asTier = null): array
                 $period = $prefix . (string) qv('SELECT id FROM memberships WHERE user_id = ? AND active', [$u['id']]);
                 [$ac, $ag] = [(float) MEMBER_PERKS[$use]['onceAc'], (float) MEMBER_PERKS[$use]['onceAg']];
             } else {
-                $weekly = $kind === 'member_weekly';
-                $period = $prefix . ($weekly ? week_key($now) : day_key($now));
-                [$ac, $ag] = [(float) MEMBER_PERKS[$use][$weekly ? 'weeklyAc' : 'dailyAc'], (float) MEMBER_PERKS[$use][$weekly ? 'weeklyAg' : 'dailyAg']];
+                $span = ['member_daily' => 'daily', 'member_weekly' => 'weekly', 'member_monthly' => 'monthly'][$kind];
+                $period = $prefix . ($span === 'monthly' ? month_key($now) : ($span === 'weekly' ? week_key($now) : day_key($now)));
+                [$ac, $ag] = [(float) MEMBER_PERKS[$use][$span . 'Ac'], (float) MEMBER_PERKS[$use][$span . 'Ag']];
             }
             $tier = $use;
             break;
@@ -220,7 +230,7 @@ function perk_claim(array $me, string $kind, ?string $asTier = null): array
     }
     if (perk_claimed($u['id'], $kind, $period)) fail('perks.errors.claimed');
     q('INSERT INTO perk_claims (user_id, kind, period) VALUES (?, ?, ?)', [$u['id'], $kind, $period]);
-    $label = ['card_daily' => 'Loyalty card daily bonus', 'card_weekly' => 'Loyalty card weekly bonus', 'member_daily' => strtoupper((string) $tier) . ' daily bonus', 'member_weekly' => strtoupper((string) $tier) . ' weekly bonus', 'member_once' => strtoupper((string) $tier) . ' welcome reward', 'endless' => 'Endless quest'][$kind];
+    $label = ['card_daily' => 'Loyalty card daily bonus', 'card_weekly' => 'Loyalty card weekly bonus', 'card_monthly' => 'Loyalty card monthly bonus', 'member_monthly' => strtoupper((string) $tier) . ' monthly bonus', 'member_daily' => strtoupper((string) $tier) . ' daily bonus', 'member_weekly' => strtoupper((string) $tier) . ' weekly bonus', 'member_once' => strtoupper((string) $tier) . ' welcome reward', 'endless' => 'Endless quest'][$kind];
     if ($ac > 0) wallet_post($u['id'], 'AC', $ac, 'reward', 'perk', $kind, $label, null, "perk:$kind:$period:AC");
     if ($ag > 0) wallet_post($u['id'], 'AG', $ag, 'reward', 'perk', $kind, $label, null, "perk:$kind:$period:AG");
     if ($lxp > 0) add_loyalty_xp($u['id'], $lxp, 'perk', "$kind:$period");

@@ -229,7 +229,7 @@ $day0 = now_ms();
 $GLOBALS['NEON_NOW'] = $day0;
 $bal = balance('b');
 $dc = call('POST', 'daily/claim', [], 'b');
-check('daily day 1 = 250 AC', $dc['ok'] && $dc['data']['result']['day'] === 1 && abs($dc['data']['state']['wallet']['balance'] - $bal - 250) < 0.001, $dc);
+check('daily day 1 = 1,000 AC', $dc['ok'] && $dc['data']['result']['day'] === 1 && abs($dc['data']['state']['wallet']['balance'] - $bal - 1000) < 0.001, $dc);
 expect_error('daily dua kali ditolak', call('POST', 'daily/claim', [], 'b'), 'rewards.errors.claimedToday');
 $GLOBALS['NEON_NOW'] = $day0 + DAY_MS;
 $dc2 = call('POST', 'daily/claim', [], 'b');
@@ -247,7 +247,7 @@ $GLOBALS['NEON_NOW'] = $day0 + 10 * DAY_MS;
 call('GET', 'me', [], 'b');   // login hari baru → quest login
 $bal = balance('b');
 $q = call('POST', 'quest/claim', ['scope' => 'daily', 'id' => 'login'], 'b');
-check('klaim quest login (+100 AC, +20 XP)', $q['ok'] && abs($q['data']['state']['wallet']['balance'] - $bal - 100) < 0.001 && $q['data']['result']['xp'] >= 20, $q);
+check('klaim quest login (+400 AC, +20 XP)', $q['ok'] && abs($q['data']['state']['wallet']['balance'] - $bal - 400) < 0.001 && $q['data']['result']['xp'] >= 20, $q);
 expect_error('quest dua kali ditolak', call('POST', 'quest/claim', ['scope' => 'daily', 'id' => 'login'], 'b'), 'rewards.errors.claimed');
 expect_error('quest belum selesai ditolak', call('POST', 'quest/claim', ['scope' => 'daily', 'id' => 'play3'], 'b'), 'rewards.errors.notDone');
 cool();

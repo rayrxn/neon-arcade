@@ -8,7 +8,7 @@
 | T4 | Mirror 1:1: save `cp_errordocument.shtml`, deploy.sh copies `public_html-extra/` (BUG-007) | partial | medium | – | file list of host public_html == `hosting/public_html` |
 | T5 | Light-mode audit of remaining dark panels (BUG-004) | partial | medium | T1 | screenshots readable in light |
 | T6 | Placeholder / icon / spacing / responsive sweep | planned | medium | T1 | no `{var}` or raw keys (i18n check + window.__missingI18n) |
-| T7 | Reward rebalance (daily/weekly/monthly/one-time AC/AG) in central config | partial | medium | – | values in one config; tests updated |
+| T7 | Reward rebalance (daily/weekly/monthly/one-time AC/AG) in central config | done (migration 014, v2.1) | medium | – | values in one config; tests updated |
 | T8 | Notification center categories + filters | planned | medium | – | categories on /notifications |
 | T9 | Activity history page (games, AG, LXP, rewards, cases, security) | planned | medium | – | page lists server events |
 | T10 | Session recovery UI (resume open round after reload) | planned | medium | – | reload mid-round restores state |

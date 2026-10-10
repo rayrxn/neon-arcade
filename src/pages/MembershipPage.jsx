@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CalendarClock, CalendarDays, Check, Crown, Gem, Gift, Headset, Infinity as InfinityIcon, Info, MessageSquareLock, Minus, PenLine, Sparkles, Ticket } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarRange, Check, Crown, Gem, Gift, Headset, Infinity as InfinityIcon, Info, MessageSquareLock, Minus, PenLine, Sparkles, Ticket } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -17,8 +17,8 @@ import { useT } from '@/i18n'
 
 const rupiah = (n) => `Rp${Number(n ?? 0).toLocaleString('id-ID')}`
 const FALLBACK = {
-  vip: { dailyAc: 25000, dailyAg: 5, weeklyAc: 150000, weeklyAg: 30, betPct: 20, convertMult: 2, shopDiscount: 10, cardFloor: 'gold', onceAc: 250000, onceAg: 50, statsDays: 30 },
-  vvip: { dailyAc: 100000, dailyAg: 25, weeklyAc: 750000, weeklyAg: 150, betPct: 50, convertMult: 5, shopDiscount: 25, cardFloor: 'platinum', onceAc: 1500000, onceAg: 500, statsDays: 90, endless: true, highlight: true, affix: true, manager: true, pass: true },
+  vip: { dailyAc: 20000, dailyAg: 1, weeklyAc: 100000, weeklyAg: 5, monthlyAc: 300000, monthlyAg: 15, betPct: 20, convertMult: 2, shopDiscount: 10, cardFloor: 'gold', onceAc: 150000, onceAg: 20, statsDays: 30 },
+  vvip: { dailyAc: 75000, dailyAg: 3, weeklyAc: 375000, weeklyAg: 15, monthlyAc: 1125000, monthlyAg: 45, betPct: 50, convertMult: 4, shopDiscount: 20, cardFloor: 'platinum', onceAc: 750000, onceAg: 75, statsDays: 90, endless: true, highlight: true, affix: true, manager: true, pass: true },
 }
 
 /** Perk rows: [key, value for VIP, value for VVIP] — value false = not included, true = included, string = included with detail. */
@@ -31,6 +31,7 @@ function perkRows(t, perks, cards) {
     ['allVip', false, true],
     ['daily', cash(vip, 'daily'), cash(vvip, 'daily')],
     ['weekly', cash(vip, 'weekly'), cash(vvip, 'weekly')],
+    ['monthly', cash(vip, 'monthly'), cash(vvip, 'monthly')],
     ['once', cash(vip, 'once'), cash(vvip, 'once')],
     ['bets', `+${vip.betPct}%`, `+${vvip.betPct}%`],
     ['card', card(vip.cardFloor), card(vvip.cardFloor)],
@@ -59,8 +60,8 @@ function TierCard({ tier, cfg, rows, active, onGet }) {
   const { t } = useT()
   const vvip = tier === 'vvip'
   // VVIP card: "everything in VIP" + upgraded numbers + the VVIP-only perks (not a repeat of the VIP list).
-  const VVIP_KEYS = ['allVip', 'daily', 'weekly', 'once', 'bets', 'card', 'discount', 'endless', 'pass', 'highlight', 'affix', 'manager']
-  const list = vvip ? VVIP_KEYS.map((k) => rows.find((r) => r[0] === k)).filter(Boolean) : rows.filter((r) => r[1] !== false).slice(0, 10)
+  const VVIP_KEYS = ['allVip', 'daily', 'weekly', 'monthly', 'once', 'bets', 'card', 'discount', 'endless', 'pass', 'highlight', 'affix', 'manager']
+  const list = vvip ? VVIP_KEYS.map((k) => rows.find((r) => r[0] === k)).filter(Boolean) : rows.filter((r) => r[1] !== false).slice(0, 11)
   return (
     <motion.article
       initial={{ opacity: 0, y: 14 }}
@@ -139,9 +140,10 @@ function MemberPerks({ tier }) {
   const endless = perks?.endless
   return (
     <Panel title={t('membership.yourPerks', { tier: tier.toUpperCase() })} icon={Sparkles} bodyClassName="space-y-5 p-4 sm:p-5">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <BonusTile icon={CalendarDays} title={t('membership.perk.daily')} detail={`${formatCoins(p.dailyAc)} AC + ${formatCoins(p.dailyAg)} AG`} claimed={perks?.daily?.claimed} busy={busy === 'd'} onClaim={() => run('d', () => claimPerk('member_daily'), got)} />
         <BonusTile icon={CalendarClock} title={t('membership.perk.weekly')} detail={`${formatCoins(p.weeklyAc)} AC + ${formatCoins(p.weeklyAg)} AG`} claimed={perks?.weekly?.claimed} busy={busy === 'w'} onClaim={() => run('w', () => claimPerk('member_weekly'), got)} />
+        <BonusTile icon={CalendarRange} title={t('membership.perk.monthly')} detail={`${formatCoins(p.monthlyAc)} AC + ${formatCoins(p.monthlyAg)} AG`} claimed={perks?.monthly?.claimed} busy={busy === 'm'} onClaim={() => run('m', () => claimPerk('member_monthly'), got)} />
         <BonusTile icon={Gift} title={t('membership.perk.once')} detail={`${formatCoins(p.onceAc)} AC + ${formatCoins(p.onceAg)} AG`} claimed={perks?.once?.claimed} busy={busy === 'o'} onClaim={() => run('o', () => claimPerk('member_once'), got)} />
         {endless ? (
           <BonusTile
@@ -161,10 +163,11 @@ function MemberPerks({ tier }) {
       {tier === 'vvip' && perks?.vipIncluded && (
         <div>
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-300"><Crown className="h-3.5 w-3.5" /> {t('membership.vipIncluded')}</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ['vd', 'member_daily', CalendarDays, t('membership.perk.daily'), 'daily'],
               ['vw', 'member_weekly', CalendarClock, t('membership.perk.weekly'), 'weekly'],
+              ['vm', 'member_monthly', CalendarRange, t('membership.perk.monthly'), 'monthly'],
               ['vo', 'member_once', Gift, t('membership.perk.once'), 'once'],
             ].map(([key, kind, Icon, title, k]) => {
               const vp = perks.vipIncluded.perks

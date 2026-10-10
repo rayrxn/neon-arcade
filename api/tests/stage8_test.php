@@ -210,11 +210,11 @@ expect_error('players cannot run QA', admin('a', 'qaRun'), 'admin.errors.forbidd
 echo "Vivace + loyalty curve\n";
 $GLOBALS['NEON_CARDS_DIRTY'] = true;
 $vv = array_values(array_filter(catalog_view()['cards'], fn($c) => $c['slug'] === 'vivace'))[0] ?? null;
-check('Vivace exists above Monarch (rank 7, 60M XP)', $vv && $vv['rank'] === 7 && $vv['xpRequired'] === 60000000, $vv);
-check('Vivace max bet = platform cap (1.5B AC / 100K AG)', $vv['maxBetAC'] == 1500000000 && $vv['maxBetAG'] == 100000);
-check('Vivace perks beat Monarch', $vv['perks']['lxpPct'] == 50 && $vv['perks']['shopDiscount'] == 35 && $vv['perks']['onceDays'] == 365);
-check('thresholds: 59,999,999 → Monarch, 60,000,000 → Vivace', card_for_xp(59999999) === 'monarch' && card_for_xp(60000000) === 'vivace');
-check('daily game Loyalty XP cap grows with the card', card_perks('none')['lxpCap'] == 5000 && card_perks('black')['lxpCap'] == 40000 && card_perks('vivace')['lxpCap'] == 120000);
+check('Vivace exists above Monarch (rank 7, 4M XP)', $vv && $vv['rank'] === 7 && $vv['xpRequired'] === 4000000, $vv);
+check('Vivace max bet 125M AC / 5,000 AG (2.5× Monarch)', $vv['maxBetAC'] == 125000000 && $vv['maxBetAG'] == 5000);
+check('Vivace perks beat Monarch', $vv['perks']['lxpPct'] == 35 && $vv['perks']['shopDiscount'] == 22 && $vv['perks']['onceDays'] == 60);
+check('thresholds: 3,999,999 → Monarch, 4,000,000 → Vivace', card_for_xp(3999999) === 'monarch' && card_for_xp(4000000) === 'vivace');
+check('daily game Loyalty XP cap grows with the card', card_perks('none')['lxpCap'] == 4000 && card_perks('black')['lxpCap'] == 18000 && card_perks('vivace')['lxpCap'] == 30000);
 q('UPDATE users SET loyalty_xp = 60000000 WHERE id = ?', [$V]);
 setbal($V, 0, 100);
 check('Vivace items need the Vivace card (VIP alone is not enough)', call('POST', 'shop/buy', ['itemId' => 'badge-clef', 'requestId' => rid()], 'v')['ok'] && call('POST', 'shop/buy', ['itemId' => 'badge-clef', 'requestId' => rid()], 'a')['code'] === 'shop.errors.requires');

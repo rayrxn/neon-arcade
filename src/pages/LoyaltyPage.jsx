@@ -167,8 +167,8 @@ export default function LoyaltyPage() {
               <Button size="sm" variant="gold" loading={claiming === 'card_once'} onClick={() => claim('card_once')}>{t('loyalty.onceClaim')}</Button>
             </div>
           )}
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div className="col-span-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06] sm:col-span-1">
+          <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="col-span-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06] lg:col-span-1">
               <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500"><Gauge className="h-3.5 w-3.5" /> {t('loyalty.maxBet')}</p>
               <p className="num mt-1 font-mono text-sm font-bold text-white">{formatCoins(loyalty.maxBetAC ?? current.maxBetAC)} AC</p>
               <p className="num font-mono text-sm font-bold text-neon-purple">{formatCoins(loyalty.maxBetAG ?? current.maxBetAG)} AG</p>
@@ -177,6 +177,7 @@ export default function LoyaltyPage() {
             {[
               ['card_daily', t('loyalty.dailyBonus'), bonus?.dailyAc, bonus?.dailyAg, bonus?.claimed, t('loyalty.bonusClaimed')],
               ['card_weekly', t('loyalty.weeklyBonus'), bonus?.weeklyAc, bonus?.weeklyAg, bonus?.weeklyClaimed, t('loyalty.weeklyClaimed')],
+              ['card_monthly', t('loyalty.monthlyBonus'), bonus?.monthlyAc, bonus?.monthlyAg, bonus?.monthlyClaimed, t('loyalty.monthlyClaimed')],
             ].map(([kind, label, ac, ag, claimed, claimedLabel]) => (
               <div key={kind} className="flex flex-col justify-between rounded-xl bg-white/[0.03] p-3 ring-1 ring-inset ring-white/[0.06]">
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">{kind === 'card_daily' ? <Gift className="h-3.5 w-3.5" /> : <CalendarRange className="h-3.5 w-3.5" />} {label}</p>
