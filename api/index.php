@@ -8,6 +8,7 @@ require __DIR__ . '/lib/progression.php';
 require __DIR__ . '/lib/state.php';
 require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/games.php';
+require __DIR__ . '/lib/games2.php';
 require __DIR__ . '/lib/platform.php';
 require __DIR__ . '/lib/admin.php';
 require __DIR__ . '/lib/platform2.php';
@@ -225,7 +226,7 @@ function route(string $method, string $path): array
         $action = substr($path, 5);
         $fn = GAME_ACTIONS[$action] ?? null;
         if (!$fn) fail('errors.notFound', [], 404);
-        $light = in_array($action, ['crash-tick', 'mines-reveal', 'blackjack-action'], true);
+        $light = in_array($action, ['crash-tick', 'mines-reveal', 'blackjack-action', 'tower-step', 'cross-step', 'pump-step'], true);
         $cur = (string) (body()['currency'] ?? 'AC');
         if (!in_array($cur, ['AC', 'AG'], true)) fail('play.errors.invalid');
         // Cases are priced in AC.

@@ -37,7 +37,7 @@ function feature_allowed(?array $u, string $key): bool
 
 function require_feature(?array $u, string $key): void
 {
-    if (!feature_allowed($u, $key)) fail('errors.featureOff', ['feature' => FEATURE_KEYS[$key] ?? $key], 403);
+    if (!feature_allowed($u, $key)) fail('errors.featureOff', ['feature' => FEATURE_KEYS[$key] ?? $key], 400);
 }
 
 /** POST routes guarded by a feature flag. Cash-out / tick stay open so running rounds can always finish. */
