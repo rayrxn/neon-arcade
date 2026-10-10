@@ -68,3 +68,19 @@ export async function captchaProof(fetchChallenge) {
   if (c.mode === 'turnstile') return { token: await turnstileToken(c.siteKey) }
   return { challenge: c.challenge, solution: await solvePow(c.challenge, c.bits) }
 }
+
+// ── Visible check on the auth forms (HumanCheck) ──
+let prepared = null
+export const setPreparedCaptcha = (c) => {
+  prepared = c ? { ...c, at: Date.now() } : null
+}
+/** One proof per request. Tells the widget to reset so the next attempt gets a fresh check. */
+export function takePreparedCaptcha() {
+  const c = prepared && Date.now() - prepared.at < 4 * 60_000 ? prepared : null
+  prepared = null
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('neon-captcha-used'))
+  if (!c) return null
+  const { at, ...proof } = c
+  return proof
+}
+export { loadTurnstile }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import HumanCheck from '@/components/auth/HumanCheck'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useAnimationControls } from 'framer-motion'
 import { AlertCircle, ArrowRight, AtSign, Check, Eye, EyeOff, Lock, Mail } from 'lucide-react'
@@ -189,6 +190,8 @@ export default function AuthForm() {
           <Collapsible show={isRegister}>
             <Field id="auth-confirm" label={t('auth.confirm')} icon={Lock} type={showPassword ? 'text' : 'password'} placeholder={t('auth.confirmPlaceholder')} autoComplete="new-password" error={errorFor('confirm')} {...bind('confirm')} />
           </Collapsible>
+
+          <HumanCheck />
 
           <AnimatePresence>
             {serverError && (

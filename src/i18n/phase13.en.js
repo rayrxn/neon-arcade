@@ -65,6 +65,7 @@ export default {
   profile: { status: 'Status', bio: 'Bio' },
   missions: { status: { none: 'Not claimed' } },
   auth: {
+    human: { check: "I'm not a robot", working: 'Checking…', done: 'Verified', retry: 'Check failed, tap to try again', error: 'The check could not load. Refresh the page.' },
     errors: {
       captcha: 'The anti-bot check failed. Please try again.',
       captchaExpired: 'The anti-bot check expired. Please try again.',

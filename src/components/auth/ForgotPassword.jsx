@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import HumanCheck from '@/components/auth/HumanCheck'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, ArrowLeft, ArrowRight, MailCheck, Mail } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -73,6 +74,7 @@ export default function ForgotPassword({ initialEmail = '', onBack }) {
               error={touched && invalid ? t('validation.emailFormat') : undefined}
             />
           </div>
+          <HumanCheck />
           {error && (
             <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-neon-red/30 bg-neon-red/10 px-3.5 py-3 text-sm text-neon-red" role="alert">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {t(error.code, error.vars)}

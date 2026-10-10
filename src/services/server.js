@@ -15,7 +15,7 @@ import { translate } from '@/i18n'
 import { emit } from './events'
 import { play } from './sound'
 import { deferUntilReveal } from './reveal'
-import { captchaProof } from './captcha'
+import { captchaProof, takePreparedCaptcha } from './captcha'
 
 /**
  * Jembatan ke API server (mode produksi). Server memegang akun, saldo, game, dan progres;
@@ -39,6 +39,7 @@ const lang = () => usePrefsStore.getState().language
  */
 let authGen = 0
 const BANNED_CODES = new Set(['errors.bannedPermanent', 'errors.bannedUntil'])
+const ACCOUNT_BLOCK_CODES = new Set(['errors.accountFrozen'])
 const AUTH_PATHS = new Set(['auth/login', 'auth/register', 'auth/logout', 'auth/forgot', 'auth/reset/check', 'auth/reset', 'auth/verify'])
 export const LOGOUT_KEY = 'neon-arcade:logout'
 const CAPTCHA_PATHS = new Set(['auth/login', 'auth/register', 'auth/forgot'])
@@ -48,7 +49,8 @@ export async function api(path, body, { method } = {}) {
   const m = method ?? (body === undefined ? 'GET' : 'POST')
   const gen = authGen
   if (m === 'POST' && CAPTCHA_PATHS.has(path) && !body?.captcha) {
-    const captcha = await captchaProof(() => api('captcha'))
+    // The visible check on the form (HumanCheck) prepares a proof; without one we solve it here.
+    const captcha = takePreparedCaptcha() ?? (await captchaProof(() => api('captcha')))
     if (captcha) body = { ...body, captcha }
   }
   let res
@@ -80,7 +82,9 @@ export async function api(path, body, { method } = {}) {
     useAuthStore.setState({ banned: { code, ...vars } })
     throw new AppError(code, vars)
   }
-  if (res.status === 401 || res.status === 403) {
+  // Only a dead session (401) or a blocked account signs the player out. Other 403s (feature off,
+  // staff permission, CSRF) are normal errors and must never kick anyone.
+  if (res.status === 401 || (res.status === 403 && ACCOUNT_BLOCK_CODES.has(code))) {
     if (useAuthStore.getState().session && path !== 'auth/login') {
       clearSession()
       if (res.status === 403 && code !== 'errors.generic') {

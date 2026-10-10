@@ -10,7 +10,8 @@ export default [
     "items": [
       { "tag": "new", "en": "Keno: pick up to 10 numbers, 10 balls are drawn.", "id": "Keno: pilih sampai 10 angka, 10 bola diundi." },
       { "tag": "new", "en": "Tower, Cross the Road and Pump: go one step further or cash out. Four difficulties each.", "id": "Tower, Cross the Road, dan Pump: maju satu langkah lagi atau cash out. Masing-masing empat tingkat kesulitan." },
-      { "tag": "improve", "en": "Every result is decided on the server and stays provably fair.", "id": "Semua hasil ditentukan di server dan tetap provably fair." }
+      { "tag": "improve", "en": "Every result is decided on the server and stays provably fair.", "id": "Semua hasil ditentukan di server dan tetap provably fair." },
+      { "tag": "fix", "en": "No more random sign-outs. The anti-bot check now sits only on the sign-in, sign-up and reset forms.", "id": "Tidak ada lagi ter-logout tiba-tiba. Cek anti-bot sekarang hanya ada di form login, daftar, dan reset password." }
     ]
   },
   {

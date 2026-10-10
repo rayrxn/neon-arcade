@@ -65,6 +65,7 @@ export default {
   profile: { status: 'Status', bio: 'Bio' },
   missions: { status: { none: 'Belum diklaim' } },
   auth: {
+    human: { check: 'Saya bukan robot', working: 'Memeriksa…', done: 'Terverifikasi', retry: 'Gagal, ketuk untuk coba lagi', error: 'Pemeriksaan gagal dimuat. Muat ulang halaman.' },
     errors: {
       captcha: 'Cek anti-bot gagal. Coba lagi.',
       captchaExpired: 'Cek anti-bot kedaluwarsa. Coba lagi.',
