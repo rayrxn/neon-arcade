@@ -65,6 +65,7 @@ function route(string $method, string $path): array
     }
 
     if ($method !== 'POST') fail('errors.notFound', [], 404);
+    route_feature_guard($path);
     switch ($path) {
         case 'auth/register': return api_register();
         case 'auth/login': return api_login();

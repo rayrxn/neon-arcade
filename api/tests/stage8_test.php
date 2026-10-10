@@ -180,6 +180,13 @@ try { require_feature(q1('SELECT * FROM users WHERE id = ?', [$A]), 'transfers')
 check('require_feature blocks the player', $ex === 'errors.featureOff');
 admin('own', 'setFeature', ['key' => 'transfers', 'state' => 'public', 'reason' => 'live']);
 expect_error('unknown feature rejected', admin('own', 'setFeature', ['key' => 'nope', 'state' => 'off', 'reason' => 'x']), 'admin.errors.invalid');
+foreach (['shop' => ['shop/buy', ['itemId' => 'badge-clef', 'requestId' => 'x']], 'chat' => ['chat/send', ['text' => 'hi']], 'crash' => ['game/crash-start', ['bet' => 10]], 'exchange' => ['convert', ['amount' => 1]], 'cases' => ['game/case-open', ['caseId' => 'x']]] as $fk => [$path, $body]) {
+    admin('own', 'setFeature', ['key' => $fk, 'state' => 'off', 'reason' => 'test']);
+    unset($GLOBALS['NEON_FEATURES']);
+    expect_error("$fk off → $path refused", call('POST', $path, $body, 'a'), 'errors.featureOff');
+    admin('own', 'setFeature', ['key' => $fk, 'state' => 'public', 'reason' => 'test']);
+    unset($GLOBALS['NEON_FEATURES']);
+}
 
 echo "Captcha (built-in proof of work)\n";
 $GLOBALS['NEON_CAPTCHA_MODE'] = 'pow';
@@ -243,6 +250,9 @@ $GLOBALS['NEON_KV_DIRTY']['crash'] = true;
 check('owner switches to Calm preset (max ×1000)', $r['ok'] && crash_cfg()['maxMult'] == 1000 && crash_point_cfg(0.9999999) == 1000, $r);
 expect_error('invalid custom curve refused', admin('own', 'setCrashConfig', ['preset' => 'custom', 'maxMult' => 50000, 'edge' => 0.01, 'tail' => 1, 'reason' => 'x']), 'admin.errors.invalid');
 check('custom curve saved', admin('own', 'setCrashConfig', ['preset' => 'custom', 'maxMult' => 5000, 'edge' => 0.02, 'tail' => 0.9, 'reason' => 'x'])['ok'] && (($GLOBALS['NEON_KV_DIRTY']['crash'] = true) && crash_cfg()['maxMult'] == 5000));
+expect_error('edge above 10% refused', admin('own', 'setCrashConfig', ['preset' => 'custom', 'maxMult' => 100, 'edge' => 0.5, 'tail' => 1, 'reason' => 'x']), 'admin.errors.invalid');
+expect_error('unknown preset refused', admin('own', 'setCrashConfig', ['preset' => 'nope', 'reason' => 'x']), 'admin.errors.invalid');
+check('crash config changes are audited', (int) qv("SELECT count(*) FROM admin_audit_log WHERE action = 'crash.config'") >= 2);
 expect_error('moderators cannot change it', admin('mod', 'setCrashConfig', ['preset' => 'wild', 'reason' => 'x']), 'admin.errors.forbidden');
 admin('own', 'setCrashConfig', ['preset' => 'standard', 'reason' => 'reset']);
 
