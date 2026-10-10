@@ -39,6 +39,8 @@ export default {
   },
   membership: { affixInSettings: 'Edit in Settings → Name display', perk: { monthly: 'Monthly bonus' } },
   notifications: { filters: { system: 'System' } },
+  chat: { mod: { ban: '{user} was banned by {by} ({duration})', unban: '{user} was unbanned by {by}', kick: '{user} was kicked by {by}', mute: '{user} was muted by {by} ({duration})', unmute: '{user} can chat again', forever: 'permanent', gacor: '🔥 Jam Gacor ×{mult} is live for {minutes} minutes!' } },
+  gacor: { global: 'Jam Gacor ×{mult} is live', personal: 'Your luck boost ×{mult} is on', hint: 'wins pay extra' },
   openRound: { text: 'You have an unfinished {game} round.', resume: 'Resume' },
   activity: {
     title: 'Activity', error: 'Could not load activity. Try again later.', empty: 'Nothing here yet', emptyBody: 'Your games, rewards and sign-ins from the last 90 days show up here.',
@@ -71,8 +73,19 @@ export default {
     escalatePh: 'Why does this need a senior admin?', closeMine: 'My problem is solved — close this ticket',
   },
   admin: {
+    annReset: 'End all announcements',
+    luck: {
+      title: 'Jam Gacor', desc: 'Pays an extra bonus on every win: profit × (boost − 1), max 10× the bet. Game results stay provably fair. Boost 1.1 – {max}×.',
+      live: 'Live ×{mult} · {left} left', off: 'No event running', stop: 'Stop', start: 'Start', mult: 'Boost (×)', minutes: 'Minutes',
+      player: 'Player (optional)', playerHint: 'Empty = everyone', label: 'Banner text (optional)',
+    },
+    captcha: {
+      title: 'Anti-bot check', desc: 'Used on sign-in, sign-up and password reset. Cloudflare Turnstile needs keys from dash.cloudflare.com → Turnstile.',
+      now: 'Active now: {mode}', mode: 'Mode', site: 'Turnstile site key', secret: 'Turnstile secret key', secretSet: 'Saved. Leave empty to keep it.',
+      modes: { config: 'From config file', pow: 'Built-in check', turnstile: 'Cloudflare Turnstile' },
+    },
     serverOnly: 'This page works on the live server only.',
-    errors: { confirm: 'Type the confirmation word exactly.' },
+    errors: { confirm: 'Type the confirmation word exactly.', userNotFound: 'No player with that username.', captchaKeys: 'Turnstile needs both the site key and the secret key.' },
     nav: { features: 'Feature flags', monitoring: 'Monitoring', qa: 'QA center' },
     cols: { severity: 'Severity', bet: 'Bet' },
     confidence: 'Confidence', trigger: 'Why it was flagged',

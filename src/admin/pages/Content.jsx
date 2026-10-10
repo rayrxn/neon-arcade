@@ -7,6 +7,8 @@ import Avatar from '@/components/ui/Avatar'
 import ReasonDialog from '@/components/admin/ReasonDialog'
 import { AdminPage, Badge, Card, FormField, Kpi, ROLE_TONE, STATUS_TONE, SearchInput, Table, Tabs, inputCls } from '@/components/admin/AdminKit'
 import { LogTable } from './Users'
+import { CrashCurveCard } from './Operations'
+import { CaptchaCard, LuckCard } from './PowerTools'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { usePlatformStore } from '@/store/usePlatformStore'
 import { useProgressStore } from '@/store/useProgressStore'
@@ -15,6 +17,7 @@ import { ACHIEVEMENTS, DAILY_QUESTS, DAILY_REWARDS, WEEKLY_QUESTS } from '@/conf
 import { ITEMS } from '@/config/economy'
 import { PERMISSIONS, ROLES, ROLE_PERMISSIONS, can } from '@/config/roles'
 import * as admin from '@/services/admin'
+import { adminCall } from '@/services/server'
 import { SERVER_MODE } from '@/config/runtime'
 import { formatCoins, formatDateTime, timeAgo } from '@/utils/format'
 import { pick, useT } from '@/i18n'
@@ -270,10 +273,13 @@ export function AnnouncementsAdmin() {
   const empty = { title: '', message: '', type: 'info', startAt: '', endAt: '', active: true, target: 'all', priority: 'normal', sound: true }
   const [form, setForm] = useState(empty)
   const [confirm, setConfirm] = useState(false)
+  const [resetAll, setResetAll] = useState(false)
   const live = new Set(activeAnnouncements(list).map((a) => a.id))
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
   return (
-    <AdminPage title={t('admin.nav.announcements')} description={t('admin.announcementsDesc')}>
+    <AdminPage title={t('admin.nav.announcements')} description={t('admin.announcementsDesc')}
+      actions={SERVER_MODE && can(me.role, 'announcements.manage') && <Button size="sm" variant="ghost" onClick={() => setResetAll(true)}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />{t('admin.annReset')}</Button>}>
+      {resetAll && <ReasonDialog open onClose={() => setResetAll(false)} adminName={me.username} tone="danger" title={t('admin.annReset')} onConfirm={(r) => adminCall('resetAnnouncements', { reason: r })} />}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card bodyClassName="">
           <Table rows={list} empty={t('admin.noAnnouncements')} columns={[
@@ -460,9 +466,13 @@ function ReleaseResetCard({ me }) {
 export function SettingsAdmin() {
   const { t } = useT()
   const me = useCurrentUser()
+  const v3 = useAdminStore((s) => s.v3)
   return (
     <AdminPage title={t('admin.nav.settings')} description={t('admin.settingsDesc')}>
       {can(me.role, 'release.reset') && <ReleaseResetCard me={me} />}
+      {SERVER_MODE && v3?.crash && can(me.role, 'games.manage') && <CrashCurveCard crash={v3.crash} me={me} />}
+      {SERVER_MODE && v3?.luck && can(me.role, 'economy.manage') && <LuckCard luck={v3.luck} me={me} />}
+      {SERVER_MODE && v3?.captcha && can(me.role, 'system.manage') && <CaptchaCard captcha={v3.captcha} me={me} />}
       <Card title={t('admin.rbac')} bodyClassName="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-xs">
           <thead><tr className="border-b hairline text-slate-500"><th className="px-4 py-2.5 font-semibold">Permission</th>{ROLES.filter((r) => r !== 'user').map((r) => <th key={r} className="px-3 py-2.5 text-center font-semibold">{t(`admin.roles.${r}`)}</th>)}</tr></thead>

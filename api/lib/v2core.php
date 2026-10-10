@@ -130,6 +130,8 @@ function save_announcement_v3(array $me, array $a): array
     $start = $toIso($d['startAt'] ?? null) ?? date('c');
     $end = $toIso($d['endAt'] ?? null);
     if ($end && strtotime($end) <= strtotime($start)) fail('admin.errors.invalid');
+    // No end date → shown for 3 days, so a forgotten banner does not stay forever.
+    if (!$end) $end = date('c', strtotime($start) + 3 * 86400);
     $active = !empty($d['active']);
     $isNew = empty($d['id']) || !qv('SELECT 1 FROM announcements WHERE id::text = ?', [(string) $d['id']]);
     $vals = [mb_substr($title, 0, 80), mb_substr($msg, 0, 1000), $type, $start, $end, $active, $target, $priority, $sound];
@@ -216,9 +218,10 @@ function economy_analytics(): array
 function captcha_cfg(): array
 {
     $c = config()['captcha'] ?? [];
-    $mode = $GLOBALS['NEON_CAPTCHA_MODE'] ?? ($c['mode'] ?? 'auto');
-    $secret = (string) ($c['turnstile_secret'] ?? '');
-    $site = (string) ($c['turnstile_site'] ?? '');
+    $k = kv_get('captcha'); // set from Admin → Settings; overrides neon-config when present
+    $mode = $GLOBALS['NEON_CAPTCHA_MODE'] ?? ($k['mode'] ?? ($c['mode'] ?? 'auto'));
+    $secret = (string) (($k['secret'] ?? '') !== '' ? $k['secret'] : ($c['turnstile_secret'] ?? ''));
+    $site = (string) (($k['site'] ?? '') !== '' ? $k['site'] : ($c['turnstile_site'] ?? ''));
     if ($mode === 'auto') $mode = $secret !== '' && $site !== '' ? 'turnstile' : 'pow';
     return ['mode' => $mode, 'site' => $site, 'secret' => $secret, 'bits' => (int) ($c['pow_bits'] ?? 16)];
 }
@@ -384,7 +387,7 @@ function qa_run(): array
 
 function admin_v3_view(array $me): array
 {
-    $out = ['features' => features_view($me), 'crash' => crash_view()];
+    $out = ['features' => features_view($me), 'crash' => crash_view(), 'luck' => luck_admin_view(), 'captcha' => captcha_admin_view()];
     if (has_perm($me, 'economy.manage')) $out['economy'] = economy_analytics();
     if (has_perm($me, 'errors.view') || has_perm($me, 'system.manage')) {
         $out['errorSummary'] = array_map(fn($r) => ['context' => $r['context'], 'code' => $r['code'], 'count' => (int) $r['n'], 'last' => iso_to_ms($r['last'])],
@@ -467,6 +470,7 @@ function admin_v3_action(array $me, string $name, array $a)
             $rounds = 0;
             foreach (q("SELECT * FROM game_sessions WHERE user_id = ? AND status = 'OPEN' FOR UPDATE", [$t['id']])->fetchAll() as $gs) if (end_game_session($gs, 'admin')) $rounds++;
             audit_log($me, 'sessions.terminate', $t['id'], null, null, null, ['logins' => $logins, 'rounds' => $rounds], $r);
+            chat_mod_notice('kick', $t['id'], $me, $r);
             return ['ok' => true, 'logins' => $logins, 'rounds' => $rounds];
         }
         case 'emergencyShutdown': {
@@ -614,6 +618,11 @@ function admin_v3_action(array $me, string $name, array $a)
             audit_log($me, 'qa.run', null, 'qa', null, null, $r['summary'], '—');
             return $r;
         }
+        case 'resetAnnouncements':
+        case 'setLuck':
+        case 'clearLuck':
+        case 'setCaptcha':
+            return admin_v4_action($me, $name, $a);
         case 'clearErrors': {
             require_user_perm($me, 'system.manage');
             $r = adm_reason($a['reason'] ?? '');
@@ -670,5 +679,139 @@ function activity_view(array $u, string $kind): array
     }
     usort($rows, fn($a, $b) => $b['at'] <=> $a['at']);
     return array_slice($rows, 0, 200);
+}
+
+// ───────────────────────────── Moderation notices in chat ─────────────────────────────
+
+/** Public line in global chat when staff bans, kicks or mutes someone (like a game server). */
+function chat_mod_notice(string $action, string $targetId, array $me, ?string $reason = null, ?string $duration = null): void
+{
+    $name = username_of($targetId);
+    if (!$name) return;
+    q("INSERT INTO chat_messages (user_id, type, body, data) VALUES (NULL, 'mod', 'mod', ?::jsonb)", [jenc([
+        'action' => $action, 'user' => $name, 'by' => $me['username'], 'reason' => $reason !== null ? mb_substr($reason, 0, 120) : null, 'duration' => $duration,
+    ])]);
+}
+
+// ───────────────────────────── Jam Gacor (luck boost) ─────────────────────────────
+// The RNG is never touched (provably fair stays valid). A boost pays an extra bonus on top of a WIN:
+// bonus = profit × (mult − 1), capped at 10× the bet, posted as a separate "Jam Gacor" reward.
+
+const LUCK_MAX_MULT = 5;
+
+function luck_state(): array
+{
+    $s = kv_get('luck');
+    $now = now_ms();
+    $g = $s['global'] ?? null;
+    if ($g && ($g['until'] ?? 0) <= $now) $g = null;
+    $users = array_filter($s['users'] ?? [], fn($u) => ($u['until'] ?? 0) > $now);
+    return ['global' => $g, 'users' => $users];
+}
+
+function luck_mult(string $userId): float
+{
+    $s = luck_state();
+    return max(1.0, (float) ($s['global']['mult'] ?? 1), (float) ($s['users'][$userId]['mult'] ?? 1));
+}
+
+/** Called after a winning round is paid. Returns the bonus paid (0 when no boost). */
+function luck_bonus(string $userId, string $cur, float $bet, float $payout, string $sessionId): float
+{
+    if ($payout <= $bet) return 0.0;
+    $m = luck_mult($userId);
+    if ($m <= 1) return 0.0;
+    $bonus = round2(min(($payout - $bet) * ($m - 1), $bet * 10));
+    if ($bonus <= 0) return 0.0;
+    wallet_post($userId, $cur, $bonus, 'reward', 'perk', 'gacor', 'Jam Gacor ×' . rtrim(rtrim(number_format($m, 2, '.', ''), '0'), '.'), $sessionId, "gacor:$sessionId:$cur");
+    return $bonus;
+}
+
+/** What players see (global event only; personal boosts are private). */
+function luck_public(?array $u): ?array
+{
+    $s = luck_state();
+    $mine = $u ? ($s['users'][$u['id']] ?? null) : null;
+    if (!$s['global'] && !$mine) return null;
+    $best = $mine && (!$s['global'] || $mine['mult'] > $s['global']['mult']) ? $mine : $s['global'];
+    return ['mult' => (float) $best['mult'], 'until' => (int) $best['until'], 'personal' => $best === $mine, 'label' => $best['label'] ?? null];
+}
+
+function luck_admin_view(): array
+{
+    $s = luck_state();
+    $users = [];
+    foreach ($s['users'] as $id => $u) $users[] = ['userId' => $id, 'username' => username_of($id), 'mult' => (float) $u['mult'], 'until' => (int) $u['until']];
+    return ['global' => $s['global'], 'users' => $users, 'maxMult' => LUCK_MAX_MULT];
+}
+
+// ───────────────────────────── Captcha settings (admin) ─────────────────────────────
+
+function captcha_admin_view(): array
+{
+    $c = captcha_cfg();
+    $k = kv_get('captcha');
+    return ['mode' => $c['mode'], 'setting' => $k['mode'] ?? 'config', 'siteKey' => $c['site'], 'hasSecret' => $c['secret'] !== '', 'bits' => $c['bits']];
+}
+
+/** Extra v3 admin actions (v2.2). Returns null when the action is not one of these. */
+function admin_v4_action(array $me, string $name, array $a): ?array
+{
+    switch ($name) {
+        case 'resetAnnouncements': {
+            require_user_perm($me, 'announcements.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $n = q("UPDATE announcements SET active = FALSE, end_at = LEAST(COALESCE(end_at, now()), now()) WHERE active OR end_at IS NULL OR end_at > now()")->rowCount();
+            q("UPDATE notifications SET read_at = now() WHERE kind = 'announcement' AND read_at IS NULL");
+            audit_log($me, 'announcement.reset', null, 'all', null, null, ['ended' => $n], $r);
+            return ['ok' => true, 'ended' => $n];
+        }
+        case 'setLuck': {
+            require_user_perm($me, 'economy.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $mult = round((float) ($a['mult'] ?? 0), 2);
+            $min = (int) ($a['minutes'] ?? 0);
+            if ($mult < 1.1 || $mult > LUCK_MAX_MULT || $min < 1 || $min > 7 * 1440) fail('admin.errors.invalid');
+            $entry = ['mult' => $mult, 'until' => now_ms() + $min * 60000, 'by' => $me['username'], 'label' => mb_substr(trim((string) ($a['label'] ?? '')), 0, 40) ?: null];
+            $s = luck_state();
+            $target = null;
+            if (!empty($a['username'])) {
+                $target = q1('SELECT id, username FROM users WHERE lower(username) = lower(?)', [(string) $a['username']]);
+                if (!$target) fail('admin.errors.userNotFound');
+                $s['users'][$target['id']] = $entry;
+            } else {
+                $s['global'] = $entry;
+                q("INSERT INTO chat_messages (user_id, type, body, data) VALUES (NULL, 'mod', 'mod', ?::jsonb)", [jenc(['action' => 'gacor', 'mult' => $mult, 'minutes' => $min, 'by' => $me['username']])]);
+            }
+            kv_set('luck', $s);
+            audit_log($me, 'luck.set', $target['id'] ?? null, $target['username'] ?? 'global', null, null, $entry, $r);
+            return luck_admin_view();
+        }
+        case 'clearLuck': {
+            require_user_perm($me, 'economy.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $s = luck_state();
+            if (!empty($a['userId'])) unset($s['users'][(string) $a['userId']]);
+            else $s['global'] = null;
+            kv_set('luck', $s);
+            audit_log($me, 'luck.clear', $a['userId'] ?? null, $a['userId'] ?? 'global', null, null, null, $r);
+            return luck_admin_view();
+        }
+        case 'setCaptcha': {
+            require_user_perm($me, 'system.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $mode = (string) ($a['mode'] ?? '');
+            if (!in_array($mode, ['config', 'pow', 'turnstile'], true)) fail('admin.errors.invalid');
+            $k = kv_get('captcha');
+            $next = ['mode' => $mode === 'config' ? null : $mode, 'site' => $k['site'] ?? '', 'secret' => $k['secret'] ?? ''];
+            if (isset($a['siteKey'])) $next['site'] = mb_substr(trim((string) $a['siteKey']), 0, 120);
+            if (isset($a['secret']) && trim((string) $a['secret']) !== '') $next['secret'] = mb_substr(trim((string) $a['secret']), 0, 200);
+            if ($mode === 'turnstile' && ($next['site'] === '' || $next['secret'] === '')) fail('admin.errors.captchaKeys');
+            kv_set('captcha', $next);
+            audit_log($me, 'captcha.set', null, 'captcha', null, null, ['mode' => $mode, 'site' => $next['site'], 'secret' => $next['secret'] !== '' ? 'set' : ''], $r);
+            return captcha_admin_view();
+        }
+    }
+    return null;
 }
 

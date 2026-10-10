@@ -269,6 +269,36 @@ check('kind filter: only AG wallet rows', $r['ok'] && !array_filter($r['data'], 
 expect_error('needs a session', call('GET', 'activity'), 'errors.sessionExpired');
 unset($_GET['kind']);
 
+echo "v2.2: mod notices, Jam Gacor, captcha settings, announcement reset\n";
+admin('own', 'muteUser', ['userId' => $A, 'minutes' => 5, 'reason' => 'spam test']);
+$mod = q1("SELECT data FROM chat_messages WHERE type = 'mod' ORDER BY created_at DESC LIMIT 1");
+check('mute shows a moderation line in chat', $mod && jdec($mod['data'], [])['action'] === 'mute' && jdec($mod['data'], [])['duration'] === '5m', $mod);
+admin('own', 'muteUser', ['userId' => $A, 'minutes' => 0, 'reason' => 'ok']);
+expect_error('moderators cannot start Jam Gacor', admin('mod', 'setLuck', ['mult' => 2, 'minutes' => 10, 'reason' => 'x']), 'admin.errors.forbidden');
+expect_error('boost above ×5 refused', admin('own', 'setLuck', ['mult' => 10, 'minutes' => 10, 'reason' => 'x']), 'admin.errors.invalid');
+$GLOBALS['NEON_KV_DIRTY']['luck'] = true;
+check('owner starts a global ×2 Jam Gacor', admin('own', 'setLuck', ['mult' => 2, 'minutes' => 30, 'reason' => 'event'])['ok'] && luck_mult($A) == 2.0);
+check('players see the event in sync', ($GLOBALS['NEON_KV_DIRTY']['luck'] = true) && sync('a')['platform']['gacor']['mult'] == 2);
+$gs = q1('SELECT id, user_id FROM game_sessions ORDER BY started_at DESC LIMIT 1');
+$before = (float) qv('SELECT ac_balance FROM wallets WHERE user_id = ?', [$gs['user_id']]);
+$bonus = tx(fn() => luck_bonus($gs['user_id'], 'AC', 100, 250, $gs['id']));
+check('win bonus = profit × (mult − 1), RNG untouched', $bonus == 150 && (float) qv('SELECT ac_balance FROM wallets WHERE user_id = ?', [$gs['user_id']]) == $before + 150, $bonus);
+check('no bonus on a loss', tx(fn() => luck_bonus($gs['user_id'], 'AC', 100, 50, $gs['id'])) == 0);
+check('bonus capped at 10× the bet', tx(fn() => luck_bonus($gs['user_id'], 'AG', 1, 1000, $gs['id'])) == 10);
+check('personal boost by username', admin('own', 'setLuck', ['mult' => 3, 'minutes' => 10, 'username' => qv('SELECT username FROM users WHERE id = ?', [$V]), 'reason' => 'vip'])['ok'] && (($GLOBALS['NEON_KV_DIRTY']['luck'] = true) && luck_mult($V) == 3.0));
+admin('own', 'clearLuck', ['reason' => 'end']);
+admin('own', 'clearLuck', ['userId' => $V, 'reason' => 'end']);
+$GLOBALS['NEON_KV_DIRTY']['luck'] = true;
+check('clear ends every boost', luck_mult($A) == 1.0 && luck_mult($V) == 1.0);
+expect_error('Turnstile needs both keys', admin('own', 'setCaptcha', ['mode' => 'turnstile', 'reason' => 'x']), 'admin.errors.captchaKeys');
+$r = admin('own', 'setCaptcha', ['mode' => 'turnstile', 'siteKey' => '0x4AAA-site', 'secret' => 'sec-123', 'reason' => 'cf']);
+$GLOBALS['NEON_KV_DIRTY']['captcha'] = true;
+check('captcha switched to Turnstile from the panel (secret never returned)', $r['ok'] && $r['data']['result']['setting'] === 'turnstile' && kv_get('captcha')['site'] === '0x4AAA-site' && !isset($r['data']['result']['secret']) && $r['data']['result']['hasSecret'] === true, $r);
+admin('own', 'setCaptcha', ['mode' => 'config', 'reason' => 'back']);
+$GLOBALS['NEON_KV_DIRTY']['captcha'] = true;
+check('back to the config file setting', kv_get('captcha')['mode'] === null);
+check('reset ends every announcement', admin('own', 'resetAnnouncements', ['reason' => 'clean'])['ok'] && (int) qv('SELECT count(*) FROM announcements WHERE active') === 0);
+
 echo "Owner console\n";
 $_SERVER['REMOTE_ADDR'] = '10.9.8.7';
 $con = fn(string $path, array $body = []) => call('POST', $path, $body);

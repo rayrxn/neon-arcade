@@ -15,7 +15,7 @@
 | T11 | Music on mobile (unlock on gesture) | done-unverified (needs a real iOS/Android tap test) | low | – | plays on iOS/Android after tap |
 | T12 | New games, each server-settled (Keno, Pump, Tower, Cross the Road, Sweet, Tarot first; then Horse shared rounds; Chess/Racing PvP; skill arcades Snake/Slice/Layer/Moles with capped XP) | planned | high | T3 (flags per game) | API tests per game + RTP check in QA |
 | T13 | Case opening + battle expansion | planned | medium | – | new cases in catalog, tests |
-| T14 | Football predictions | blocked | low | football-data.org token from user | real fixtures, no fabricated data |
+| T13.1 | Admin power tools: captcha/Turnstile settings in panel, reset announcements (+3-day default end), ban/kick/mute lines in chat, Crash ×10,000 card in Settings, Jam Gacor luck boost | done (v2.2, stage8 tests) | high | – | stage8 "v2.2" block passes |
 | T15 | Ops: console key (BUG-001), rotate DB password (BUG-002) | user action | high | user | console/state enabled:true |
 
 Rule for every task: ask the reset question before release, push `main` + run `deploy.sh`, regenerate `hosting/public_html`, update docs.

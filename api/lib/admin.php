@@ -174,11 +174,13 @@ function admin_action(array $me, string $name, array $a)
             if ($h !== null && !is_numeric($h)) fail('admin.errors.invalid');
             sql_admin('SELECT admin_ban(?::uuid, ?::uuid, ?::int, ?)', [$me['id'], $uid, $h === null ? null : (int) round((float) $h), adm_reason($a['reason'] ?? '')]);
             q('UPDATE users SET banned_at = now(), banned_by = ? WHERE id = ?', [$me['id'], $uid]);
+            chat_mod_notice('ban', (string) $uid, $me, (string) ($a['reason'] ?? ''), $h === null ? null : ((int) round((float) $h)) . 'h');
             return ['ok' => true];
         }
         case 'unbanUser':
             sql_admin('SELECT admin_unban(?::uuid, ?::uuid, ?)', [$me['id'], $uid, adm_reason($a['reason'] ?? '')]);
             q('UPDATE users SET banned_at = NULL, banned_by = NULL WHERE id = ?', [$uid]);
+            chat_mod_notice('unban', (string) $uid, $me);
             return ['ok' => true];
         case 'freezeAccount': {
             require_user_perm($me, 'users.freeze');
@@ -298,6 +300,7 @@ function admin_action(array $me, string $name, array $a)
             q('UPDATE users SET mute_reason = ? WHERE id = ?', [$min === 0 ? null : $r, $uid]);
             log_event($min === 0 ? 'USER_UNMUTED' : 'USER_MUTED', $uid, ['adminId' => $me['id']]);
             mod_log((string) $uid, $min === 0 ? 'unmuted' : 'muted', mb_substr($r, 0, 40), null, [], $me['id']);
+            chat_mod_notice($min === 0 ? 'unmute' : 'mute', (string) $uid, $me, $min === 0 ? null : $r, $min === null || $min === 0 ? null : ((int) $min) . 'm');
             return ['ok' => true];
         }
         case 'warnUser':

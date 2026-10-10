@@ -39,6 +39,8 @@ export default {
   },
   membership: { affixInSettings: 'Atur di Settings → Tampilan nama', perk: { monthly: 'Bonus bulanan' } },
   notifications: { filters: { system: 'Sistem' } },
+  chat: { mod: { ban: '{user} di-ban oleh {by} ({duration})', unban: '{user} di-unban oleh {by}', kick: '{user} di-kick oleh {by}', mute: '{user} di-mute oleh {by} ({duration})', unmute: '{user} bisa chat lagi', forever: 'permanen', gacor: '🔥 Jam Gacor ×{mult} aktif {minutes} menit!' } },
+  gacor: { global: 'Jam Gacor ×{mult} sedang aktif', personal: 'Boost hoki ×{mult} kamu aktif', hint: 'menang dapat bonus' },
   openRound: { text: 'Ada ronde {game} yang belum selesai.', resume: 'Lanjutkan' },
   activity: {
     title: 'Aktivitas', error: 'Aktivitas gagal dimuat. Coba lagi nanti.', empty: 'Belum ada aktivitas', emptyBody: 'Game, hadiah, dan login 90 hari terakhir muncul di sini.',
@@ -71,8 +73,19 @@ export default {
     escalatePh: 'Kenapa perlu admin senior?', closeMine: 'Masalahku sudah beres — tutup tiket ini',
   },
   admin: {
+    annReset: 'Akhiri semua pengumuman',
+    luck: {
+      title: 'Jam Gacor', desc: 'Bonus ekstra tiap menang: profit × (boost − 1), maks 10× taruhan. Hasil game tetap provably fair. Boost 1,1 – {max}×.',
+      live: 'Aktif ×{mult} · sisa {left}', off: 'Tidak ada event', stop: 'Stop', start: 'Mulai', mult: 'Boost (×)', minutes: 'Menit',
+      player: 'Pemain (opsional)', playerHint: 'Kosong = semua', label: 'Teks banner (opsional)',
+    },
+    captcha: {
+      title: 'Cek anti-bot', desc: 'Dipakai di login, daftar, dan reset password. Cloudflare Turnstile butuh key dari dash.cloudflare.com → Turnstile.',
+      now: 'Aktif sekarang: {mode}', mode: 'Mode', site: 'Turnstile site key', secret: 'Turnstile secret key', secretSet: 'Tersimpan. Kosongkan untuk tetap.',
+      modes: { config: 'Dari file config', pow: 'Cek bawaan', turnstile: 'Cloudflare Turnstile' },
+    },
     serverOnly: 'Halaman ini hanya berjalan di server live.',
-    errors: { confirm: 'Ketik kata konfirmasi dengan tepat.' },
+    errors: { confirm: 'Ketik kata konfirmasi dengan tepat.', userNotFound: 'Tidak ada pemain dengan username itu.', captchaKeys: 'Turnstile butuh site key dan secret key.' },
     nav: { features: 'Feature flag', monitoring: 'Monitoring', qa: 'QA center' },
     cols: { severity: 'Tingkat', bet: 'Taruhan' },
     confidence: 'Keyakinan', trigger: 'Alasan ditandai',

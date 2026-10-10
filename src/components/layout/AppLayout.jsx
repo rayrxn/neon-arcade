@@ -7,6 +7,7 @@ import MobileTabBar from './MobileTabBar'
 import ModalHost from '@/components/modals/ModalHost'
 import SystemBanners from './SystemBanners'
 import OpenRoundBanner from '@/components/layout/OpenRoundBanner'
+import GacorBanner from '@/components/layout/GacorBanner'
 import { setMusicDuck } from '@/services/sound'
 import MaintenanceScreen from './MaintenanceScreen'
 import LevelUpOverlay from '@/components/progress/LevelUpOverlay'
@@ -50,6 +51,7 @@ export default function AppLayout() {
           >
             <SystemBanners />
             <OpenRoundBanner />
+            <GacorBanner />
             <ErrorBoundary resetKey={pathname} name={pathname}>
               {locked ? <MaintenanceScreen /> : <Outlet />}
             </ErrorBoundary>

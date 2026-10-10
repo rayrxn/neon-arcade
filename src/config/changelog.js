@@ -11,7 +11,10 @@ export default [
       { "tag": "new", "en": "Activity on the History page: games, rewards, AC/AG, Loyalty XP and sign-ins from the last 90 days.", "id": "Aktivitas di halaman Riwayat: game, hadiah, AC/AG, Loyalty XP, dan login 90 hari terakhir." },
       { "tag": "new", "en": "Unfinished Crash, Mines or Blackjack round? A bar takes you straight back to it.", "id": "Ada ronde Crash, Mines, atau Blackjack yang belum selesai? Ada bar untuk langsung balik ke sana." },
       { "tag": "improve", "en": "Notifications get a System tab and unread counts on every filter.", "id": "Notifikasi punya tab Sistem dan jumlah belum dibaca di tiap filter." },
-      { "tag": "fix", "en": "Music and sounds start more reliably on phones and tablets.", "id": "Musik dan suara lebih mudah jalan di HP dan tablet." }
+      { "tag": "fix", "en": "Music and sounds start more reliably on phones and tablets.", "id": "Musik dan suara lebih mudah jalan di HP dan tablet." },
+      { "tag": "new", "en": "Jam Gacor events: during an event every win pays an extra bonus.", "id": "Event Jam Gacor: selama event, setiap menang dapat bonus tambahan." },
+      { "tag": "new", "en": "Bans, kicks and mutes by staff now show in chat.", "id": "Ban, kick, dan mute dari staf sekarang muncul di chat." },
+      { "tag": "improve", "en": "Announcements no longer stay on screen forever.", "id": "Pengumuman tidak lagi tampil terus-menerus." }
     ]
   },
   {

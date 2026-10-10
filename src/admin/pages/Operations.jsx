@@ -115,7 +115,7 @@ export function Wallets() {
 const toLocalInput = (ms) => (ms ? new Date(ms - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '')
 const fromLocalInput = (v) => (v ? new Date(v).getTime() : null)
 
-function CrashCurveCard({ crash, me }) {
+export function CrashCurveCard({ crash, me }) {
   const { t } = useT()
   const [f, setF] = useState({ maxMult: crash.maxMult, edge: crash.edge * 100, tail: crash.tail })
   const [pending, setPending] = useState(null)

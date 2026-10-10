@@ -68,7 +68,9 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [x] Session recovery
 - [x] Error monitoring (API errors, failed requests, client crashes, auth failures)
 - [~] Music on mobile/tablet (unlock on gesture, fallback)
-- [~] Crash max ×10,000 with admin-configured curve/presets
+- [x] Crash max ×10,000 with admin-configured curve/presets (Games + Settings)
+- [x] Jam Gacor: admin luck boost (global / per player) as a win bonus, RNG untouched
+- [x] Staff actions (ban/kick/mute) shown in global chat
 - [x] Anti-bot captcha (Cloudflare Turnstile when keys are configured, built-in challenge otherwise)
 
 ## G. Games
@@ -77,7 +79,6 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [ ] Racing PvP
 - [ ] Horse Racing (shared rounds)
 - [ ] Snake, Tower, Slice, Layer, Cross the Road, Sweet, Keno, Moles, Pump, Tarot
-- [ ] Live football prediction (football-data.org; needs API token)
 
 ## H. QA
 - [x] QA center (admin) running real checks

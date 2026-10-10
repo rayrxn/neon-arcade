@@ -41,6 +41,22 @@ function MessageText({ text, myUsername }) {
   )
 }
 
+/** Staff action shown to everyone (ban / kick / mute) or a Jam Gacor start. */
+function ModMessage({ mod }) {
+  const { t } = useT()
+  if (!mod?.action) return null
+  const gacor = mod.action === 'gacor'
+  const text = gacor
+    ? t('chat.mod.gacor', { mult: mod.mult, minutes: mod.minutes })
+    : t(`chat.mod.${mod.action}`, { user: mod.user, by: mod.by, duration: mod.duration ?? t('chat.mod.forever') })
+  return (
+    <div className={clsx('mx-2 my-1 rounded-lg px-3 py-1.5 text-xs font-semibold ring-1 ring-inset', gacor ? 'bg-neon-gold/10 text-neon-gold ring-neon-gold/25' : 'bg-neon-red/10 text-red-200 ring-neon-red/20')}>
+      {text}
+      {mod.reason && !gacor && <span className="font-normal text-slate-400"> · {mod.reason}</span>}
+    </div>
+  )
+}
+
 function JackpotMessage({ jackpot, now }) {
   const { t } = useT()
   if (!jackpot) return null
@@ -196,6 +212,7 @@ export default function ChatRoom({ compact = false, limit, className, room = 'gl
           <EmptyState icon={MessagesSquare} title={t('chat.empty')} body={t('chat.emptyBody')} />
         ) : (
           visible.map((m, i) => {
+            if (m.type === 'mod') return <ModMessage key={m.id} mod={m.mod} />
             if (m.type === 'jackpot') return <JackpotMessage key={m.id} jackpot={jackpotById[m.jackpotId]} now={now} />
             const prev = visible[i - 1]
             const grouped = prev && prev.type === 'user' && prev.userId === m.userId && m.at - prev.at < 5 * 60_000
