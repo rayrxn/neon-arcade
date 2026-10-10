@@ -50,6 +50,7 @@ function flag_view(array $f): array
         'id' => $f['id'], 'type' => $f['type'], 'risk' => $f['risk'], 'status' => $f['status'], 'at' => iso_to_ms($f['created_at']), 'lastAt' => iso_to_ms($f['last_at']),
         'count' => (int) $f['occurrences'], 'sessionId' => $f['session_id'], 'game' => $f['game'] ?? null, 'expected' => $f['expected'], 'submitted' => $f['submitted'],
         'evidence' => (object) $ev, 'reviewedBy' => $f['reviewer'] ?? null, 'reviewedAt' => iso_to_ms($f['reviewed_at']), 'reviewReason' => $f['review_reason'],
+        'severity' => $f['severity'] ?? 'medium', 'confidence' => (int) ($f['confidence'] ?? 50), 'reason' => $f['reason'] ?? null, 'reviewNote' => $f['review_note'] ?? null,
     ];
 }
 
@@ -105,7 +106,7 @@ function admin_snapshot(array $me): array
         has_perm($me, 'system.manage') ? q('SELECT * FROM error_log ORDER BY at DESC LIMIT 200')->fetchAll() : []);
     return [
         'users' => $users, 'wallets' => (object) $wallets, 'progress' => (object) $progress,
-        'admin' => ['logs' => $logs, 'events' => $events, 'errors' => $errors, 'codes' => (object) code_defs_view(), 'v2' => admin_v2_view($me)],
+        'admin' => ['logs' => $logs, 'events' => $events, 'errors' => $errors, 'codes' => (object) code_defs_view(), 'v2' => admin_v2_view($me), 'v3' => admin_v3_view($me)],
         'serverTime' => now_ms(),
     ];
 }
@@ -126,6 +127,8 @@ function lock_docs(string $userId): array
 function admin_action(array $me, string $name, array $a)
 {
     $uid = $a['userId'] ?? null;
+    $v3 = admin_v3_action($me, $name, $a);
+    if ($v3 !== null) return $v3;
     $v2 = admin_v2_action($me, $name, $a);
     if ($v2 !== null) return $v2;
     switch ($name) {
@@ -170,10 +173,12 @@ function admin_action(array $me, string $name, array $a)
             $h = $a['hours'] ?? null;
             if ($h !== null && !is_numeric($h)) fail('admin.errors.invalid');
             sql_admin('SELECT admin_ban(?::uuid, ?::uuid, ?::int, ?)', [$me['id'], $uid, $h === null ? null : (int) round((float) $h), adm_reason($a['reason'] ?? '')]);
+            q('UPDATE users SET banned_at = now(), banned_by = ? WHERE id = ?', [$me['id'], $uid]);
             return ['ok' => true];
         }
         case 'unbanUser':
             sql_admin('SELECT admin_unban(?::uuid, ?::uuid, ?)', [$me['id'], $uid, adm_reason($a['reason'] ?? '')]);
+            q('UPDATE users SET banned_at = NULL, banned_by = NULL WHERE id = ?', [$uid]);
             return ['ok' => true];
         case 'freezeAccount': {
             require_user_perm($me, 'users.freeze');

@@ -6,7 +6,9 @@ declare(strict_types=1);
 // ───────────────────────────── Settings ─────────────────────────────
 
 const KV_DEFAULTS = [
-    'economy' => ['acPerAg' => 25000, 'convertMinAg' => 1, 'convertMaxAgPerDay' => 200],
+    'crash' => ['preset' => 'standard', 'maxMult' => 10000, 'edge' => 0.01, 'tail' => 0.92],
+    // maxBetCap*: the absolute ceiling for any single bet. Card × membership and per-game caps sit under it.
+    'economy' => ['acPerAg' => 25000, 'convertMinAg' => 1, 'convertMaxAgPerDay' => 200, 'maxBetCapAC' => 1500000000, 'maxBetCapAG' => 100000],
     'moderation' => ['level' => 'standard', 'autoMute' => true, 'autoMuteStrikes' => 3, 'autoMuteMinutes' => 10, 'repeatLimit' => 8],
     'memberships' => [
         'vip' => ['price' => 149999, 'days' => 30, 'benefits' => []],
@@ -108,21 +110,58 @@ function loyalty_view(array $u): array
 }
 
 /** Bet limits: the Loyalty Card limit, raised by an active VIP (+20%) / VVIP (+50%) membership. */
-function bet_limits(array $u): array
+/**
+ * The one bet limit used everywhere (UI, validation, anomaly checks):
+ * min(loyalty card × membership bonus, global cap, per-game cap). Pass the game to include its cap.
+ * Returns the limiting source too, so the error message names the real reason.
+ */
+function bet_limits(array $u, ?string $game = null): array
 {
     $c = cards_all()[effective_card($u)];
     $pct = member_perk($u['id'] ?? '', 'betPct', 0);
-    return ['AC' => (float) floor((float) $c['max_bet_ac'] * (1 + $pct / 100)), 'AG' => (float) floor((float) $c['max_bet_ag'] * (1 + $pct / 100)), 'card' => $c['name']];
+    $eco = kv_get('economy');
+    $card = ['AC' => (float) floor((float) $c['max_bet_ac'] * (1 + $pct / 100)), 'AG' => (float) floor((float) $c['max_bet_ag'] * (1 + $pct / 100))];
+    $cap = ['AC' => (float) $eco['maxBetCapAC'], 'AG' => (float) $eco['maxBetCapAG']];
+    $g = $game !== null ? game_caps()[$game] ?? null : null;
+    $out = ['card' => $c['name'], 'by' => []];
+    foreach (['AC', 'AG'] as $cur) {
+        $limit = min($card[$cur], $cap[$cur]);
+        $by = $card[$cur] <= $cap[$cur] ? 'card' : 'cap';
+        if ($g && $g[$cur] < $limit) {
+            $limit = $g[$cur];
+            $by = 'game';
+        }
+        $out[$cur] = $limit;
+        $out['by'][$cur] = $by;
+    }
+    return $out;
 }
 
-/** Hard server-side bet limit from the player's Loyalty Card (+ membership bonus). */
-function check_loyalty_bet(array $u, string $currency, int $bet): void
+/** Per-game caps (AC, AG), read once per request. */
+function game_caps(): array
 {
-    $l = bet_limits($u);
-    if ($bet > $l[$currency === 'AG' ? 'AG' : 'AC']) fail('play.errors.loyaltyMax', ['ac' => number_format($l['AC']), 'ag' => number_format($l['AG']), 'card' => $l['card']]);
+    static $caps = null;
+    if ($caps === null || !empty($GLOBALS['NEON_GAMES_DIRTY'])) {
+        $caps = [];
+        foreach (q('SELECT slug, max_bet, max_bet_ag FROM games')->fetchAll() as $g) $caps[$g['slug']] = ['AC' => (float) $g['max_bet'], 'AG' => (float) $g['max_bet_ag']];
+        $GLOBALS['NEON_GAMES_DIRTY'] = false;
+    }
+    return $caps;
 }
 
-const LXP_GAME_DAILY_CAP = 5000;
+/** Hard server-side bet limit. The message carries the same numbers the bet input shows. */
+function check_loyalty_bet(array $u, string $currency, int $bet, ?string $game = null): void
+{
+    $l = bet_limits($u, $game);
+    $cur = $currency === 'AG' ? 'AG' : 'AC';
+    if ($bet <= $l[$cur]) return;
+    $vars = ['ac' => number_format($l['AC']), 'ag' => number_format($l['AG']), 'card' => $l['card'], 'max' => number_format($l[$cur]), 'currency' => $cur];
+    fail($l['by'][$cur] === 'card' ? 'play.errors.loyaltyMax' : 'play.errors.maxBet', $vars);
+}
+
+const LXP_GAME_DAILY_CAP = 5000; // fallback; each card sets its own cap (perks.lxpCap)
+/** Central Loyalty XP rewards outside games (one place to rebalance). */
+const LXP_REWARDS = ['daily' => 50, 'questDaily' => 30, 'questWeekly' => 150];
 
 /** Loyalty XP from a round: 1 per 1,000 AC wagered (AG valued at the converter rate), max 250 per round. */
 function game_lxp(float $valueAc): int
@@ -134,10 +173,12 @@ function add_loyalty_xp(string $userId, int $amount, string $source, ?string $re
 {
     if ($amount === 0) return 0;
     if ($amount > 0) {
-        $amount = (int) floor($amount * boost_mult($userId, 'lxp') * (1 + card_perks(effective_card(q1('SELECT * FROM users WHERE id = ?', [$userId]) ?? []))['lxpPct'] / 100));
+        $perks = card_perks(effective_card(q1('SELECT * FROM users WHERE id = ?', [$userId]) ?? []));
+        $amount = (int) floor($amount * boost_mult($userId, 'lxp') * (1 + $perks['lxpPct'] / 100));
         if ($source === 'game') {
+            $cap = (int) ($perks['lxpCap'] ?? LXP_GAME_DAILY_CAP);
             $today = (int) qv("SELECT coalesce(sum(amount), 0) FROM loyalty_xp_log WHERE user_id = ? AND source = 'game' AND at > date_trunc('day', now() AT TIME ZONE 'Asia/Jakarta') AT TIME ZONE 'Asia/Jakarta'", [$userId]);
-            $amount = max(0, min($amount, LXP_GAME_DAILY_CAP - $today));
+            $amount = max(0, min($amount, $cap - $today));
             if ($amount === 0) return 0;
         }
     }
@@ -751,7 +792,7 @@ function user_extra_fields(array $u, array $profile): array
         'membership' => $tier,
         'style' => (object) style_view($u, $profile, null, $tier),
         'bannerUrl' => banner_url($u['id']),
-        'namePrefix' => $tier === 'vvip' ? ($u['name_prefix'] ?? null) : null,
-        'nameSuffix' => $tier === 'vvip' ? ($u['name_suffix'] ?? null) : null,
+        'namePrefix' => $tier === 'vvip' || is_staff_role($u['role']) ? ($u['name_prefix'] ?? null) : null,
+        'nameSuffix' => $tier === 'vvip' || is_staff_role($u['role']) ? ($u['name_suffix'] ?? null) : null,
     ];
 }

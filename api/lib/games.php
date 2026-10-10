@@ -3,7 +3,7 @@
 // UI hanya mengirim pilihan (taruhan, target, petak, aksi). Payout tidak pernah diterima dari UI.
 declare(strict_types=1);
 
-const LIMITS = ['minBet' => 1, 'maxBet' => 100000000];
+const LIMITS = ['minBet' => 1];
 const MAX_MULTIPLIER = [
     'dice' => 49.5, 'limbo' => 1000000, 'coinflip' => 1.98, 'plinko' => 1000, 'roulette' => 36, 'case-opening' => 20,
     'case-battle' => 40, 'crash' => 1000000000, 'mines' => 6000000, 'blackjack' => 2.5,
@@ -64,8 +64,7 @@ function check_bet($bet): int
     if (!is_int($bet) && !(is_float($bet) && floor($bet) == $bet)) fail('play.errors.wholeBet');
     $bet = (int) $bet;
     if ($bet < LIMITS['minBet']) fail('play.errors.minBet', ['min' => LIMITS['minBet']]);
-    // Upper limit comes from the player's Loyalty Card (check_loyalty_bet).
-    if ($bet > LIMITS['maxBet']) fail('play.errors.maxBet', ['max' => number_format(LIMITS['maxBet'])]);
+    // Upper limit: bet_limits() (card × membership, global cap, per-game cap), checked in begin().
     return $bet;
 }
 
@@ -87,7 +86,7 @@ function begin(Ctx $c, string $game, $bet, int $floatCount, array $extra = []): 
 {
     $bet = check_bet($bet);
     $currency = $c->currency;
-    check_loyalty_bet($c->user, $currency, $bet);
+    check_loyalty_bet($c->user, $currency, $bet, $game);
     check_cooldown($c, $game);
     try {
         $st = jdec((string) qv('SELECT game_start(?::uuid, ?, ?::numeric, ?::currency_code)', [$c->user['id'], $game, (string) $bet, $currency]));
@@ -420,7 +419,7 @@ function crash_start(Ctx $c, array $a): array
     $auto = !empty($a['autoCashout']) ? floor(((float) $a['autoCashout']) * 100) / 100 : null;
     if ($auto !== null && !($auto >= CRASH_MIN_CASHOUT && $auto <= 10000)) fail('play.crash.minCashout', ['min' => number_format(CRASH_MIN_CASHOUT, 2)]);
     $round = begin($c, 'crash', $a['bet'] ?? null, 1, ['autoCashout' => $auto]);
-    $round['point'] = $round['control'] === 'win' ? 1000 : ($round['control'] === 'loss' ? 1 : crash_point($round['floats'][0]));
+    $round['point'] = $round['control'] === 'win' ? min(1000, crash_cfg()['maxMult']) : ($round['control'] === 'loss' ? 1 : crash_point_cfg($round['floats'][0]));
     save_open($round);
     return ['id' => $round['id'], 'startedAt' => $round['startedAt'], 'autoCashout' => $auto];
 }
@@ -465,7 +464,8 @@ function crash_cashout(Ctx $c, array $a): array
 /** Global round id in the session detail (history links to the shared round). */
 function crash_detail(array $round): array
 {
-    return empty($round['globalRound']) ? [] : ['round' => $round['globalRound']];
+    $c = crash_cfg();
+    return (empty($round['globalRound']) ? [] : ['round' => $round['globalRound']]) + ['curve' => ['max' => $c['maxMult'], 'edge' => $c['edge'], 'tail' => $c['tail']]];
 }
 
 // ───────────────────────────── Mines ─────────────────────────────

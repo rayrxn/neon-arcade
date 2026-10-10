@@ -95,6 +95,7 @@ function user_view(array $u, array $profile = []): array
         'loginHistory' => [],
         'warnings' => [],
         'equipped' => (object) ($profile['equipped'] ?? []),
+        'status' => $profile['status'] ?? null, 'bio' => $profile['bio'] ?? null,
         'server' => true,
     ] + (array_key_exists('loyalty_xp', $u) ? user_extra_fields($u, $profile) : []);
 }

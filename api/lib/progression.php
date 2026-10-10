@@ -486,7 +486,7 @@ function claim_daily_reward(string $userId, array &$p, array &$meta, int $now): 
     q('INSERT INTO daily_claims (user_id, claim_day, streak_day, streak) VALUES (?, ?, ?, ?)', [$userId, local_dt($now)->format('Y-m-d'), $def['day'], $state['streak'] + 1]);
     log_event('DAILY_CLAIMED', $userId, ['day' => $def['day'], 'streak' => $state['streak'] + 1]);
     notify($userId, 'daily', ['day' => $def['day'], 'rewards' => $granted]);
-    add_loyalty_xp($userId, 20, 'daily', $today);
+    add_loyalty_xp($userId, LXP_REWARDS['daily'], 'daily', $today);
     commit_out($userId, $p, $meta, $out, false, $now);
     return ['day' => $def['day'], 'rewards' => $granted, 'bonus' => round($bonus, 3)] + $out;
 }
@@ -512,7 +512,7 @@ function claim_quest(string $userId, array &$p, array &$meta, string $scope, str
         wallet_post($userId, 'AC', $def['reward']['AC'], 'reward', 'quest', 'quest', "$scope:$questId", null, "quest:$scope:{$bucket['period']}:$questId");
     }
     log_event('QUEST_CLAIMED', $userId, ['scope' => $scope, 'quest' => $questId]);
-    add_loyalty_xp($userId, $scope === 'weekly' ? 60 : 15, 'quest', "$scope:$questId");
+    add_loyalty_xp($userId, $scope === 'weekly' ? LXP_REWARDS['questWeekly'] : LXP_REWARDS['questDaily'], 'quest', "$scope:$questId");
     commit_out($userId, $p, $meta, $out, false, $now);
     return ['reward' => $def['reward']] + $out;
 }
