@@ -511,10 +511,18 @@ function crash_current(int $now): array
     $seed = rand_hex(32);
     $id = (int) qv("SELECT nextval(pg_get_serial_sequence('crash_rounds', 'id'))");
     $point = crash_round_point($seed, $id);
+    // Event round set by the Owner (Admin → Settings → Crash): fixed point, flagged as forced.
+    $sched = kv_get('crash_sched');
+    $forced = isset($sched['rounds'][(string) $id]);
+    if ($forced) {
+        $point = max(1.0, min(crash_cfg()['maxMult'], (float) $sched['rounds'][(string) $id]));
+        unset($sched['rounds'][(string) $id]);
+        kv_set('crash_sched', $sched);
+    }
     $start = $now + CRASH_BET_MS;
     $crashAt = $start + (int) ceil(crash_time_of($point));
-    q('INSERT INTO crash_rounds (id, server_seed, seed_hash, point, start_at, crash_at) VALUES (?, ?, ?, ?, to_timestamp(? / 1000.0), to_timestamp(? / 1000.0))',
-        [$id, $seed, hash('sha256', $seed), (string) $point, $start, $crashAt]);
+    q('INSERT INTO crash_rounds (id, server_seed, seed_hash, point, start_at, crash_at, forced) VALUES (?, ?, ?, ?, to_timestamp(? / 1000.0), to_timestamp(? / 1000.0), ?)',
+        [$id, $seed, hash('sha256', $seed), (string) $point, $start, $crashAt, $forced ? 't' : 'f']);
     return q1('SELECT * FROM crash_rounds WHERE id = ?', [$id]);
 }
 
@@ -580,8 +588,8 @@ function crash_state(?array $me): array
             unset($v);
         }
     }
-    $history = array_map(fn($h) => ['id' => (int) $h['id'], 'point' => num($h['point']), 'seed' => $h['server_seed'], 'hash' => $h['seed_hash']],
-        q('SELECT id, point, server_seed, seed_hash FROM crash_rounds WHERE crash_at <= now() ORDER BY id DESC LIMIT 20')->fetchAll());
+    $history = array_map(fn($h) => ['id' => (int) $h['id'], 'point' => num($h['point']), 'seed' => $h['server_seed'], 'hash' => $h['seed_hash'], 'event' => $h['forced'] === true || $h['forced'] === 't'],
+        q('SELECT id, point, server_seed, seed_hash, forced FROM crash_rounds WHERE crash_at <= now() ORDER BY id DESC LIMIT 20')->fetchAll());
     $mine = $me ? q1("SELECT b.session_id FROM crash_bets b JOIN game_sessions s ON s.id = b.session_id WHERE b.round_id = ? AND b.user_id = ? AND s.status = 'OPEN'", [$r['id'], $me['id']]) : null;
     return [
         'round' => [
