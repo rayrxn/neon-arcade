@@ -170,3 +170,91 @@ function cross_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 
 function pump_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'pump'); }
 function pump_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'pump'); }
 function pump_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'pump'); }
+
+// ───────────────────────────── Tarot ─────────────────────────────
+// Three cards are drawn (with replacement) from the 22 major arcana. Each card has a multiplier for the chosen
+// risk; the payout is the product of the three, floored to 2 decimals. Mean card value = 0.97^(1/3) → ≈ 97% RTP.
+const TAROT_CARDS = ['tower', 'death', 'devil', 'hanged', 'moon', 'hermit', 'fool', 'temperance', 'justice', 'hierophant', 'priestess', 'strength', 'emperor', 'empress', 'lovers', 'chariot', 'magician', 'judgement', 'wheel', 'star', 'sun', 'world'];
+const TAROT_PAY = [
+    'low' => [0.27, 0.46, 0.55, 0.64, 0.73, 0.73, 0.82, 0.82, 0.91, 0.91, 0.91, 0.91, 1.0, 1.0, 1.09, 1.09, 1.18, 1.28, 1.37, 1.46, 1.64, 2.0],
+    'medium' => [0.0, 0.15, 0.3, 0.37, 0.44, 0.52, 0.59, 0.67, 0.74, 0.74, 0.74, 0.89, 0.89, 0.96, 1.11, 1.19, 1.33, 1.48, 1.63, 1.85, 2.22, 2.96],
+    'high' => [0.0, 0.0, 0.0, 0.0, 0.0, 0.12, 0.18, 0.3, 0.3, 0.48, 0.6, 0.6, 0.72, 0.89, 0.89, 1.19, 1.49, 1.79, 2.09, 2.39, 2.98, 4.77],
+];
+
+function play_tarot(Ctx $c, array $a): array
+{
+    $risk = (string) ($a['risk'] ?? '');
+    if (!isset(TAROT_PAY[$risk])) fail('play.errors.invalid');
+    $round = begin($c, 'tarot', $a['bet'] ?? null, 3);
+    $pick = fn($f) => array_map(fn($x) => min(21, (int) floor($x * 22)), $f);
+    $mult = fn($idx) => floor(TAROT_PAY[$risk][$idx[0]] * TAROT_PAY[$risk][$idx[1]] * TAROT_PAY[$risk][$idx[2]] * 100) / 100;
+    $idx = $pick(forced($round, 3, fn($f) => $mult($pick($f)) > 1));
+    $m = $mult($idx);
+    $cards = array_map(fn($i) => ['card' => TAROT_CARDS[$i], 'mult' => TAROT_PAY[$risk][$i]], $idx);
+    return ['cards' => $cards, 'multiplier' => $m]
+        + finish($c, $round, $m, $m > 1 ? 'win' : ($m == 1 ? 'push' : 'loss'), ['risk' => $risk, 'cards' => array_column($cards, 'card')]);
+}
+
+
+// ───────────────────────────── Sweet (tumble slot) ─────────────────────────────
+// 6×5 grid. 8+ of the same symbol anywhere pays; winners vanish, the rest falls, new symbols drop in (max 20 tumbles).
+// Bomb symbols carry ×2–×100; at the end of a winning spin the win is multiplied by the sum of bombs on the grid.
+// Pays are calibrated by api/tests/sweet_rtp.php to ≈ 96.5% RTP. Win capped at ×5000.
+const SWEET_COLS = 6;
+const SWEET_ROWS = 5;
+const SWEET_FLOATS = 1300;
+const SWEET_MAX = 5000;
+const SWEET_WEIGHTS = [90, 85, 80, 75, 55, 45, 35, 25, 3]; // 0–7 symbols, 8 = bomb
+const SWEET_BOMBS = [2, 2, 3, 3, 4, 5, 8, 10, 15, 25, 50, 100];
+const SWEET_PAY_SCALE = 0.24; // measured: 0.2467 → 98.5% over 500k spins, so 0.24 ≈ 96%
+const SWEET_PAY = [ // [8–9, 10–11, 12+] × bet, before SWEET_PAY_SCALE
+    [0.25, 0.75, 2], [0.4, 0.9, 4], [0.5, 1, 5], [0.8, 1.2, 8],
+    [1, 1.5, 10], [1.5, 2, 12], [2, 5, 15], [10, 25, 50],
+];
+
+function sweet_spin(array $f, float $scale = SWEET_PAY_SCALE): array
+{
+    $i = 0;
+    $next = function () use (&$f, &$i): float { return $f[$i++] ?? 0.5; };
+    $total = array_sum(SWEET_WEIGHTS);
+    $draw = function () use ($next, $total): array {
+        $r = $next() * $total;
+        foreach (SWEET_WEIGHTS as $s => $w) { if ($r < $w) break; $r -= $w; }
+        return $s === 8 ? ['s' => 8, 'b' => SWEET_BOMBS[min(11, (int) floor($next() * 12))]] : ['s' => $s];
+    };
+    $grid = [];
+    for ($c = 0; $c < SWEET_COLS; $c++) for ($r = 0; $r < SWEET_ROWS; $r++) $grid[$c][$r] = $draw();
+    $steps = [];
+    $win = 0.0;
+    for ($t = 0; $t < 20; $t++) {
+        $count = array_fill(0, 8, 0);
+        foreach ($grid as $col) foreach ($col as $cell) if ($cell['s'] < 8) $count[$cell['s']]++;
+        $wins = [];
+        foreach ($count as $s => $n) if ($n >= 8) {
+            $pay = round(SWEET_PAY[$s][$n >= 12 ? 2 : ($n >= 10 ? 1 : 0)] * $scale, 4);
+            $wins[] = ['s' => $s, 'n' => $n, 'pay' => $pay];
+            $win += $pay;
+        }
+        $steps[] = ['grid' => $grid, 'wins' => $wins];
+        if (!$wins) break;
+        $gone = array_column($wins, 's');
+        for ($c = 0; $c < SWEET_COLS; $c++) {
+            $keep = array_values(array_filter($grid[$c], fn($cell) => !in_array($cell['s'], $gone, true)));
+            $fresh = [];
+            for ($k = count($keep); $k < SWEET_ROWS; $k++) $fresh[] = $draw();
+            $grid[$c] = array_merge($fresh, $keep);
+        }
+    }
+    $bombs = 0;
+    if ($win > 0) foreach (end($steps)['grid'] as $col) foreach ($col as $cell) if ($cell['s'] === 8) $bombs += $cell['b'];
+    $mult = min(SWEET_MAX, floor($win * ($bombs > 0 ? $bombs : 1) * 100) / 100);
+    return ['steps' => $steps, 'base' => round($win, 2), 'bombs' => $bombs, 'mult' => $mult];
+}
+
+function play_sweet(Ctx $c, array $a): array
+{
+    $round = begin($c, 'sweet', $a['bet'] ?? null, SWEET_FLOATS);
+    $spin = sweet_spin(forced($round, SWEET_FLOATS, fn($f) => sweet_spin($f)['mult'] > 1));
+    $m = $spin['mult'];
+    return $spin + finish($c, $round, $m, $m > 1 ? 'win' : ($m == 1 ? 'push' : 'loss'), ['tumbles' => count($spin['steps']) - 1, 'bombs' => $spin['bombs']]);
+}
