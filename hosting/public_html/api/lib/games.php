@@ -231,6 +231,8 @@ function finish(Ctx $c, array $round, $multiplier, string $result, array $detail
     if (!$valid) raise_flag($round['userId'], 'invalidState', 'critical', $round['id'], "≤ {$max}×", "{$multiplier}× ($result)");
     if ($valid && empty($round['isTest']) && $payout > 0) {
         $session['payoutTxId'] = wallet_post($round['userId'], $cur, $payout, 'win', 'game', 'game', null, $round['id'], 'game:' . $round['id'] . ':payout');
+        $gacor = luck_bonus($round['userId'], $cur, (float) $round['bet'], (float) $payout, $round['id']);
+        if ($gacor > 0) $session['gacorBonus'] = $gacor;
         if ($cur === 'AC') $c->meta['totalWon'] = round2($c->meta['totalWon'] + $payout);
         $c->meta['wins'] = ($c->meta['wins'] ?? 0) + 1;
         if ($cur === 'AC' && (empty($c->meta['biggestWin']) || $payout > $c->meta['biggestWin']['amount'])) {

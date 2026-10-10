@@ -86,6 +86,7 @@ function chat_view(array $m): array
     $data = jdec($m['data'] ?? null, []);
     $v = ['id' => $m['id'], 'type' => $m['type'], 'userId' => $m['user_id'], 'text' => $m['body'], 'at' => iso_to_ms($m['created_at']), 'flagged' => (bool) $m['flagged'], 'badge' => $m['badge'], 'reports' => (int) ($m['reports'] ?? 0), 'room' => $m['room'] ?? 'global'];
     if (!empty($data['jackpotId'])) $v['jackpotId'] = $data['jackpotId'];
+    if ($m['type'] === 'mod') $v['mod'] = $data;
     if ($m['deleted_at']) $v['deleted'] = ['by' => username_of($m['deleted_by']), 'at' => iso_to_ms($m['deleted_at']), 'reason' => $m['delete_reason']];
     return $v;
 }
@@ -242,7 +243,7 @@ function sync_view(array $me): array
         'users' => $users,
         'progress' => (object) $progress,
         'platform' => [
-            'chat' => $chat, 'hidden' => (object) [$me['id'] => $hidden], 'presence' => (object) $presence, 'jackpots' => $jackpots,
+            'chat' => $chat, 'hidden' => (object) [$me['id'] => $hidden], 'presence' => (object) $presence, 'jackpots' => $jackpots, 'gacor' => luck_public($me),
             'friendships' => $friendships, 'blocks' => (object) $blocks, 'favorites' => (object) $favorites, 'chatSettings' => ['slowMode' => $slow],
             'codeUsage' => (object) code_usage_view(), 'seededAt' => 1, 'catalog' => catalog_view() + ['pass' => pass_catalog()],
             'live' => live_results(), 'vipRoom' => $vipRoom,

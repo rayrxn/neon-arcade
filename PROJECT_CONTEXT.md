@@ -39,7 +39,7 @@ src/components/loyalty/LoyaltyCard.jsx + index.css (lc-* classes)
 tools/deploy.sh          builds and pushes branch `deploy`; --out DIR assembles locally
 tools/owner-console.php  CLI console (--set-key / --hash)
 tools/hosting/           neon-sync.sh (cron), after-sync.sh (migrations), release-reset.php, public_html-extra/ (cPanel files)
-hosting/public_html/     mirror of the deployed public_html (build a51eed9, v2.1.0)
+hosting/public_html/     mirror of the deployed public_html (build e94275e, v2.2.0)
 api/tests/*.php, tests/  test suites
 ```
 Coupling to watch: permissions exist in 3 places (DB `role_permissions`, `src/config/roles.js`, `require_user_perm` calls). Game limits: `bet_limits()` (platform2) + SQL `game_start` + `games` table + `GameKit.useMaxBet`. Any new i18n key needs both `phase13.en.js` and `phase13.id.js`. `sync_view` is called every poll — keep it cheap (it now calls `deliver_announcements()`).
