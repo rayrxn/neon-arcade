@@ -26,7 +26,8 @@ function ensure() {
     master.connect(ctx.destination)
     applyVolumes()
   }
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+  // iOS uses 'interrupted' after calls / backgrounding; both need resume() from a user gesture.
+  if (ctx.state === 'suspended' || ctx.state === 'interrupted') ctx.resume().catch(() => {})
   return ctx
 }
 
@@ -311,22 +312,47 @@ export function setMusicDuck(inGame) {
   applyVolumes()
 }
 
-/** Dipanggil sekali di PlatformRuntime: aktifkan audio setelah interaksi pertama & ikuti prefs. */
+/**
+ * Dipanggil sekali di PlatformRuntime: aktifkan audio setelah interaksi & ikuti prefs.
+ * Mobile: iOS/Android only start audio inside a real gesture (touchend/click count, pointerdown not always),
+ * iOS mutes Web Audio on the silent switch unless the session is 'playback', and backgrounding suspends the
+ * context. So: listen on every gesture type until the context runs, and re-arm after the tab comes back.
+ */
 export function initSound() {
   if (typeof window === 'undefined') return () => {}
+  const EVENTS = ['pointerdown', 'touchend', 'click', 'keydown']
+  let armed = false
   const unlock = () => {
     const { sound } = usePrefsStore.getState()
-    if (sound.music > 0 && !sound.muted && !sound.musicOff) {
-      ensure()
-      syncMusic()
+    if (sound.muted || (sound.musicOff && !(sound.sfx > 0))) return
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = 'playback'
+    } catch {
+      /* not supported */
     }
+    const c = ensure()
+    if (sound.music > 0 && !sound.musicOff) syncMusic()
+    if (c && c.state === 'running') disarm()
+    else if (c) c.resume().then(() => c.state === 'running' && disarm()).catch(() => {})
   }
-  window.addEventListener('pointerdown', unlock, { once: true })
-  window.addEventListener('keydown', unlock, { once: true })
+  const arm = () => {
+    if (armed) return
+    armed = true
+    EVENTS.forEach((e) => window.addEventListener(e, unlock, { passive: true }))
+  }
+  const disarm = () => {
+    armed = false
+    EVENTS.forEach((e) => window.removeEventListener(e, unlock))
+  }
+  const onVisible = () => {
+    if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running') arm()
+  }
+  arm()
+  document.addEventListener('visibilitychange', onVisible)
   const unsub = usePrefsStore.subscribe(() => applyVolumes())
   return () => {
-    window.removeEventListener('pointerdown', unlock)
-    window.removeEventListener('keydown', unlock)
+    disarm()
+    document.removeEventListener('visibilitychange', onVisible)
     unsub()
   }
 }

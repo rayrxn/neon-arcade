@@ -39,6 +39,7 @@ export default {
   },
   membership: { affixInSettings: 'Atur di Settings → Tampilan nama', perk: { monthly: 'Bonus bulanan' } },
   notifications: { filters: { system: 'Sistem' } },
+  openRound: { text: 'Ada ronde {game} yang belum selesai.', resume: 'Lanjutkan' },
   activity: {
     title: 'Aktivitas', error: 'Aktivitas gagal dimuat. Coba lagi nanti.', empty: 'Belum ada aktivitas', emptyBody: 'Game, hadiah, dan login 90 hari terakhir muncul di sini.',
     loginOk: 'Login berhasil', loginFail: 'Percobaan login gagal', lxp: 'Loyalty XP · {source}',

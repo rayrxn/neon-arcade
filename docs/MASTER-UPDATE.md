@@ -65,9 +65,9 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [x] Feature flags OFF / TESTER ONLY / VIP ONLY / PUBLIC (backend enforced)
 - [x] Notification center categories
 - [x] Activity history (games, AG, LXP, rewards, cases, bets, security)
-- [ ] Session recovery
+- [x] Session recovery
 - [x] Error monitoring (API errors, failed requests, client crashes, auth failures)
-- [ ] Music on mobile/tablet (unlock on gesture, fallback)
+- [~] Music on mobile/tablet (unlock on gesture, fallback)
 - [~] Crash max ×10,000 with admin-configured curve/presets
 - [x] Anti-bot captcha (Cloudflare Turnstile when keys are configured, built-in challenge otherwise)
 

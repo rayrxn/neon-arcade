@@ -11,8 +11,8 @@
 | T7 | Reward rebalance (daily/weekly/monthly/one-time AC/AG) in central config | done (migration 014, v2.1) | medium | – | values in one config; tests updated |
 | T8 | Notification center categories + filters | done (System group, unread count per filter) | medium | – | categories on /notifications |
 | T9 | Activity history page (games, AG, LXP, rewards, cases, security) | done (`GET activity`, History → Activity) | medium | – | page lists server events |
-| T10 | Session recovery UI (resume open round after reload) | planned | medium | – | reload mid-round restores state |
-| T11 | Music on mobile (unlock on gesture) | planned | low | – | plays on iOS/Android after tap |
+| T10 | Session recovery UI (resume open round after reload) | done (in-game resume + global OpenRoundBanner) | medium | – | reload mid-round restores state |
+| T11 | Music on mobile (unlock on gesture) | done-unverified (needs a real iOS/Android tap test) | low | – | plays on iOS/Android after tap |
 | T12 | New games, each server-settled (Keno, Pump, Tower, Cross the Road, Sweet, Tarot first; then Horse shared rounds; Chess/Racing PvP; skill arcades Snake/Slice/Layer/Moles with capped XP) | planned | high | T3 (flags per game) | API tests per game + RTP check in QA |
 | T13 | Case opening + battle expansion | planned | medium | – | new cases in catalog, tests |
 | T14 | Football predictions | blocked | low | football-data.org token from user | real fixtures, no fabricated data |

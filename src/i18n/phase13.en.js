@@ -39,6 +39,7 @@ export default {
   },
   membership: { affixInSettings: 'Edit in Settings → Name display', perk: { monthly: 'Monthly bonus' } },
   notifications: { filters: { system: 'System' } },
+  openRound: { text: 'You have an unfinished {game} round.', resume: 'Resume' },
   activity: {
     title: 'Activity', error: 'Could not load activity. Try again later.', empty: 'Nothing here yet', emptyBody: 'Your games, rewards and sign-ins from the last 90 days show up here.',
     loginOk: 'Signed in', loginFail: 'Failed sign-in attempt', lxp: 'Loyalty XP · {source}',
