@@ -8,7 +8,7 @@
 | BUG-004 | Dark banners unreadable in light mode | fixed-unverified (partial) | medium | `src/index.css` light block |
 | BUG-005 | Crash curve has no automated tests | fixed (stage8: cap, presets, custom/edge/preset validation, perms, audit) | medium | `v2core.php crash_*`, stage8 |
 | BUG-006 | Feature flags not enforced by feature endpoints | fixed (`FEATURE_ROUTES` guard in router + stage8 tests) | medium | chat/transfers/shop/… routes |
-| BUG-007 | GitHub mirror not 100% equal to host public_html | confirmed | low | `deploy.sh`, `hosting/public_html` |
+| BUG-007 | GitHub mirror not 100% equal to host public_html | fixed (`deploy.sh --out` adds `public_html-extra/`) | low | `deploy.sh`, `hosting/public_html` |
 | BUG-008 | Brief window where new DB ran with old site code | resolved | low | sync order main vs deploy |
 | BUG-009 | Vivace piano-key strip renders slightly outside frame | suspected | low | `.lc-vv-keys` |
 

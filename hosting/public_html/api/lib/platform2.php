@@ -161,7 +161,7 @@ function check_loyalty_bet(array $u, string $currency, int $bet, ?string $game =
 
 const LXP_GAME_DAILY_CAP = 5000; // fallback; each card sets its own cap (perks.lxpCap)
 /** Central Loyalty XP rewards outside games (one place to rebalance). */
-const LXP_REWARDS = ['daily' => 50, 'questDaily' => 30, 'questWeekly' => 150];
+const LXP_REWARDS = ['daily' => 100, 'questDaily' => 40, 'questWeekly' => 200];
 
 /** Loyalty XP from a round: 1 per 1,000 AC wagered (AG valued at the converter rate), max 250 per round. */
 function game_lxp(float $valueAc): int

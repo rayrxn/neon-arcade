@@ -189,7 +189,7 @@ function admin_v2_action(array $me, string $name, array $a): ?array
             $next = [
                 'name' => isset($p['name']) ? v_str($p['name'], 2, 24) : $c['name'],
                 'xp_required' => $slug === 'none' ? 0 : (isset($p['xpRequired']) ? v_int($p['xpRequired'], 1, 1000000000) : (int) $c['xp_required']),
-                'max_bet_ac' => isset($p['maxBetAC']) ? v_num($p['maxBetAC'], 1, 100000000) : (float) $c['max_bet_ac'],
+                'max_bet_ac' => isset($p['maxBetAC']) ? v_num($p['maxBetAC'], 1, 1500000000) : (float) $c['max_bet_ac'],
                 'max_bet_ag' => isset($p['maxBetAG']) ? v_num($p['maxBetAG'], 1, 1000000) : (float) $c['max_bet_ag'],
                 'color' => isset($p['color']) ? v_color($p['color']) : $c['color'],
                 'benefits' => isset($p['benefits']) ? v_list($p['benefits']) : jdec($c['benefits'], []),
@@ -197,7 +197,7 @@ function admin_v2_action(array $me, string $name, array $a): ?array
                     'dailyAc' => v_int($p['perks']['dailyAc'] ?? 0, 0, 100000000), 'dailyAg' => v_int($p['perks']['dailyAg'] ?? 0, 0, 100000),
                     'convertPct' => v_int($p['perks']['convertPct'] ?? 0, 0, 10000), 'shopDiscount' => v_int($p['perks']['shopDiscount'] ?? 0, 0, 90),
                     'lxpPct' => v_int($p['perks']['lxpPct'] ?? 0, 0, 500),
-                ] : []),
+                ] + array_map(fn($v) => v_int($v, 0, 1000000000), array_intersect_key($p['perks'], array_flip(['weeklyAc', 'weeklyAg', 'monthlyAc', 'monthlyAg']))) : []),
             ];
             // XP thresholds must keep the card order.
             foreach (cards_all() as $o) {
