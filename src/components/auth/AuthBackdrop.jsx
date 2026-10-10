@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { usePotato } from '@/components/runtime/PerformanceController'
 
 /**
  * Latar halaman awal: titik-titik cahaya yang melayang pelan + garis tipis antar titik yang berdekatan.
@@ -6,11 +7,13 @@ import { useEffect, useRef } from 'react'
  */
 export default function AuthBackdrop() {
   const ref = useRef(null)
+  const potato = usePotato()
   useEffect(() => {
     const canvas = ref.current
     const g = canvas?.getContext?.('2d')
     if (!g) return
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    // Potato mode: draw the dots once, no animation loop.
+    const reduce = potato || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const colors = ['34,225,255', '168,85,247', '250,204,21']
     let w = 0, h = 0, dpr = 1, raf = 0, dots = []
     const resize = () => {
@@ -73,7 +76,7 @@ export default function AuthBackdrop() {
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVis)
     }
-  }, [])
+  }, [potato])
   return (
     <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" aria-hidden>
       <div className="auth-aurora auth-aurora--a" />

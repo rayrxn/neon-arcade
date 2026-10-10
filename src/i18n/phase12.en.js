@@ -22,4 +22,15 @@ export default {
     prankNote: 'Your balance is untouched. The account details you typed were never sent or saved, and they’re already cleared.',
     prankOk: 'You got me 😅',
   },
+  settings: { performance: { title: 'Potato mode', description: 'Lighter visuals for slower phones and laptops. Games play the same.' } },
+  perf: {
+    auto: 'Auto', autoHint: 'Turns on by itself if this device struggles',
+    on: 'Potato mode', onHint: 'No blur, glow or background animation',
+    off: 'Full effects', offHint: 'Every animation and effect, always',
+    statusOn: 'Potato mode is on. Blur, glows and decorative animation are off.',
+    statusAuto: 'Potato mode turned on automatically ({why}).',
+    whySpec: 'this device has little memory or few cores', whyFps: 'animations were running below 40 fps',
+    statusOff: 'Full effects are on.', statusChecking: 'Checking how smoothly this device runs…', statusFast: 'This device runs smoothly, full effects are on.',
+    autoOnTitle: 'Potato mode turned on 🥔', autoOnBody: 'This device was lagging, so we switched off heavy effects. Change it in Settings.',
+  },
 }

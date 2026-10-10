@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp } from 'lucide-react'
 import clsx from 'clsx'
+import { usePotato } from '@/components/runtime/PerformanceController'
 
 /** Kartu demo di halaman awal: ronde Crash yang naik lalu meledak, berulang. Hanya animasi, tanpa saldo. */
 const POINTS = [2.41, 1.37, 5.82, 1.12, 3.06, 12.4, 1.68]
@@ -9,6 +10,7 @@ export default function LiveRound({ label, crashedLabel }) {
   const [round, setRound] = useState(0)
   const [m, setM] = useState(1)
   const [crashed, setCrashed] = useState(false)
+  const potato = usePotato()
   useEffect(() => {
     const point = POINTS[round % POINTS.length]
     const start = performance.now()
@@ -22,11 +24,13 @@ export default function LiveRound({ label, crashedLabel }) {
         return
       }
       setM(v)
-      raf = requestAnimationFrame(step)
+      // Potato mode: ~8 updates a second instead of every frame.
+      if (potato) timer = setTimeout(() => step(performance.now()), 120)
+      else raf = requestAnimationFrame(step)
     }
     raf = requestAnimationFrame(step)
     return () => { cancelAnimationFrame(raf); clearTimeout(timer) }
-  }, [round])
+  }, [round, potato])
   const history = POINTS.slice(0, round % POINTS.length).slice(-4)
   return (
     <motion.div

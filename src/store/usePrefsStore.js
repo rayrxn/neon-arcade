@@ -7,6 +7,8 @@ import { persist, createJSONStorage } from 'zustand/middleware'
  */
 export const LANGUAGES = ['id', 'en']
 export const APPEARANCES = ['dark', 'light', 'system']
+/** Potato mode: 'auto' turns it on for weak devices / low frame rate, 'on' always, 'off' never. */
+export const PERFORMANCE = ['auto', 'on', 'off']
 export const NOTIFICATION_KEYS = ['transfers', 'redeem', 'jackpots', 'mentions', 'progress', 'friends']
 /** sfx = volume game, ui = volume antarmuka (klik, notifikasi, chat). */
 const DEFAULT_SOUND = { master: 0.7, sfx: 0.8, ui: 0.7, music: 0.4, muted: false, musicOff: false, track: null }
@@ -21,6 +23,10 @@ export const usePrefsStore = create(
       sound: DEFAULT_SOUND,
       betCurrency: 'AC',
       sidebarCollapsed: false,
+      performance: 'auto',
+      autoPotato: null, // result of the automatic check on this device: null = not measured yet
+      setPerformance: (performance) => PERFORMANCE.includes(performance) && set({ performance }),
+      setAutoPotato: (autoPotato) => set({ autoPotato: !!autoPotato }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
       setLanguage: (language) => LANGUAGES.includes(language) && set({ language }),

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, Globe, Volume2, VolumeX, KeyRound, Lock, LogOut, Mail, MailCheck, Monitor, Moon, Palette, Pencil, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react'
+import { Bell, Check, Globe, Volume2, VolumeX, KeyRound, Gauge, Lock, LogOut, Mail, MailCheck, Rabbit, Sparkles as SparklesIcon, Zap, Monitor, Moon, Palette, Pencil, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react'
 import clsx from 'clsx'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -15,6 +15,7 @@ import { errorKey } from '@/utils/errors'
 import { formatDateTime } from '@/utils/format'
 import { play } from '@/services/sound'
 import { sendVerificationEmail } from '@/services/account'
+import { lowSpecDevice, usePotato } from '@/components/runtime/PerformanceController'
 import { SERVER_MODE } from '@/config/runtime'
 import { useT } from '@/i18n'
 
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'account', icon: UserRound },
   { id: 'appearance', icon: Palette },
   { id: 'language', icon: Globe },
+  { id: 'performance', icon: Gauge },
   { id: 'notifications', icon: Bell },
   { id: 'sound', icon: Volume2 },
   { id: 'security', icon: ShieldCheck },
@@ -222,7 +224,8 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   const user = useCurrentUser()
   const logout = useAuthStore((s) => s.logout)
-  const { language, appearance, notifications, setLanguage, setAppearance, setNotification } = usePrefsStore()
+  const { language, appearance, notifications, setLanguage, setAppearance, setNotification, performance: perfMode, setPerformance, autoPotato } = usePrefsStore()
+  const potato = usePotato()
   const [confirm, setConfirm] = useState(null) // 'logout' | 'reset'
 
   const resetLocalData = () => {
@@ -275,6 +278,20 @@ export default function SettingsPage() {
             <OptionCard active={language === 'id'} onClick={() => setLanguage('id')} label="Bahasa Indonesia" hint="ID" />
             <OptionCard active={language === 'en'} onClick={() => setLanguage('en')} label="English" hint="EN" />
           </div>
+        </Section>
+
+        <Section id="performance" title={t('settings.performance.title')} description={t('settings.performance.description')}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <OptionCard active={perfMode === 'auto'} onClick={() => setPerformance('auto')} icon={SparklesIcon} label={t('perf.auto')} hint={t('perf.autoHint')} />
+            <OptionCard active={perfMode === 'on'} onClick={() => setPerformance('on')} icon={Rabbit} label={t('perf.on')} hint={t('perf.onHint')} />
+            <OptionCard active={perfMode === 'off'} onClick={() => setPerformance('off')} icon={Zap} label={t('perf.off')} hint={t('perf.offHint')} />
+          </div>
+          <p className={clsx('mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs ring-1 ring-inset', potato ? 'bg-neon-gold/[0.06] text-slate-200 ring-neon-gold/20' : 'bg-white/[0.03] text-slate-400 ring-white/[0.06]')}>
+            <span aria-hidden="true">{potato ? '🥔' : '✨'}</span>
+            {potato
+              ? perfMode === 'on' ? t('perf.statusOn') : t('perf.statusAuto', { why: lowSpecDevice() ? t('perf.whySpec') : t('perf.whyFps') })
+              : perfMode === 'off' ? t('perf.statusOff') : autoPotato === null ? t('perf.statusChecking') : t('perf.statusFast')}
+          </p>
         </Section>
 
         <Section id="notifications" title={t('settings.notifications.title')} description={t('settings.notifications.description')}>

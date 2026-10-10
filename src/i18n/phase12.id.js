@@ -22,4 +22,15 @@ export default {
     prankNote: 'Saldomu aman, tidak berkurang. Data rekening yang kamu ketik tidak pernah dikirim atau disimpan, dan sudah dihapus.',
     prankOk: 'Kena deh 😅',
   },
+  settings: { performance: { title: 'Potato mode', description: 'Tampilan lebih ringan untuk HP dan laptop yang lambat. Game tetap sama.' } },
+  perf: {
+    auto: 'Otomatis', autoHint: 'Menyala sendiri kalau perangkat ini kewalahan',
+    on: 'Potato mode', onHint: 'Tanpa blur, glow, dan animasi latar',
+    off: 'Efek penuh', offHint: 'Semua animasi dan efek, selalu',
+    statusOn: 'Potato mode aktif. Blur, glow, dan animasi dekorasi dimatikan.',
+    statusAuto: 'Potato mode aktif otomatis ({why}).',
+    whySpec: 'memori atau core perangkat ini kecil', whyFps: 'animasi berjalan di bawah 40 fps',
+    statusOff: 'Efek penuh aktif.', statusChecking: 'Mengecek seberapa lancar perangkat ini…', statusFast: 'Perangkat ini lancar, efek penuh aktif.',
+    autoOnTitle: 'Potato mode dinyalakan 🥔', autoOnBody: 'Perangkat ini sempat lag, jadi efek berat dimatikan. Bisa diubah di Pengaturan.',
+  },
 }

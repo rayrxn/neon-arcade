@@ -1028,3 +1028,26 @@
 /* Exchange prank */
 .prank-title { background: linear-gradient(90deg, #facc15, #f472b6, #22d3ee, #facc15); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: name-flow 2s linear infinite; filter: drop-shadow(0 4px 18px rgba(244, 114, 182, 0.45)); }
 @media (prefers-reduced-motion: reduce) { .prank-title { animation: none; } }
+
+/* ── Potato mode (html[data-potato]): no blur, no decorative animation, lighter shadows. Games keep their motion
+   (they animate with JS / canvas / framer-motion, not these CSS animations). Loading spinners keep spinning. ── */
+html[data-potato] *,
+html[data-potato] *::before,
+html[data-potato] *::after {
+  animation: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-potato] .animate-spin { animation: spin 1s linear infinite !important; }
+html[data-potato] .glass { background: var(--card-strong); box-shadow: none; }
+html[data-potato] .glass-strong { box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.6); }
+html[data-potato] .arcade-bg { background: none; }
+html[data-potato] .arcade-bg::before { -webkit-mask-image: none; mask-image: none; opacity: 0.5; }
+html[data-potato] .lc-shine, html[data-potato] .lc-glitch, html[data-potato] .role-tag__fx, html[data-potato] .role-chip__fx,
+html[data-potato] .event-banner__shine, html[data-potato] .update-banner__shine, html[data-potato] .pfx { display: none !important; }
+html[data-potato] .role-tag__text, html[data-potato] .role-chip__text, html[data-potato] .role-tag__icon, html[data-potato] .role-chip__icon { filter: none !important; }
+html[data-potato] .auth-aurora { display: none; }
+/* Potato: bars that relied on blur become solid; decorative glow blobs go away. */
+html[data-potato] .bg-ink-950\/80, html[data-potato] .bg-ink-950\/90 { background-color: rgb(var(--ink-950)); }
+html[data-potato] .blur-xl:not([class*="backdrop"]), html[data-potato] .blur-2xl, html[data-potato] .blur-3xl,
+html[data-potato] .member-card__glow, html[data-potato] .pfx-aurora { display: none !important; }

@@ -35,6 +35,7 @@ import { AchievementsAdmin, AnnouncementsAdmin, ChatAdmin, CodesAdmin, DailyAdmi
 import AppLayout from '@/components/layout/AppLayout'
 import RequireAuth from '@/components/routing/RequireAuth'
 import ThemeController from '@/components/runtime/ThemeController'
+import PerformanceController from '@/components/runtime/PerformanceController'
 import PlatformRuntime from '@/components/runtime/PlatformRuntime'
 import ServerGate from '@/components/runtime/ServerGate'
 import RootBoundary from '@/components/runtime/RootBoundary'
@@ -54,6 +55,7 @@ export default function App() {
     <>
       <div className="arcade-bg" aria-hidden />
       <ThemeController />
+      <PerformanceController />
       <RootBoundary>
       <ServerGate>
       <PlatformRuntime />
