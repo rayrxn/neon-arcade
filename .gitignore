@@ -1,5 +1,5 @@
 node_modules/
-dist/
+# dist/ is committed so GitHub mirrors what runs on the host
 tests/output/
 
 # Environment variables (JANGAN COMMIT!)
