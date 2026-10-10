@@ -161,7 +161,7 @@ check('Silver: 20 AG bet allowed', call('POST', 'game/dice', ['bet' => 20, 'targ
 cool();
 expect_error('Silver: 21 AG rejected', call('POST', 'game/dice', ['bet' => 21, 'target' => 50, 'over' => true, 'currency' => 'AG'], 'p1'), 'play.errors.loyaltyMax');
 check('loyalty XP log written', (int) qv("SELECT count(*) FROM loyalty_xp_log WHERE user_id = ? AND source = 'game'", [$P1]) >= 2);
-check('XP card thresholds: 5,000 → Silver, 25,000 → Gold', card_for_xp(4999) === 'none' && card_for_xp(5000) === 'silver' && card_for_xp(25000) === 'gold' && card_for_xp(1000000) === 'black');
+check('XP card thresholds (v2 curve): 2,500 → Silver, 15,000 → Gold, 75,000 → Platinum, 300,000 → Infinite, 1M → Black', card_for_xp(2499) === 'none' && card_for_xp(2500) === 'silver' && card_for_xp(15000) === 'gold' && card_for_xp(75000) === 'platinum' && card_for_xp(300000) === 'infinite' && card_for_xp(1000000) === 'black');
 check('owner sets Loyalty XP', admin('own', 'setLoyaltyXp', ['userId' => $P3, 'xp' => 30000, 'reason' => 'event reward'])['ok'] && extras('p3')['loyalty']['card'] === 'gold');
 check('owner assigns Black card (override)', admin('own', 'setLoyaltyCard', ['userId' => $P3, 'card' => 'black', 'mode' => 'override', 'reason' => 'partner'])['ok'] && extras('p3')['loyalty']['card'] === 'black');
 check('owner removes override → back to XP card', admin('own', 'setLoyaltyCard', ['userId' => $P3, 'card' => null, 'mode' => 'override', 'reason' => 'partner ended'])['ok'] && extras('p3')['loyalty']['card'] === 'gold');

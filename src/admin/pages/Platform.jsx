@@ -368,7 +368,7 @@ function ItemEditor({ item, onClose, ask }) {
           {f.kind === 'chatEffect' && <Field label={t('adm2.shop.color2')}><input type="color" value={f.style.color2 ?? f.style.color ?? '#22d3ee'} onChange={(e) => style({ color2: e.target.value, animated: true })} className="h-10 w-full rounded-lg bg-transparent" /></Field>}
           {f.kind === 'theme' && <Field label={t('adm2.shop.accent')}><input type="color" value={f.style.accent ?? '#22d3ee'} onChange={(e) => style({ accent: e.target.value })} className="h-10 w-full rounded-lg bg-transparent" /></Field>}
           {['badge', 'boost'].includes(f.kind) && <Field label={t('adm2.shop.glyph')}><input value={f.style.glyph ?? ''} onChange={(e) => style({ glyph: e.target.value })} className={inputCls} /></Field>}
-          {f.kind === 'profileEffect' && <Field label={t('adm2.shop.fx')}><Select value={f.style.kind ?? 'aurora'} onChange={(v) => style({ kind: v })} options={['aurora', 'scan', 'stars']} /></Field>}
+          {f.kind === 'profileEffect' && <Field label={t('adm2.shop.fx')}><Select value={f.style.kind ?? 'aurora'} onChange={(v) => style({ kind: v })} options={['aurora', 'scan', 'stars', 'notes']} /></Field>}
           {f.kind === 'emote' && <Field label={t('adm2.shop.emote')}><Select value={f.effect.emote ?? ''} onChange={(v) => effect({ emote: v })} options={[{ value: '', label: '—' }, ...catalog.emotes.map((e) => ({ value: e.code, label: `${e.glyph} :${e.code}:` }))]} /></Field>}
           {f.kind === 'boost' && (
             <>

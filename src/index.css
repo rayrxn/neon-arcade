@@ -236,6 +236,7 @@
 
 /* ───────── Staff tags (Owner, Admin, Moderator, Helper, Tester): each role has its own theme ───────── */
 @property --rt-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@property --spot { syntax: '<percentage>'; inherits: false; initial-value: 30%; }
 .role-tag {
   --rt-a: #94a3b8;
   --rt-b: #ffffff;
@@ -625,20 +626,78 @@
 .lc-face--silver { background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 45%, #e2e8f0 70%, #64748b 100%); }
 .lc-face--silver .lc-pattern { background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 3px); opacity: 0.6; }
 .lc-face--gold { background: linear-gradient(135deg, #fef3c7 0%, #f59e0b 40%, #fde68a 65%, #b45309 100%); color: #3b2405; }
-.lc-face--platinum { background: linear-gradient(135deg, #eef2ff 0%, #a5b4fc 38%, #e0e7ff 62%, #6366f1 100%); color: #1e1b4b; }
-.lc-face--infinite { background: radial-gradient(120% 140% at 0% 0%, #1d4ed8 0%, #0b1650 45%, #050a24 100%); color: #dbeafe; }
-.lc-face--infinite .lc-pattern {
-  opacity: 0.9;
+/* Platinum — guilloché engraving, holographic sheen, engraved inner border */
+.lc-face--platinum {
+  color: #1e1b4b;
+  background: linear-gradient(135deg, #f5f7ff 0%, #c7d2fe 30%, #eef2ff 52%, #a5b4fc 74%, #6366f1 100%);
+  box-shadow: 0 18px 40px -22px rgba(30, 27, 75, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+.lc-face--platinum .lc-pattern {
+  opacity: 0.5;
+  background:
+    repeating-radial-gradient(ellipse at 20% 50%, transparent 0 6px, rgba(79, 70, 229, 0.16) 6px 7px),
+    repeating-radial-gradient(ellipse at 80% 50%, transparent 0 6px, rgba(255, 255, 255, 0.4) 6px 7px);
+  mix-blend-mode: multiply;
+}
+.lc-holo {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.55; mix-blend-mode: overlay;
+  background: conic-gradient(from 200deg at 70% 40%, #f0abfc, #a5f3fc, #fde68a, #c4b5fd, #f0abfc);
+  background-size: 160% 160%; animation: lc-holo 9s ease-in-out infinite alternate;
+}
+@keyframes lc-holo { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+.lc-face--platinum .lc-tier { background: linear-gradient(90deg, #312e81, #6366f1 50%, #312e81); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lc-face--platinum .lc-chip { background-image: linear-gradient(90deg, transparent 32%, rgba(0, 0, 0, 0.2) 33%, transparent 34%, transparent 65%, rgba(0, 0, 0, 0.2) 66%, transparent 67%), linear-gradient(0deg, transparent 48%, rgba(0, 0, 0, 0.2) 49%, transparent 51%), linear-gradient(135deg, #f8fafc, #94a3b8 55%, #e2e8f0); }
+
+/* Infinite — deep space, nebula, twinkling stars, a glowing ∞ ribbon */
+.lc-face--infinite {
+  color: #dbeafe;
+  background: radial-gradient(140% 120% at 0% 0%, #1e3a8a 0%, #0b1650 42%, #040822 100%);
+  box-shadow: 0 20px 44px -22px rgba(29, 78, 216, 0.85), inset 0 0 0 1px rgba(147, 197, 253, 0.35);
+}
+.lc-nebula {
+  position: absolute; inset: -20%; z-index: -1; pointer-events: none; filter: blur(6px); opacity: 0.85;
+  background: radial-gradient(40% 35% at 70% 30%, rgba(129, 140, 248, 0.55), transparent 70%), radial-gradient(35% 30% at 25% 75%, rgba(56, 189, 248, 0.45), transparent 70%), radial-gradient(30% 25% at 55% 60%, rgba(236, 72, 153, 0.25), transparent 70%);
+  animation: lc-nebula 18s ease-in-out infinite alternate;
+}
+@keyframes lc-nebula { from { transform: translate(-3%, -2%) rotate(0deg); } to { transform: translate(3%, 2%) rotate(8deg); } }
+.lc-face--infinite .lc-pattern, .lc-stars {
+  position: absolute; inset: 0; z-index: -1; opacity: 0.9;
   background-image:
     radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #bfdbfe, transparent),
     radial-gradient(1.5px 1.5px at 40% 75%, #fff, transparent), radial-gradient(1px 1px at 85% 65%, #93c5fd, transparent),
     radial-gradient(1px 1px at 55% 45%, #fff, transparent), radial-gradient(1px 1px at 10% 80%, #bfdbfe, transparent);
 }
-.lc-face--black { background: linear-gradient(140deg, #18181b 0%, #050505 55%, #1f1f23 100%); color: #e5c07b; box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(229, 192, 123, 0.45); }
-.lc-face--black .lc-pattern { opacity: 0.25; background-image: repeating-linear-gradient(45deg, rgba(229, 192, 123, 0.25) 0 1px, transparent 1px 7px); }
-.lc-face--black .lc-shine { background: linear-gradient(115deg, transparent 35%, rgba(229, 192, 123, 0.28) 48%, transparent 60%); }
+.lc-stars {
+  background-image: radial-gradient(1.5px 1.5px at 33% 18%, #fff, transparent), radial-gradient(1px 1px at 62% 82%, #e0f2fe, transparent), radial-gradient(1.5px 1.5px at 90% 35%, #fff, transparent), radial-gradient(1px 1px at 8% 50%, #fff, transparent);
+  animation: lc-twinkle 3.4s ease-in-out infinite alternate;
+}
+@keyframes lc-twinkle { from { opacity: 0.25; } to { opacity: 1; } }
+.lc-inf-art { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
+.lc-inf-path { fill: none; stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 0 2px #93c5fd) drop-shadow(0 0 5px rgba(96, 165, 250, 0.8)); stroke-dasharray: 180; stroke-dashoffset: 180; opacity: 0.85; animation: lc-inf-draw 6s ease-in-out infinite; }
+@keyframes lc-inf-draw { 0% { stroke-dashoffset: 180; } 45%, 70% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -180; } }
+.lc-face--infinite .lc-tier { text-shadow: 0 0 10px rgba(147, 197, 253, 0.8); }
+.lc-face--infinite .lc-shine { background: linear-gradient(115deg, transparent 35%, rgba(191, 219, 254, 0.3) 48%, transparent 60%); }
+
+/* Black — carbon weave, gold foil rails, embossed monogram */
+.lc-face--black {
+  color: #e5c07b;
+  background: linear-gradient(140deg, #1c1c1f 0%, #070707 55%, #1f1f23 100%);
+  box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(229, 192, 123, 0.5);
+}
+.lc-face--black .lc-pattern {
+  opacity: 0.55;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.045) 25%, transparent 25% 50%, rgba(255, 255, 255, 0.045) 50% 75%, transparent 75%) 0 0 / 6px 6px,
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.35) 25%, transparent 25% 50%, rgba(0, 0, 0, 0.35) 50% 75%, transparent 75%) 0 0 / 6px 6px;
+}
+.lc-rails { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(100deg, transparent 58%, rgba(229, 192, 123, 0.75) 58.4%, rgba(229, 192, 123, 0.2) 59.6%, transparent 60%, transparent 63%, rgba(229, 192, 123, 0.45) 63.3%, transparent 64%); }
+.lc-monogram { position: absolute; z-index: -1; right: 9%; top: 50%; transform: translateY(-55%); font-family: 'Cinzel', 'Times New Roman', serif; font-weight: 900; font-size: 26cqw; letter-spacing: -0.04em; color: #0a0a0a; text-shadow: -1px -1px 0 rgba(255, 255, 255, 0.07), 1px 1px 0 rgba(229, 192, 123, 0.25); }
+.lc-face--black .lc-tier { font-family: 'Cinzel', 'Times New Roman', serif; background: linear-gradient(90deg, #e5c07b, #fff1c7 50%, #b8893a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lc-face--black .lc-shine { background: linear-gradient(115deg, transparent 35%, rgba(229, 192, 123, 0.3) 48%, transparent 60%); }
+.lc-face--black .lc-chip { background-image: linear-gradient(90deg, transparent 32%, rgba(0, 0, 0, 0.3) 33%, transparent 34%, transparent 65%, rgba(0, 0, 0, 0.3) 66%, transparent 67%), linear-gradient(0deg, transparent 48%, rgba(0, 0, 0, 0.3) 49%, transparent 51%), linear-gradient(135deg, #fff1c7, #b8893a 55%, #e5c07b); }
+.lc-face--sm .lc-monogram, .lc-face--sm .lc-inf-art, .lc-face--sm .lc-vivace-art, .lc-face--sm .lc-vv-frame, .lc-face--sm .lc-vv-keys { display: none; }
 .lc-face--custom { background: linear-gradient(135deg, color-mix(in srgb, var(--lc) 70%, white), var(--lc)); }
-@media (prefers-reduced-motion: reduce) { .lc-shine { animation: none; display: none; } }
+@media (prefers-reduced-motion: reduce) { .lc-shine { animation: none; display: none; } .lc-holo, .lc-nebula, .lc-stars, .lc-inf-path { animation: none; } .lc-inf-path { stroke-dashoffset: 0; } }
 
 /* ───────── Membership cards ───────── */
 .member-card--vip { background: linear-gradient(160deg, rgba(91, 33, 182, 0.35), rgba(20, 16, 40, 0.92) 55%); }
@@ -1077,3 +1136,95 @@ html[data-potato] .member-card__glow, html[data-potato] .pfx-aurora { display: n
 /* Turnstile challenge (only visible when Cloudflare needs the player to interact). */
 .captcha-overlay { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 100; }
 .captcha-overlay:empty { display: none; }
+
+
+/* Monarch polish: drifting gold dust */
+.lc-dust { position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.7;
+  background-image: radial-gradient(1px 1px at 15% 70%, #fde68a, transparent), radial-gradient(1.5px 1.5px at 45% 25%, #fbbf24, transparent), radial-gradient(1px 1px at 75% 80%, #fef3c7, transparent), radial-gradient(1px 1px at 88% 30%, #fbbf24, transparent), radial-gradient(1.5px 1.5px at 30% 45%, #fef3c7, transparent);
+  animation: lc-dust 8s linear infinite; }
+@keyframes lc-dust { from { transform: translateY(4%); opacity: 0.2; } 50% { opacity: 0.8; } to { transform: translateY(-6%); opacity: 0.2; } }
+
+/* ── Vivace: charcoal concert card. Silver staff, a melody that lights up note by note, treble-clef crest,
+   ornamental double frame with corner flourishes, piano-key edge, spotlight. Above Monarch in detail. ── */
+.lc-face--vivace {
+  color: #f1f5f9;
+  background:
+    radial-gradient(120% 90% at 50% -20%, rgba(248, 250, 252, 0.14), transparent 55%),
+    linear-gradient(160deg, #2a2d33 0%, #16181c 40%, #0b0c0e 72%, #1d2025 100%);
+  box-shadow: 0 26px 56px -24px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(226, 232, 240, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  animation: lc-vv-breathe 6s ease-in-out infinite;
+}
+.lc-face--vivace .lc-pattern {
+  opacity: 0.35;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1.5px) 0 0 / 9px 9px;
+}
+.lc-vv-spot { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(45% 70% at var(--spot, 30%) 40%, rgba(248, 250, 252, 0.12), transparent 70%); animation: lc-vv-spot 10s ease-in-out infinite alternate; }
+@keyframes lc-vv-spot { from { --spot: 22%; background-position: -12% 0; } to { --spot: 78%; background-position: 12% 0; } }
+.lc-vv-clef {
+  position: absolute; z-index: -1; left: 4%; top: 41%; font-size: 25cqw; line-height: 1;
+  background: linear-gradient(160deg, #ffffff, #94a3b8 45%, #f1f5f9 60%, #475569); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); opacity: 0.9;
+}
+.lc-vivace-art { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
+.lc-vv-line { stroke: rgba(226, 232, 240, 0.45); stroke-width: 0.28; }
+.lc-vv-bar { stroke: rgba(226, 232, 240, 0.55); stroke-width: 0.35; }
+.lc-vv-head { fill: #e2e8f0; }
+.lc-vv-head--open { fill: none; stroke: #e2e8f0; stroke-width: 0.45; }
+.lc-vv-stem, .lc-vv-flag { stroke: #e2e8f0; stroke-width: 0.35; fill: none; }
+.lc-vv-note { opacity: 0.55; animation: lc-vv-play 4.4s ease-in-out infinite; animation-delay: calc(var(--i) * 0.28s); transform-box: fill-box; transform-origin: center; }
+@keyframes lc-vv-play { 0%, 40%, 100% { opacity: 0.55; filter: none; } 8% { opacity: 1; filter: drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 3px rgba(226, 232, 240, 0.9)); } }
+.lc-vv-sweep { stroke: rgba(255, 255, 255, 0.9); stroke-width: 9; stroke-dasharray: 6 200; stroke-dashoffset: 10; opacity: 0.08; animation: lc-vv-sweep 4.4s linear infinite; }
+@keyframes lc-vv-sweep { from { stroke-dashoffset: 10; } to { stroke-dashoffset: -100; } }
+.lc-vv-frame { position: absolute; inset: 4%; z-index: -1; pointer-events: none; border-radius: 9px; border: 1px solid rgba(226, 232, 240, 0.55); box-shadow: inset 0 0 0 2.5px rgba(11, 12, 14, 0.9), inset 0 0 0 3.2px rgba(226, 232, 240, 0.28); }
+.lc-vv-frame i { position: absolute; width: 9cqw; height: 9cqw; border: 1px solid rgba(241, 245, 249, 0.8); border-radius: 50% 0 50% 0; }
+.lc-vv-frame i:nth-child(1) { left: -1px; top: -1px; border-right: 0; border-bottom: 0; }
+.lc-vv-frame i:nth-child(2) { right: -1px; top: -1px; border-left: 0; border-bottom: 0; border-radius: 0 50% 0 50%; }
+.lc-vv-frame i:nth-child(3) { left: -1px; bottom: -1px; border-right: 0; border-top: 0; border-radius: 0 50% 0 50%; }
+.lc-vv-frame i:nth-child(4) { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+.lc-vv-keys { position: absolute; left: 0; right: 0; bottom: 0; height: 3.2%; z-index: -1; opacity: 0.6;
+  background: repeating-linear-gradient(90deg, #f8fafc 0 6.3%, #0b0c0e 6.3% 6.8%), #f8fafc;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent); mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent); }
+.lc-face--vivace .lc-brand { font-family: 'Cinzel', 'Times New Roman', serif; letter-spacing: 0.22em; font-size: max(7px, 3.8cqw); color: #cbd5e1; white-space: nowrap; }
+.lc-face--vivace .lc-tier {
+  display: inline-flex; align-items: baseline; gap: 0.6em;
+  font-family: 'Playfair Display', 'Cinzel', 'Times New Roman', serif; font-style: italic; font-weight: 900; font-size: max(10px, 8.4cqw); letter-spacing: 0.08em;
+  background: linear-gradient(100deg, #94a3b8 0%, #ffffff 30%, #cbd5e1 45%, #ffffff 55%, #64748b 80%, #e2e8f0 100%); background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8)) drop-shadow(0 0 8px rgba(226, 232, 240, 0.35));
+  animation: name-flow 6s linear infinite;
+}
+.lc-vv-tempo { white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-style: normal; font-weight: 700; font-size: 0.32em; letter-spacing: 0.1em; color: #94a3b8; -webkit-text-fill-color: #94a3b8; }
+.lc-face--vivace .lc-chip { visibility: hidden; background-image: linear-gradient(90deg, transparent 32%, rgba(0, 0, 0, 0.3) 33%, transparent 34%, transparent 65%, rgba(0, 0, 0, 0.3) 66%, transparent 67%), linear-gradient(0deg, transparent 48%, rgba(0, 0, 0, 0.3) 49%, transparent 51%), linear-gradient(135deg, #ffffff, #94a3b8 50%, #e2e8f0); box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.5), 0 0 10px rgba(226, 232, 240, 0.25); }
+.lc-face--vivace .lc-holder { color: #e2e8f0; letter-spacing: 0.22em; }
+.lc-face--vivace .lc-mark { font-size: max(12px, 10cqw); background: linear-gradient(160deg, #fff, #94a3b8); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: 1; }
+.lc-face--vivace .lc-shine { background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.28) 46%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.22) 54%, transparent 66%); animation-duration: 5s; mix-blend-mode: overlay; }
+.lc-face--vivace.lc-face--sm .lc-vv-clef { font-size: 70cqw; left: 20%; top: -10%; opacity: 0.6; }
+@keyframes lc-vv-breathe {
+  0%, 100% { box-shadow: 0 26px 56px -24px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(226, 232, 240, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+  50% { box-shadow: 0 26px 62px -20px rgba(148, 163, 184, 0.45), 0 0 0 1px rgba(248, 250, 252, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-dust, .lc-face--vivace, .lc-vv-spot, .lc-vv-note, .lc-vv-sweep, .lc-face--vivace .lc-tier { animation: none; }
+}
+html[data-potato] :is(.lc-holo, .lc-nebula, .lc-stars, .lc-inf-path, .lc-dust, .lc-face--vivace, .lc-vv-spot, .lc-vv-note, .lc-vv-sweep, .lc-face--vivace .lc-tier, .lc-face--monarch) { animation: none !important; }
+html[data-potato] .lc-nebula { filter: none; }
+
+/* Vivace tag (chat / profile): charcoal plate, silver italic name, moving staff line */
+.card-tag--vivace {
+  position: relative; overflow: hidden; color: #f1f5f9;
+  font-family: 'Playfair Display', 'Cinzel', 'Times New Roman', serif; font-style: italic; font-weight: 900; letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #2a2d33, #0b0c0e 70%);
+  box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.75), 0 0 10px -3px rgba(226, 232, 240, 0.6);
+}
+.card-tag--vivace::before { content: ''; position: absolute; inset: 0; opacity: 0.35; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(226, 232, 240, 0.35) 3px 3.5px); }
+.card-tag--vivace::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%); transform: translateX(-130%); animation: role-sweep 2.8s ease-in-out infinite; }
+.card-tag--vivace .card-tag__name { position: relative; background: linear-gradient(90deg, #cbd5e1, #fff, #94a3b8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@media (prefers-reduced-motion: reduce) { .card-tag--vivace::after { animation: none; } }
+
+/* Vivace profile effect: drifting notes over the banner */
+.fx-vivace { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.fx-vivace span { position: absolute; bottom: -20%; font-size: 18px; color: rgba(241, 245, 249, 0.7); text-shadow: 0 0 8px rgba(226, 232, 240, 0.7); animation: fx-note 7s linear infinite; }
+@keyframes fx-note { from { transform: translateY(0) rotate(-10deg); opacity: 0; } 15% { opacity: 1; } to { transform: translateY(-260%) rotate(12deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .fx-vivace span { animation: none; display: none; } }
+html[data-potato] .fx-vivace { display: none; }

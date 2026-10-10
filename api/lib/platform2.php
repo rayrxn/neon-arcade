@@ -158,7 +158,9 @@ function check_loyalty_bet(array $u, string $currency, int $bet, ?string $game =
     fail($l['by'][$cur] === 'card' ? 'play.errors.loyaltyMax' : 'play.errors.maxBet', $vars);
 }
 
-const LXP_GAME_DAILY_CAP = 5000;
+const LXP_GAME_DAILY_CAP = 5000; // fallback; each card sets its own cap (perks.lxpCap)
+/** Central Loyalty XP rewards outside games (one place to rebalance). */
+const LXP_REWARDS = ['daily' => 50, 'questDaily' => 30, 'questWeekly' => 150];
 
 /** Loyalty XP from a round: 1 per 1,000 AC wagered (AG valued at the converter rate), max 250 per round. */
 function game_lxp(float $valueAc): int
@@ -170,10 +172,12 @@ function add_loyalty_xp(string $userId, int $amount, string $source, ?string $re
 {
     if ($amount === 0) return 0;
     if ($amount > 0) {
-        $amount = (int) floor($amount * boost_mult($userId, 'lxp') * (1 + card_perks(effective_card(q1('SELECT * FROM users WHERE id = ?', [$userId]) ?? []))['lxpPct'] / 100));
+        $perks = card_perks(effective_card(q1('SELECT * FROM users WHERE id = ?', [$userId]) ?? []));
+        $amount = (int) floor($amount * boost_mult($userId, 'lxp') * (1 + $perks['lxpPct'] / 100));
         if ($source === 'game') {
+            $cap = (int) ($perks['lxpCap'] ?? LXP_GAME_DAILY_CAP);
             $today = (int) qv("SELECT coalesce(sum(amount), 0) FROM loyalty_xp_log WHERE user_id = ? AND source = 'game' AND at > date_trunc('day', now() AT TIME ZONE 'Asia/Jakarta') AT TIME ZONE 'Asia/Jakarta'", [$userId]);
-            $amount = max(0, min($amount, LXP_GAME_DAILY_CAP - $today));
+            $amount = max(0, min($amount, $cap - $today));
             if ($amount === 0) return 0;
         }
     }

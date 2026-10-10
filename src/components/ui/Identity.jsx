@@ -76,7 +76,7 @@ export function CardTag({ slug, className }) {
   const card = cardOf(catalog, slug)
   return (
     <span className={clsx('id-tag', `card-tag card-tag--${slug}`, className)} style={{ '--tag': card.color }} title={`${card.name} card`}>
-      {slug === 'monarch' ? <span className="card-tag__crown" aria-hidden="true">♛</span> : <span className="card-tag__chip" aria-hidden="true" />}
+      {slug === 'monarch' ? <span className="card-tag__crown" aria-hidden="true">♛</span> : slug === 'vivace' ? <span className="card-tag__crown card-tag__clef" aria-hidden="true">𝄞</span> : <span className="card-tag__chip" aria-hidden="true" />}
       <span className="card-tag__name" data-text={card.name}>{card.name}</span>
     </span>
   )
@@ -183,6 +183,7 @@ export function ProfileBanner({ user, fallback, className }) {
 
 export function ProfileFx({ kind, colors }) {
   if (kind === 'scan') return <span className="pfx-scan" style={{ '--c1': colors[0] }} aria-hidden="true" />
+  if (kind === 'notes') return <span className="fx-vivace" aria-hidden="true">{['♪', '♫', '𝄞', '♩', '♬', '♪'].map((n, i) => <span key={i} style={{ left: `${8 + i * 16}%`, animationDelay: `${i * -1.15}s`, fontSize: `${14 + (i % 3) * 5}px` }}>{n}</span>)}</span>
   if (kind === 'stars') return <span className="pfx-stars" style={{ '--c1': colors[0], '--c2': colors[1] ?? colors[0] }} aria-hidden="true" />
   return (
     <span className="pfx-aurora" aria-hidden="true">

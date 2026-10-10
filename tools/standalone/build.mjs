@@ -122,7 +122,7 @@ const html = `<title>Neon Arcade</title>
 <meta name="theme-color" content="#06070c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=JetBrains+Mono:wght@500;700&family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Playfair+Display:ital,wght@1,700;1,900&family=JetBrains+Mono:wght@500;700&family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
 <script>
 try{var p=JSON.parse(localStorage.getItem('neon-arcade:prefs')||'{}').state||{};var a=p.appearance||'dark';if(a==='system')a=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.dataset.appearance=a;if(p.language)document.documentElement.lang=p.language}catch(e){}
 </script>
