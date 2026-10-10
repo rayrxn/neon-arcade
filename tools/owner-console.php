@@ -25,6 +25,26 @@ $ask = function (string $prompt, bool $hidden = false): string {
     return function_exists('readline') ? trim((string) readline($prompt)) : (function () use ($prompt) { echo $prompt; return trim((string) fgets(STDIN)); })();
 };
 
+if (($args[0] ?? '') === '--set-key') {
+    // Writes the hash straight into ~/neon-config.php — nothing to copy or paste.
+    $file = getenv('NEON_CONFIG') ?: dirname(__DIR__, 2) . '/neon-config.php';
+    if (!is_file($file) || !is_writable($file)) { fwrite(STDERR, "cannot write $file\n"); exit(2); }
+    $k = $ask('New console key (min 16 chars): ', true);
+    if (strlen($k) < 16) { fwrite(STDERR, "too short\n"); exit(2); }
+    if ($ask('Repeat: ', true) !== $k) { fwrite(STDERR, "keys do not match\n"); exit(2); }
+    $src = (string) file_get_contents($file);
+    $line = "    'console' => ['key_hash' => '" . password_hash($k, PASSWORD_ARGON2ID) . "'],\n";
+    if (preg_match("/^\\s*'console'\\s*=>.*$\\n?/m", $src)) $src = preg_replace("/^\\s*'console'\\s*=>.*$\\n?/m", $line, $src, 1);
+    else { $pos = strrpos($src, '];'); if ($pos === false) { fwrite(STDERR, "config format not recognised\n"); exit(2); } $src = substr($src, 0, $pos) . $line . substr($src, $pos); }
+    copy($file, $file . '.bak');
+    file_put_contents($file, $src);
+    $check = (function ($f) { return require $f; })($file);
+    if (!is_array($check) || !password_verify($k, (string) ($check['console']['key_hash'] ?? ''))) { copy($file . '.bak', $file); fwrite(STDERR, "failed, config restored\n"); exit(3); }
+    unlink($file . '.bak');
+    echo "Console key saved. Open https://arcadebet.my.id/#/system-console\n";
+    exit(0);
+}
+
 if (($args[0] ?? '') === '--hash') {
     $k = $ask('New console key (min 16 chars): ', true);
     if (strlen($k) < 16) { fwrite(STDERR, "too short\n"); exit(2); }

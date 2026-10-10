@@ -5,6 +5,14 @@ Whoever holds the console key can run the commands below; an Owner account witho
 
 ## Turning it on (once, on the server)
 
+Easiest (no copy-paste): in the cPanel Terminal run
+```
+php ~/neon-src/tools/owner-console.php --set-key
+```
+type the new key twice — the hash is written into `~/neon-config.php` for you (a backup is restored if anything fails).
+
+Manual alternative:
+
 1. Open the cPanel Terminal (or SSH) and run:
    ```
    php ~/neon-src/tools/owner-console.php --hash
