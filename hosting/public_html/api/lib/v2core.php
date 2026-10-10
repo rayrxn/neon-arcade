@@ -44,7 +44,7 @@ function require_feature(?array $u, string $key): void
 const FEATURE_ROUTES = [
     'chat/send' => 'chat', 'transfer' => 'transfers', 'shop/buy' => 'shop', 'shop/use' => 'shop', 'convert' => 'exchange',
     'pass/buy' => 'pass', 'pass/claim' => 'pass', 'game/case-open' => 'cases', 'game/case-battle' => 'battles',
-    'game/crash-start' => 'crash', 'game/crash-bet' => 'crash',
+    'game/crash-start' => 'crash', 'game/crash-bet' => 'crash', 'game/horse-bet' => 'horse',
 ];
 
 function route_feature_guard(string $path): void
@@ -843,5 +843,26 @@ function admin_v4_action(array $me, string $name, array $a): ?array
         }
     }
     return null;
+}
+
+/**
+ * Cheap change detector polled every few seconds by the browser. Returns short fingerprints; when one changes,
+ * the client pulls the full data (me / sync). Account: balances, progress, docs, card XP, role/status, memberships,
+ * notifications. Shared: latest chat message, announcements, maintenance/game settings.
+ */
+function pulse_view(?array $u): array
+{
+    $shared = (string) qv("SELECT concat_ws('|', (SELECT max(created_at) FROM chat_messages), (SELECT max(created_at) FROM announcements),
+        (SELECT max(updated_at) FROM games), (SELECT value::text FROM neon_kv WHERE key = 'luck'))");
+    $out = ['shared' => substr(md5($shared), 0, 12), 'serverTime' => now_ms()];
+    if ($u) {
+        $acct = (string) qv("SELECT concat_ws('|', w.ac_balance, w.ag_balance, w.updated_at, u.role, u.status, u.loyalty_xp, u.wallet_frozen,
+            (SELECT updated_at FROM user_progress WHERE user_id = u.id), (SELECT updated_at FROM user_docs WHERE user_id = u.id),
+            (SELECT max(created_at) FROM memberships WHERE user_id = u.id), (SELECT count(*) FROM memberships WHERE user_id = u.id AND active),
+            (SELECT max(created_at) FROM notifications WHERE user_id = u.id))
+            FROM users u LEFT JOIN wallets w ON w.user_id = u.id WHERE u.id = ?", [$u['id']]);
+        $out['account'] = substr(md5($acct), 0, 12);
+    }
+    return $out;
 }
 
