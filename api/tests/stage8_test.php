@@ -232,6 +232,20 @@ expect_error('no HTML', call('POST', 'profile/affix', ['prefix' => '<b>x'], 'a')
 check('a real admin may use ADMIN', call('POST', 'profile/affix', ['prefix' => '&cADMIN'], 'adm')['ok']);
 expect_error('VIP (not VVIP) players cannot set one', call('POST', 'profile/affix', ['prefix' => 'x'], 'v'), 'perks.errors.vvip');
 
+echo "Crash curve\n";
+check('default crash max is ×10,000', crash_cfg()['maxMult'] == 10000);
+check('extreme floats are capped at the maximum', crash_point_cfg(0.999999999) == 10000);
+check('low multipliers follow the fair curve', crash_point_cfg(0.5) == crash_point(0.5));
+$o = crash_odds(1000);
+check('×1000 is rarer than fair (tail < 1)', $o < 0.99 / 1000 && $o > 0, $o);
+$r = admin('own', 'setCrashConfig', ['preset' => 'calm', 'reason' => 'test']);
+$GLOBALS['NEON_KV_DIRTY']['crash'] = true;
+check('owner switches to Calm preset (max ×1000)', $r['ok'] && crash_cfg()['maxMult'] == 1000 && crash_point_cfg(0.9999999) == 1000, $r);
+expect_error('invalid custom curve refused', admin('own', 'setCrashConfig', ['preset' => 'custom', 'maxMult' => 50000, 'edge' => 0.01, 'tail' => 1, 'reason' => 'x']), 'admin.errors.invalid');
+check('custom curve saved', admin('own', 'setCrashConfig', ['preset' => 'custom', 'maxMult' => 5000, 'edge' => 0.02, 'tail' => 0.9, 'reason' => 'x'])['ok'] && (($GLOBALS['NEON_KV_DIRTY']['crash'] = true) && crash_cfg()['maxMult'] == 5000));
+expect_error('moderators cannot change it', admin('mod', 'setCrashConfig', ['preset' => 'wild', 'reason' => 'x']), 'admin.errors.forbidden');
+admin('own', 'setCrashConfig', ['preset' => 'standard', 'reason' => 'reset']);
+
 echo "Owner console\n";
 $_SERVER['REMOTE_ADDR'] = '10.9.8.7';
 $con = fn(string $path, array $body = []) => call('POST', $path, $body);

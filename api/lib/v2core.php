@@ -276,6 +276,48 @@ function captcha_require_tx(): void
     tx(fn() => captcha_require());
 }
 
+// ───────────────────────────── Crash curve ─────────────────────────────
+
+/** Presets: max multiplier, house edge and tail (how quickly very high multipliers become rarer above ×100). */
+const CRASH_PRESETS = [
+    'standard' => ['maxMult' => 10000, 'edge' => 0.01, 'tail' => 0.92],
+    'calm' => ['maxMult' => 1000, 'edge' => 0.01, 'tail' => 0.8],
+    'wild' => ['maxMult' => 10000, 'edge' => 0.01, 'tail' => 1.0],
+];
+
+function crash_cfg(): array
+{
+    $c = kv_get('crash');
+    return ['preset' => (string) $c['preset'], 'maxMult' => max(2, min(10000, (float) $c['maxMult'])), 'edge' => max(0, min(0.1, (float) $c['edge'])), 'tail' => max(0.5, min(1, (float) $c['tail']))];
+}
+
+/** Crash point from a uniform float, using the admin curve. Fair base (1-edge)/(1-f), then above ×100 the excess is
+ *  compressed by `tail` (1.0 = pure fair curve), then capped at maxMult. Runs only on the server. */
+function crash_point_cfg(float $f, ?array $c = null): float
+{
+    $c ??= crash_cfg();
+    $p = crash_point($f, $c['edge']);
+    if ($p > 100 && $c['tail'] < 1) $p = floor(100 * pow($p / 100, $c['tail']) * 100) / 100;
+    return min($c['maxMult'], $p);
+}
+
+/** P(point >= x) under the current curve — shown to admins so the effect of a change is visible. */
+function crash_odds(float $x, ?array $c = null): float
+{
+    $c ??= crash_cfg();
+    if ($x > $c['maxMult']) return 0.0;
+    $base = $x <= 100 || $c['tail'] >= 1 ? $x : 100 * pow($x / 100, 1 / $c['tail']);
+    return min(1, (1 - $c['edge']) / $base);
+}
+
+function crash_view(): array
+{
+    $c = crash_cfg();
+    $odds = [];
+    foreach ([2, 10, 100, 1000, 10000] as $x) $odds[(string) $x] = $x > $c['maxMult'] ? 0 : round(crash_odds($x, $c), 8);
+    return $c + ['presets' => CRASH_PRESETS, 'odds' => $odds];
+}
+
 // ───────────────────────────── QA center ─────────────────────────────
 
 /** Real health checks against the live database (read-only). */
@@ -330,7 +372,7 @@ function qa_run(): array
 
 function admin_v3_view(array $me): array
 {
-    $out = ['features' => features_view($me)];
+    $out = ['features' => features_view($me), 'crash' => crash_view()];
     if (has_perm($me, 'economy.manage')) $out['economy'] = economy_analytics();
     if (has_perm($me, 'errors.view') || has_perm($me, 'system.manage')) {
         $out['errorSummary'] = array_map(fn($r) => ['context' => $r['context'], 'code' => $r['code'], 'count' => (int) $r['n'], 'last' => iso_to_ms($r['last'])],
@@ -538,6 +580,21 @@ function admin_v3_action(array $me, string $name, array $a)
                 ? q('SELECT * FROM error_log WHERE context LIKE ? ORDER BY at DESC LIMIT 200', [str_replace(['%', '_'], ['\\%', '\\_'], $ctx) . '%'])->fetchAll()
                 : q('SELECT * FROM error_log ORDER BY at DESC LIMIT 200')->fetchAll();
             return array_map(fn($e) => ['id' => (string) $e['id'], 'at' => iso_to_ms($e['at']), 'context' => $e['context'], 'code' => $e['code'], 'message' => $e['message'], 'stack' => mb_substr((string) $e['stack'], 0, 2000), 'userId' => $e['user_id'] ?? null], $rows);
+        }
+        case 'setCrashConfig': {
+            require_user_perm($me, 'games.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $preset = (string) ($a['preset'] ?? 'custom');
+            if (isset(CRASH_PRESETS[$preset])) $next = ['preset' => $preset] + CRASH_PRESETS[$preset];
+            elseif ($preset === 'custom') {
+                $m = (float) ($a['maxMult'] ?? 0); $e = (float) ($a['edge'] ?? -1); $tl = (float) ($a['tail'] ?? 0);
+                if ($m < 2 || $m > 10000 || $e < 0 || $e > 0.1 || $tl < 0.5 || $tl > 1) fail('admin.errors.invalid');
+                $next = ['preset' => 'custom', 'maxMult' => $m, 'edge' => $e, 'tail' => $tl];
+            } else fail('admin.errors.invalid');
+            $before = crash_cfg();
+            kv_set('crash', $next);
+            audit_log($me, 'crash.config', null, 'crash', null, $before, $next, $r);
+            return crash_view();
         }
         case 'qaRun': {
             require_user_perm($me, 'qa.run');

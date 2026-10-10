@@ -486,7 +486,7 @@ function crash_round_point(string $seed, int $id): float
 {
     $h = hash_hmac('sha256', "crash:$id", $seed);
     $f = hexdec(substr($h, 0, 13)) / 4503599627370496; // 16^13
-    return min(1000000, crash_point($f));
+    return crash_point_cfg($f);
 }
 
 /** Current round; finishes and settles the previous one and opens the next when it's time. */

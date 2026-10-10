@@ -72,6 +72,11 @@ export default {
     flagTabs: { escalated: 'Dieskalasi' },
     flagStatus: { false_positive: 'Salah deteksi', escalated: 'Dieskalasi' },
     ac: { falsePositive: 'Salah deteksi', escalate: 'Eskalasi' },
+    crash: {
+      title: 'Kurva Crash', desc: 'Diatur hanya di server. Kurva dasar adil (1 − edge) / (1 − r); di atas ×100 nilai tail membuat multiplier besar makin langka; tidak ada yang bisa melewati batas maksimum.',
+      presets: { standard: 'Standar', calm: 'Tenang', wild: 'Liar', custom: 'Kustom' }, current: 'Aktif',
+      max: 'Maksimum ×', edge: 'House edge %', tail: 'Tail (0.5–1)', tailHint: '1 = kurva adil murni; lebih kecil = ×100+ makin langka', saveCustom: 'Simpan kustom', odds: 'Peluang ronde mencapai…',
+    },
     gc: {
       controls: 'Kontrol', bettingOff: 'Taruhan mati', newOff: 'Ronde baru mati', scheduled: 'Terjadwal', open: 'Ronde terbuka',
       emergency: 'Shutdown darurat', emergencyGo: 'Matikan sekarang', typeConfirm: 'Ketik {word} untuk konfirmasi',

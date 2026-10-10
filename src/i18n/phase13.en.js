@@ -72,6 +72,11 @@ export default {
     flagTabs: { escalated: 'Escalated' },
     flagStatus: { false_positive: 'False positive', escalated: 'Escalated' },
     ac: { falsePositive: 'False positive', escalate: 'Escalate' },
+    crash: {
+      title: 'Crash curve', desc: 'Set by the server only. Base curve is fair (1 − edge) / (1 − r); above ×100 the tail makes huge multipliers rarer; nothing can go past the maximum.',
+      presets: { standard: 'Standard', calm: 'Calm', wild: 'Wild', custom: 'Custom' }, current: 'Active',
+      max: 'Maximum ×', edge: 'House edge %', tail: 'Tail (0.5–1)', tailHint: '1 = pure fair curve; lower = ×100+ rarer', saveCustom: 'Save custom', odds: 'Chance a round reaches…',
+    },
     gc: {
       controls: 'Controls', bettingOff: 'Betting off', newOff: 'New rounds off', scheduled: 'Scheduled', open: 'Open rounds',
       emergency: 'Emergency shutdown', emergencyGo: 'Shut down now', typeConfirm: 'Type {word} to confirm',

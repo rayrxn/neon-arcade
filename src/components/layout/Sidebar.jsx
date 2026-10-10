@@ -67,14 +67,14 @@ function SidebarContent({ idPrefix, onClose, rail = false, onToggle }) {
   return (
     <div className="flex h-full flex-col">
       {rail && tip && <span className="rail-tip" role="tooltip" style={{ top: tip.top }}>{tip.label}</span>}
-      <div className={clsx('flex h-16 shrink-0 items-center border-b hairline', rail ? 'justify-center px-2' : 'justify-between gap-2 px-4')}>
+      <div className={clsx('flex h-16 shrink-0 items-center border-b hairline', rail ? 'justify-center px-2' : 'justify-between gap-3 pl-4 pr-3')}>
         {onToggle && (
           <button onClick={onToggle} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-ring" aria-label={rail ? t('nav.expand') : t('nav.collapse')} aria-expanded={!rail}>
             <Menu className="h-5 w-5" />
           </button>
         )}
         {!rail && (
-          <NavLink to="/" aria-label="Neon Arcade" className="mr-auto">
+          <NavLink to="/" aria-label="Neon Arcade" className="mr-auto flex items-center rounded-xl py-1 pl-1 pr-2 focus-ring">
             <Logo />
           </NavLink>
         )}

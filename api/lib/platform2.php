@@ -6,6 +6,7 @@ declare(strict_types=1);
 // ───────────────────────────── Settings ─────────────────────────────
 
 const KV_DEFAULTS = [
+    'crash' => ['preset' => 'standard', 'maxMult' => 10000, 'edge' => 0.01, 'tail' => 0.92],
     // maxBetCap*: the absolute ceiling for any single bet. Card × membership and per-game caps sit under it.
     'economy' => ['acPerAg' => 25000, 'convertMinAg' => 1, 'convertMaxAgPerDay' => 200, 'maxBetCapAC' => 1500000000, 'maxBetCapAG' => 100000],
     'moderation' => ['level' => 'standard', 'autoMute' => true, 'autoMuteStrikes' => 3, 'autoMuteMinutes' => 10, 'repeatLimit' => 8],

@@ -115,6 +115,42 @@ export function Wallets() {
 const toLocalInput = (ms) => (ms ? new Date(ms - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '')
 const fromLocalInput = (v) => (v ? new Date(v).getTime() : null)
 
+function CrashCurveCard({ crash, me }) {
+  const { t } = useT()
+  const [f, setF] = useState({ maxMult: crash.maxMult, edge: crash.edge * 100, tail: crash.tail })
+  const [pending, setPending] = useState(null)
+  const pct = (p) => (p >= 0.01 ? `${(p * 100).toFixed(2)}%` : p > 0 ? `1 in ${formatCoins(Math.round(1 / p))}` : '—')
+  return (
+    <Card title={t('admin.crash.title')} bodyClassName="space-y-4 p-4">
+      <p className="text-xs text-slate-500">{t('admin.crash.desc')}</p>
+      <div className="flex flex-wrap gap-2">
+        {Object.keys(crash.presets).map((p) => (
+          <Button key={p} size="sm" variant={crash.preset === p ? 'primary' : 'ghost'} onClick={() => setPending({ preset: p })}>{t(`admin.crash.presets.${p}`)} · ×{formatCoins(crash.presets[p].maxMult)}</Button>
+        ))}
+        <Badge tone={crash.preset === 'custom' ? 'purple' : 'slate'}>{t('admin.crash.current')}: {t(`admin.crash.presets.${crash.preset}`)}</Badge>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <FormField label={t('admin.crash.max')}><input id="cr-max" inputMode="numeric" value={f.maxMult} onChange={(e) => setF({ ...f, maxMult: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} /></FormField>
+        <FormField label={t('admin.crash.edge')}><input id="cr-edge" inputMode="decimal" value={f.edge} onChange={(e) => setF({ ...f, edge: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} /></FormField>
+        <FormField label={t('admin.crash.tail')} hint={t('admin.crash.tailHint')}><input id="cr-tail" inputMode="decimal" value={f.tail} onChange={(e) => setF({ ...f, tail: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} /></FormField>
+        <div className="flex items-end"><Button className="w-full" onClick={() => setPending({ preset: 'custom', maxMult: Number(f.maxMult), edge: Number(f.edge) / 100, tail: Number(f.tail) })}>{t('admin.crash.saveCustom')}</Button></div>
+      </div>
+      <div>
+        <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('admin.crash.odds')}</p>
+        <div className="grid grid-cols-5 gap-2 text-center">
+          {Object.entries(crash.odds).map(([x, p]) => (
+            <div key={x} className="rounded-lg bg-white/[0.03] px-2 py-2 ring-1 ring-inset ring-white/[0.06]"><p className="font-mono text-xs font-bold text-white">×{formatCoins(Number(x))}</p><p className="num mt-0.5 font-mono text-[11px] text-slate-400">{pct(p)}</p></div>
+          ))}
+        </div>
+      </div>
+      {pending && (
+        <ReasonDialog open onClose={() => setPending(null)} adminName={me.username} tone="primary" title={`${t('admin.crash.title')} → ${t(`admin.crash.presets.${pending.preset}`)}`}
+          onConfirm={(r) => adminCall('setCrashConfig', { ...pending, reason: r })} />
+      )}
+    </Card>
+  )
+}
+
 export function GamesAdmin() {
   const { t } = useT()
   const me = useCurrentUser()
@@ -159,6 +195,8 @@ export function GamesAdmin() {
           ]}
         />
       </Card>
+
+      {SERVER_MODE && v3?.crash && can(me.role, 'games.manage') && <CrashCurveCard crash={v3.crash} me={me} />}
 
       {SERVER_MODE && can(me.role, 'sessions.terminate') && (
         <Card title={t('admin.gc.openRounds', { n: open.length })} actions={open.length > 0 && <Button size="sm" variant="danger" onClick={() => setDialog({ kind: 'endAll' })}>{t('admin.gc.endAll')}</Button>} bodyClassName="">

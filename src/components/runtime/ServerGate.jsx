@@ -64,13 +64,14 @@ export default function ServerGate({ children }) {
   return (
     <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
       {status === 'loading' ? (
-        <div className="flex flex-col items-center gap-5" role="status" aria-label={t('server.loading')}>
-          <div className="relative grid place-items-center">
-            <div className="boot-ring" />
-            <CoinIcon size={26} spin className="absolute" />
+        <div className="boot-stack" role="status" aria-label={t('server.loading')}>
+          <div className="boot-mark" aria-hidden="true">
+            <span className="boot-ring" />
+            <span className="boot-coin"><CoinIcon size={30} /></span>
+            <span className="boot-shadow" />
           </div>
           <Logo />
-          <div className="h-0.5 w-32 overflow-hidden rounded-full bg-white/[0.06]"><div className="boot-bar h-full w-1/3 rounded-full bg-neon-cyan" /></div>
+          <div className="h-1 w-36 overflow-hidden rounded-full bg-white/[0.06]"><div className="boot-bar h-full w-1/3 rounded-full bg-neon-cyan" /></div>
         </div>
       ) : (
         <>

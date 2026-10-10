@@ -419,7 +419,7 @@ function crash_start(Ctx $c, array $a): array
     $auto = !empty($a['autoCashout']) ? floor(((float) $a['autoCashout']) * 100) / 100 : null;
     if ($auto !== null && !($auto >= CRASH_MIN_CASHOUT && $auto <= 10000)) fail('play.crash.minCashout', ['min' => number_format(CRASH_MIN_CASHOUT, 2)]);
     $round = begin($c, 'crash', $a['bet'] ?? null, 1, ['autoCashout' => $auto]);
-    $round['point'] = $round['control'] === 'win' ? 1000 : ($round['control'] === 'loss' ? 1 : crash_point($round['floats'][0]));
+    $round['point'] = $round['control'] === 'win' ? min(1000, crash_cfg()['maxMult']) : ($round['control'] === 'loss' ? 1 : crash_point_cfg($round['floats'][0]));
     save_open($round);
     return ['id' => $round['id'], 'startedAt' => $round['startedAt'], 'autoCashout' => $auto];
 }
@@ -464,7 +464,8 @@ function crash_cashout(Ctx $c, array $a): array
 /** Global round id in the session detail (history links to the shared round). */
 function crash_detail(array $round): array
 {
-    return empty($round['globalRound']) ? [] : ['round' => $round['globalRound']];
+    $c = crash_cfg();
+    return (empty($round['globalRound']) ? [] : ['round' => $round['globalRound']]) + ['curve' => ['max' => $c['maxMult'], 'edge' => $c['edge'], 'tail' => $c['tail']]];
 }
 
 // ───────────────────────────── Mines ─────────────────────────────
