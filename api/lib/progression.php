@@ -6,31 +6,31 @@ declare(strict_types=1);
 const DAY_MS = 86400000;
 
 const DAILY_REWARDS = [
-    ['day' => 1, 'rewards' => [['kind' => 'AC', 'amount' => 250]]],
-    ['day' => 2, 'rewards' => [['kind' => 'AC', 'amount' => 400]]],
+    ['day' => 1, 'rewards' => [['kind' => 'AC', 'amount' => 1000]]],
+    ['day' => 2, 'rewards' => [['kind' => 'AC', 'amount' => 1500]]],
     ['day' => 3, 'rewards' => [['kind' => 'XP', 'amount' => 150]]],
-    ['day' => 4, 'rewards' => [['kind' => 'AC', 'amount' => 600]]],
-    ['day' => 5, 'rewards' => [['kind' => 'item', 'id' => 'gold-frame']], 'fallback' => ['kind' => 'AC', 'amount' => 1000]],
-    ['day' => 6, 'rewards' => [['kind' => 'AC', 'amount' => 800]]],
-    ['day' => 7, 'rewards' => [['kind' => 'AC', 'amount' => 1500], ['kind' => 'XP', 'amount' => 300], ['kind' => 'item', 'id' => 'emote-fire']], 'special' => true],
+    ['day' => 4, 'rewards' => [['kind' => 'AC', 'amount' => 2500]]],
+    ['day' => 5, 'rewards' => [['kind' => 'item', 'id' => 'gold-frame']], 'fallback' => ['kind' => 'AC', 'amount' => 4000]],
+    ['day' => 6, 'rewards' => [['kind' => 'AC', 'amount' => 3000]]],
+    ['day' => 7, 'rewards' => [['kind' => 'AC', 'amount' => 6000], ['kind' => 'XP', 'amount' => 300], ['kind' => 'item', 'id' => 'emote-fire']], 'special' => true],
 ];
 
 const DAILY_QUESTS = [
-    ['id' => 'login', 'metric' => 'login', 'target' => 1, 'reward' => ['AC' => 100, 'XP' => 20]],
-    ['id' => 'play3', 'metric' => 'games', 'target' => 3, 'reward' => ['AC' => 300, 'XP' => 60]],
-    ['id' => 'win1', 'metric' => 'wins', 'target' => 1, 'reward' => ['AC' => 200, 'XP' => 40]],
-    ['id' => 'wager1k', 'metric' => 'wagered', 'target' => 1000, 'reward' => ['AC' => 250, 'XP' => 50]],
-    ['id' => 'xp200', 'metric' => 'xp', 'target' => 200, 'reward' => ['AC' => 300]],
-    ['id' => 'chat3', 'metric' => 'chat', 'target' => 3, 'reward' => ['AC' => 150, 'XP' => 20]],
+    ['id' => 'login', 'metric' => 'login', 'target' => 1, 'reward' => ['AC' => 400, 'XP' => 20]],
+    ['id' => 'play3', 'metric' => 'games', 'target' => 3, 'reward' => ['AC' => 1200, 'XP' => 60]],
+    ['id' => 'win1', 'metric' => 'wins', 'target' => 1, 'reward' => ['AC' => 800, 'XP' => 40]],
+    ['id' => 'wager1k', 'metric' => 'wagered', 'target' => 1000, 'reward' => ['AC' => 1000, 'XP' => 50]],
+    ['id' => 'xp200', 'metric' => 'xp', 'target' => 200, 'reward' => ['AC' => 1200]],
+    ['id' => 'chat3', 'metric' => 'chat', 'target' => 3, 'reward' => ['AC' => 600, 'XP' => 20]],
 ];
 
 const WEEKLY_QUESTS = [
-    ['id' => 'play20', 'metric' => 'games', 'target' => 20, 'reward' => ['AC' => 2000, 'XP' => 300]],
-    ['id' => 'xp2500', 'metric' => 'xp', 'target' => 2500, 'reward' => ['AC' => 2500]],
-    ['id' => 'daily10', 'metric' => 'dailyQuests', 'target' => 10, 'reward' => ['AC' => 3000, 'XP' => 400]],
-    ['id' => 'multi10', 'metric' => 'bestMultiplier', 'target' => 10, 'reward' => ['AC' => 1500, 'XP' => 200]],
-    ['id' => 'levelUp1', 'metric' => 'levelUp', 'target' => 1, 'reward' => ['AC' => 1000, 'XP' => 100]],
-    ['id' => 'profile', 'metric' => 'profile', 'target' => 1, 'reward' => ['AC' => 500, 'XP' => 50]],
+    ['id' => 'play20', 'metric' => 'games', 'target' => 20, 'reward' => ['AC' => 8000, 'XP' => 300]],
+    ['id' => 'xp2500', 'metric' => 'xp', 'target' => 2500, 'reward' => ['AC' => 10000]],
+    ['id' => 'daily10', 'metric' => 'dailyQuests', 'target' => 10, 'reward' => ['AC' => 12000, 'XP' => 400]],
+    ['id' => 'multi10', 'metric' => 'bestMultiplier', 'target' => 10, 'reward' => ['AC' => 6000, 'XP' => 200]],
+    ['id' => 'levelUp1', 'metric' => 'levelUp', 'target' => 1, 'reward' => ['AC' => 4000, 'XP' => 100]],
+    ['id' => 'profile', 'metric' => 'profile', 'target' => 1, 'reward' => ['AC' => 2000, 'XP' => 50]],
 ];
 
 const MAX_METRICS = ['bestMultiplier', 'profile'];

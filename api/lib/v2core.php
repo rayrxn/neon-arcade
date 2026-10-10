@@ -40,6 +40,18 @@ function require_feature(?array $u, string $key): void
     if (!feature_allowed($u, $key)) fail('errors.featureOff', ['feature' => FEATURE_KEYS[$key] ?? $key], 403);
 }
 
+/** POST routes guarded by a feature flag. Cash-out / tick stay open so running rounds can always finish. */
+const FEATURE_ROUTES = [
+    'chat/send' => 'chat', 'transfer' => 'transfers', 'shop/buy' => 'shop', 'shop/use' => 'shop', 'convert' => 'exchange',
+    'pass/buy' => 'pass', 'pass/claim' => 'pass', 'game/case-open' => 'cases', 'game/case-battle' => 'battles',
+    'game/crash-start' => 'crash', 'game/crash-bet' => 'crash',
+];
+
+function route_feature_guard(string $path): void
+{
+    if (isset(FEATURE_ROUTES[$path])) require_feature(current_user(), FEATURE_ROUTES[$path]);
+}
+
 /** What the current player may use (+ the raw state for staff). */
 function features_view(?array $u): array
 {
