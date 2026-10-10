@@ -1228,3 +1228,20 @@ html[data-potato] .lc-nebula { filter: none; }
 @keyframes fx-note { from { transform: translateY(0) rotate(-10deg); opacity: 0; } 15% { opacity: 1; } to { transform: translateY(-260%) rotate(12deg); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .fx-vivace span { animation: none; display: none; } }
 html[data-potato] .fx-vivace { display: none; }
+
+/* Identity v2: "+N" overflow chip, badge as a real chip, formatting codes */
+.tag-more { cursor: help; color: rgb(var(--slate-300)); background: rgb(var(--white) / 0.06); box-shadow: inset 0 0 0 1px rgb(var(--white) / 0.12); font-weight: 800; }
+.style-badge { border-radius: 6px; background: color-mix(in srgb, var(--sb, #e2e8f0) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sb, #e2e8f0) 35%, transparent); width: 18px; height: 17px; cursor: help; }
+.fmt-color { color: var(--fmt); -webkit-text-fill-color: var(--fmt); }
+.fmt-k { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.02em; }
+.fmt-k--still { filter: blur(1.6px); }
+
+/* ── Performance presets (html[data-perf]): ultra > high (default) > medium > potato ── */
+/* Medium: keep UI motion and game animation, drop the expensive layers (blur, background drift, ambient particles). */
+html[data-perf='medium'] .glass, html[data-perf='medium'] .glass-strong { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: var(--card-strong); }
+html[data-perf='medium'] .arcade-bg, html[data-perf='medium'] .arcade-bg::before { animation: none !important; }
+html[data-perf='medium'] :is(.lc-nebula, .lc-stars, .lc-dust, .lc-vv-spot, .fx-vivace, .pfx-aurora, .role-tag__fx, .role-chip__fx, .event-banner__shine) { animation: none !important; }
+html[data-perf='medium'] .lc-nebula { filter: none; }
+/* Ultra: everything on, plus light-follow tilt on loyalty cards. */
+html[data-perf='ultra'] .lc-face { transition: transform 0.35s cubic-bezier(.2, .8, .2, 1), filter 0.35s; transform-style: preserve-3d; }
+html[data-perf='ultra'] .lc-face:not(.lc-face--sm):hover { transform: perspective(700px) rotateX(4deg) rotateY(-6deg) scale(1.02); filter: brightness(1.08) saturate(1.1); }

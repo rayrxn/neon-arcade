@@ -22,6 +22,24 @@ export default {
     disabled: 'The console is turned off. Create a key on the server, then add the printed line to ~/neon-config.php:',
     errors: { disabled: 'The console is turned off on this server.', badKey: 'Wrong console key.', expired: 'The console session ended. Unlock it again.', tooMany: 'Too many wrong keys. Try again in {minutes} minutes.', invalid: 'Invalid command.' },
   },
+  perf: {
+    ultra: 'Ultra', ultraHint: 'Everything on, plus card tilt and extra light',
+    high: 'High', highHint: 'All animations and effects (default)',
+    medium: 'Medium', mediumHint: 'Keeps motion, drops blur and ambient effects',
+    statusUltra: 'Ultra is on: every effect plus extras.', statusMedium: 'Medium is on: blur and ambient effects are off, motion stays.',
+  },
+  miniProfile: { online: 'Online', offline: 'Offline', level: 'Level', joined: 'Joined', view: 'View full profile' },
+  nameDisplay: {
+    title: 'Name display', description: 'How names look for you, and your own prefix / suffix.',
+    maxTags: 'Role tags shown next to a name', maxTagsHint: 'Extra tags collapse into “+N”. This only changes what you see — nobody loses a role or permission.',
+    affix: 'Your prefix & suffix', affixHint: 'Shown around your name everywhere. Up to 10 visible characters each.', affixLocked: 'Custom prefix and suffix are a VVIP perk (staff can use them too).',
+    prefix: 'Prefix', suffix: 'Suffix', preview: 'Preview', reset: 'Reset', saved: 'Name display saved',
+    codes: 'Formatting codes', codesHint: 'Colors &0–&9, &a–&f · &l bold · &o italic · &n underline · &m strike · &k scrambled · &r reset. Example: &6&lKING&r',
+    none: 'None',
+  },
+  membership: { affixInSettings: 'Edit in Settings → Name display' },
+  perks: { errors: { affixReserved: '“{word}” is reserved for staff with that role.' } },
+  profile: { status: 'Status', bio: 'Bio' },
   missions: { status: { none: 'Not claimed' } },
   auth: {
     errors: {
@@ -32,6 +50,7 @@ export default {
   },
   errors: { featureOff: '{feature} is not available right now.' },
   maintenance: { upcoming: 'Scheduled maintenance starts {time}' },
+  settings: { nameDisplay: { title: 'Name display', description: 'How names look for you, and your own prefix / suffix.' } },
   system: {
     startsAt: 'Starts at (optional)', bypassAdmins: 'Staff can still enter', bypassTesters: 'Testers can still enter', preview: 'Preview player screen',
   },

@@ -219,6 +219,19 @@ q('UPDATE users SET loyalty_xp = 60000000 WHERE id = ?', [$V]);
 setbal($V, 0, 100);
 check('Vivace items need the Vivace card (VIP alone is not enough)', call('POST', 'shop/buy', ['itemId' => 'badge-clef', 'requestId' => rid()], 'v')['ok'] && call('POST', 'shop/buy', ['itemId' => 'badge-clef', 'requestId' => rid()], 'a')['code'] === 'shop.errors.requires');
 
+echo "Identity: prefix/suffix with codes\n";
+q("INSERT INTO memberships (user_id, tier, ends_at) VALUES (?, 'vvip', now() + interval '30 days') ON CONFLICT DO NOTHING", [$A]);
+q("UPDATE memberships SET tier = 'vvip' WHERE user_id = ? AND active", [$A]);
+$GLOBALS['NEON_MEMBERSHIPS_DIRTY'] = true;
+$r = call('POST', 'profile/affix', ['prefix' => '&6&lKING&r', 'suffix' => '&kxx&r'], 'a');
+check('VVIP saves codes (visible length counted without codes)', $r['ok'] && qv('SELECT name_prefix FROM users WHERE id = ?', [$A]) === '&6&lKING&r', $r);
+expect_error('more than 10 visible characters refused', call('POST', 'profile/affix', ['prefix' => '&aABCDEFGHIJK'], 'a'), 'perks.errors.affix');
+expect_error('players cannot pose as ADMIN', call('POST', 'profile/affix', ['prefix' => '&cADMIN'], 'a'), 'perks.errors.affixReserved');
+expect_error('or as staff with spacing tricks', call('POST', 'profile/affix', ['suffix' => 'M.O.D'], 'a'), 'perks.errors.affixReserved');
+expect_error('no HTML', call('POST', 'profile/affix', ['prefix' => '<b>x'], 'a'), 'perks.errors.affix');
+check('a real admin may use ADMIN', call('POST', 'profile/affix', ['prefix' => '&cADMIN'], 'adm')['ok']);
+expect_error('VIP (not VVIP) players cannot set one', call('POST', 'profile/affix', ['prefix' => 'x'], 'v'), 'perks.errors.vvip');
+
 echo "Owner console\n";
 $_SERVER['REMOTE_ADDR'] = '10.9.8.7';
 $con = fn(string $path, array $body = []) => call('POST', $path, $body);

@@ -22,6 +22,24 @@ export default {
     disabled: 'Console dimatikan. Buat kunci di server, lalu tambahkan baris yang dicetak ke ~/neon-config.php:',
     errors: { disabled: 'Console dimatikan di server ini.', badKey: 'Kunci console salah.', expired: 'Sesi console berakhir. Buka lagi.', tooMany: 'Terlalu banyak kunci salah. Coba lagi dalam {minutes} menit.', invalid: 'Perintah tidak valid.' },
   },
+  perf: {
+    ultra: 'Ultra', ultraHint: 'Semua efek, plus kartu miring & cahaya ekstra',
+    high: 'Tinggi', highHint: 'Semua animasi dan efek (bawaan)',
+    medium: 'Sedang', mediumHint: 'Gerak tetap, blur & efek latar dimatikan',
+    statusUltra: 'Ultra aktif: semua efek plus tambahan.', statusMedium: 'Sedang aktif: blur dan efek latar mati, gerakan tetap.',
+  },
+  miniProfile: { online: 'Online', offline: 'Offline', level: 'Level', joined: 'Bergabung', view: 'Lihat profil lengkap' },
+  nameDisplay: {
+    title: 'Tampilan nama', description: 'Cara nama tampil untukmu, dan prefix / suffix milikmu.',
+    maxTags: 'Jumlah tag role di samping nama', maxTagsHint: 'Tag lebih dari ini diringkas jadi “+N”. Ini hanya mengubah tampilanmu — tidak ada yang kehilangan role atau izin.',
+    affix: 'Prefix & suffix kamu', affixHint: 'Tampil di sekitar namamu di semua tempat. Maks. 10 karakter terlihat masing-masing.', affixLocked: 'Prefix dan suffix kustom adalah fitur VVIP (staf juga bisa).',
+    prefix: 'Prefix', suffix: 'Suffix', preview: 'Pratinjau', reset: 'Reset', saved: 'Tampilan nama disimpan',
+    codes: 'Kode format', codesHint: 'Warna &0–&9, &a–&f · &l tebal · &o miring · &n garis bawah · &m coret · &k acak · &r reset. Contoh: &6&lKING&r',
+    none: 'Tidak ada',
+  },
+  membership: { affixInSettings: 'Atur di Settings → Tampilan nama' },
+  perks: { errors: { affixReserved: '“{word}” khusus untuk staf dengan role itu.' } },
+  profile: { status: 'Status', bio: 'Bio' },
   missions: { status: { none: 'Belum diklaim' } },
   auth: {
     errors: {
@@ -32,6 +50,7 @@ export default {
   },
   errors: { featureOff: '{feature} sedang tidak tersedia.' },
   maintenance: { upcoming: 'Maintenance terjadwal mulai {time}' },
+  settings: { nameDisplay: { title: 'Tampilan nama', description: 'Cara nama tampil untukmu, dan prefix / suffix milikmu.' } },
   system: {
     startsAt: 'Mulai (opsional)', bypassAdmins: 'Staf tetap bisa masuk', bypassTesters: 'Tester tetap bisa masuk', preview: 'Pratinjau layar pemain',
   },

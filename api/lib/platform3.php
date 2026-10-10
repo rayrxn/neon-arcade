@@ -228,15 +228,33 @@ function perk_claim(array $me, string $kind, ?string $asTier = null): array
     return ['kind' => $kind, 'ac' => num($ac), 'ag' => num($ag), 'lxp' => $lxp];
 }
 
-/** VVIP: custom prefix/suffix around the display name. */
+/** Words a player may not show around their name unless they hold that staff role (anti-impersonation). */
+const AFFIX_RESERVED = [
+    'owner' => ['super_admin'], 'master' => ['super_admin'], 'admin' => ['super_admin', 'admin'], 'staff' => ['super_admin', 'admin', 'moderator', 'support', 'developer'],
+    'mod' => ['super_admin', 'admin', 'moderator'], 'moderator' => ['super_admin', 'admin', 'moderator'], 'helper' => ['super_admin', 'admin', 'support'], 'support' => ['super_admin', 'admin', 'support'],
+    'tester' => ['super_admin', 'developer'], 'dev' => ['super_admin', 'developer'], 'developer' => ['super_admin', 'developer'], 'system' => [], 'console' => [], 'official' => ['super_admin'],
+];
+
+function can_affix(array $u): bool
+{
+    return member_tier($u['id']) === 'vvip' || is_staff_role($u['role']);
+}
+
+/** VVIP (and staff): custom prefix/suffix with formatting codes (&a…&f colors, &k &l &o &n &m &r). */
 function set_name_affix(array $me, $prefix, $suffix): array
 {
-    if (member_tier($me['id']) !== 'vvip') fail('perks.errors.vvip');
-    $clean = function ($v) {
+    if (!can_affix($me)) fail('perks.errors.vvip');
+    $clean = function ($v) use ($me) {
         $v = trim((string) ($v ?? ''));
         if ($v === '') return null;
-        if (mb_strlen($v) > 10 || !preg_match('/^[\p{L}\p{N}\p{S}\p{P} ]+$/u', $v) || preg_match('/https?:|www\./i', $v)) fail('perks.errors.affix');
-        if (mod_check($v)['action'] !== 'allow') fail('chat.errors.blocked');
+        $visible = trim(preg_replace('/&[0-9a-fk-or]/i', '', $v));
+        if ($visible === '' || mb_strlen($visible) > 10 || mb_strlen($v) > 32) fail('perks.errors.affix');
+        if (!preg_match('/^[\p{L}\p{N}\p{S}\p{P} ]+$/u', $v) || preg_match('/https?:|www\.|[<>]/i', $v)) fail('perks.errors.affix');
+        $word = strtolower(preg_replace('/[^\p{L}\p{N}]+/u', '', $visible));
+        foreach (AFFIX_RESERVED as $w => $roles) {
+            if (str_contains($word, $w) && !in_array($me['role'], $roles, true)) fail('perks.errors.affixReserved', ['word' => strtoupper($w)]);
+        }
+        if (mod_check($visible)['action'] !== 'allow') fail('chat.errors.blocked');
         return $v;
     };
     $p = $clean($prefix);

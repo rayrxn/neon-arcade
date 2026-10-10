@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import FormattedText, { stripCodes } from '@/components/ui/FormattedText'
+import { PlayerName } from '@/components/ui/Identity'
 import { AtSign, Check, ImagePlus, Pencil, UserRound } from 'lucide-react'
 import clsx from 'clsx'
 import Modal from '@/components/ui/Modal'
@@ -80,6 +82,8 @@ export default function EditProfileModal({ open, onClose }) {
   const [username, setUsername] = useState('')
   const [avatar, setAvatar] = useState(null)
   const [frame, setFrame] = useState(null)
+  const [status, setStatus] = useState('')
+  const [bio, setBio] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
@@ -89,6 +93,8 @@ export default function EditProfileModal({ open, onClose }) {
     setUsername(user.username)
     setAvatar(user.avatar)
     setFrame(user.frame ?? null)
+    setStatus(user.status ?? '')
+    setBio(user.bio ?? '')
     setBanner(undefined)
     setError(null)
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -132,7 +138,7 @@ export default function EditProfileModal({ open, onClose }) {
     setError(null)
     try {
       if (banner !== undefined) await uploadBanner(banner)
-      await updateProfile({ displayName, username, avatar, frame })
+      await updateProfile(SERVER_MODE ? { displayName, username, avatar, frame, status, bio } : { displayName, username, avatar, frame })
       toast({ tone: 'success', title: t('profile.saved') })
       onClose()
     } catch (err) {
@@ -219,6 +225,31 @@ export default function EditProfileModal({ open, onClose }) {
 
         <Field id="edit-display-name" label={t('profile.displayName')} icon={UserRound} value={displayName} maxLength={24} onChange={(e) => setDisplayName(e.target.value)} error={displayName && nameError ? t(nameError) : undefined} />
         <Field id="edit-username" label={t('profile.username')} icon={AtSign} value={username} maxLength={16} onChange={(e) => setUsername(e.target.value.replace(/\s/g, ''))} error={usernameError ? t(usernameError) : undefined} hint={<span className="font-normal text-slate-500">{t('profile.usernameHint')}</span>} />
+
+        {SERVER_MODE && (
+          <>
+            <Field id="edit-status" label={t('profile.status')} value={status} maxLength={120} onChange={(e) => setStatus(e.target.value)} hint={<span className="font-normal text-slate-500">{stripCodes(status).length}/60</span>} />
+            <div>
+              <label htmlFor="edit-bio" className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-400">{t('profile.bio')} <span className="font-normal text-slate-600">{stripCodes(bio).length}/200</span></label>
+              <textarea id="edit-bio" rows={3} maxLength={400} value={bio} onChange={(e) => setBio(e.target.value)} className="input-shell w-full resize-none px-3 py-2 text-sm text-white outline-none" />
+              <p className="mt-1 text-[11px] text-slate-500">{t('nameDisplay.codesHint')}</p>
+            </div>
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('nameDisplay.preview')}</p>
+              <div className="overflow-hidden rounded-xl ring-1 ring-inset ring-white/10">
+                <div className="h-12 bg-gradient-to-r from-neon-cyan/25 to-neon-purple/25" style={bannerShown ? { backgroundImage: `url("${bannerShown}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined} />
+                <div className="flex gap-3 bg-ink-900 px-3 pb-3">
+                  <span className="-mt-5 rounded-full ring-4 ring-ink-900"><Avatar user={preview} size="lg" /></span>
+                  <div className="min-w-0 pt-1.5">
+                    <p className="text-sm font-bold text-white"><PlayerName user={preview} compact={false} /></p>
+                    {status && <p className="truncate text-xs text-slate-300"><FormattedText text={status} /></p>}
+                    {bio && <p className="mt-1 whitespace-pre-line break-words text-xs text-slate-400"><FormattedText text={bio} /></p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {error && <p className="rounded-xl bg-neon-red/10 px-3.5 py-3 text-sm font-semibold text-neon-red" role="alert">{t(error)}</p>}
       </div>

@@ -22,7 +22,8 @@ import { formatCoins, formatTime, timeAgo } from '@/utils/format'
 import { errorKey } from '@/utils/errors'
 import { useT } from '@/i18n'
 import EmotePicker from './EmotePicker'
-import { RichText, StyledName, UserTags, chatEffectProps } from '@/components/ui/Identity'
+import { PlayerName, RichText, StyleBadge, StyledName, UserTags, chatEffectProps } from '@/components/ui/Identity'
+import ProfilePopover from '@/components/profile/ProfilePopover'
 import { useCatalog } from '@/services/platform2'
 import { SERVER_MODE } from '@/config/runtime'
 
@@ -63,12 +64,13 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
   const fx = chatEffectProps(catalog, author)
   return (
     <div className={clsx('group relative flex gap-3 px-3 sm:px-4', grouped ? 'pt-0.5' : 'pt-3', mine && !fx.className && 'bg-neon-cyan/[0.03]')}>
-      <div className="w-8 shrink-0">{!grouped && <Avatar user={author} name={author?.username} size="sm" />}</div>
+      <div className="w-8 shrink-0">{!grouped && <ProfilePopover user={author} className="block rounded-full"><Avatar user={author} name={author?.username} size="sm" /></ProfilePopover>}</div>
       <div className="min-w-0 flex-1 pb-1">
         {!grouped && (
           <p className="flex flex-wrap items-baseline gap-x-1.5">
-            <Link to={author ? `/u/${author.username}` : '#'} className={clsx('text-sm font-bold hover:underline', mine ? 'text-neon-cyan' : 'text-white')}><StyledName user={author} /></Link>
-            {author && <UserTags user={author} compact={compact} className="self-center" />}
+            {author && <UserTags user={author} compact withBadge={false} className="self-center" />}
+            <ProfilePopover user={author} className={clsx('text-sm font-bold hover:underline', mine ? 'text-neon-cyan' : 'text-white')}><StyledName user={author} /></ProfilePopover>
+            {author && <StyleBadge user={author} className="self-center" />}
             {message.badge && COSMETICS[message.badge] && <span className="rounded bg-white/[0.06] px-1 text-[10px] font-bold text-neon-gold" title={COSMETICS[message.badge].name?.en}>{COSMETICS[message.badge].glyph}</span>}
             {!compact && <span className="text-xs text-slate-500">@{author?.username}</span>}
             {author?.isDemo && <DemoTag />}
@@ -324,7 +326,7 @@ export function OnlineList({ className }) {
         <li key={user.id} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
           <Avatar user={user} size="sm" online={online} />
           <div className="min-w-0 flex-1">
-            <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-slate-200"><StyledName user={user} className="truncate" /> <UserTags user={user} compact /> {user.isDemo && <DemoTag />}</p>
+            <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-slate-200"><PlayerName user={user} /> {user.isDemo && <DemoTag />}</p>
             <p className="truncate text-[11px] text-slate-500">{online ? t('chat.online') : seen ? t('chat.lastSeen', { time: timeAgo(seen, now) }) : t('chat.offline')}</p>
           </div>
         </li>

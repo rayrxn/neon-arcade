@@ -14,7 +14,8 @@ import { currentSeason } from '@/services/seasons'
 import { useNow } from '@/hooks/useNow'
 import { formatCoins, formatDate, formatLeft } from '@/utils/format'
 import { useT } from '@/i18n'
-import { StyledName, UserTags } from '@/components/ui/Identity'
+import { PlayerName } from '@/components/ui/Identity'
+import ProfilePopover from '@/components/profile/ProfilePopover'
 
 const RANK_STYLE = ['text-neon-gold', 'text-slate-300', 'text-[#e39b62]']
 
@@ -86,7 +87,7 @@ export default function LeaderboardPage() {
                     </span>
                     <Avatar user={r.user} size="sm" />
                     <Link to={`/u/${r.user.username}`} className="min-w-0 flex-1 hover:underline">
-                      <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-white"><StyledName user={r.user} className="truncate" /> <UserTags user={r.user} compact /> {mine && <span className="text-[11px] font-semibold text-neon-cyan">({t('leaderboard.you')})</span>}</p>
+                      <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-white"><ProfilePopover user={r.user} className="min-w-0"><PlayerName user={r.user} /></ProfilePopover> {mine && <span className="text-[11px] font-semibold text-neon-cyan">({t('leaderboard.you')})</span>}</p>
                       <p className="truncate text-[11px] text-slate-500">@{r.user.username} · Lv {r.level}</p>
                     </Link>
                     <span className="shrink-0 text-right text-sm font-bold text-white num">{label ?? `Lv ${r.level}`}</span>

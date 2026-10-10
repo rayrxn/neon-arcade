@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, Globe, Volume2, VolumeX, KeyRound, Gauge, Lock, LogOut, Mail, MailCheck, Rabbit, Sparkles as SparklesIcon, Zap, Monitor, Moon, Palette, Pencil, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react'
+import { Bell, Check, Globe, Volume2, VolumeX, KeyRound, Gauge, Lock, LogOut, Mail, MailCheck, Rabbit, Gem, Tags, Sparkles as SparklesIcon, Zap, Monitor, Moon, Palette, Pencil, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react'
 import clsx from 'clsx'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
@@ -17,6 +17,8 @@ import { play } from '@/services/sound'
 import { sendVerificationEmail } from '@/services/account'
 import { lowSpecDevice, usePotato } from '@/components/runtime/PerformanceController'
 import { SERVER_MODE } from '@/config/runtime'
+import { PlayerName } from '@/components/ui/Identity'
+import { setNameAffix } from '@/services/platform2'
 import { useT } from '@/i18n'
 
 const SECTIONS = [
@@ -24,6 +26,7 @@ const SECTIONS = [
   { id: 'appearance', icon: Palette },
   { id: 'language', icon: Globe },
   { id: 'performance', icon: Gauge },
+  { id: 'nameDisplay', icon: Tags },
   { id: 'notifications', icon: Bell },
   { id: 'sound', icon: Volume2 },
   { id: 'security', icon: ShieldCheck },
@@ -70,6 +73,69 @@ function SoundSettings() {
         <Switch id="sound-muted" checked={sound.muted} onChange={(v) => setSound({ muted: v })} label={t('settings.sound.mute')} />
       </div>
       <p className="text-xs text-slate-500">{t('settings.sound.note')}</p>
+    </div>
+  )
+}
+
+/** Name display: viewer's role-tag limit + own prefix/suffix with live preview (moved here from Membership). */
+function NameDisplaySettings() {
+  const { t } = useT()
+  const user = useCurrentUser()
+  const maxTags = usePrefsStore((s) => s.maxRoleTags ?? 3)
+  const setMaxTags = usePrefsStore((s) => s.setMaxRoleTags)
+  const canAffix = user?.membership === 'vvip' || ['super_admin', 'admin', 'moderator', 'support', 'developer'].includes(user?.role)
+  const [affix, setAffix] = useState({ prefix: user?.namePrefix ?? '', suffix: user?.nameSuffix ?? '' })
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const save = async (next) => {
+    setBusy(true)
+    setErr(null)
+    try {
+      await setNameAffix(next.prefix, next.suffix)
+      setAffix(next)
+      toast({ tone: 'success', title: t('nameDisplay.saved') })
+    } catch (e) {
+      setErr(t(errorKey(e), e?.vars))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const preview = user ? { ...user, namePrefix: affix.prefix || null, nameSuffix: affix.suffix || null } : null
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="text-sm font-semibold text-white">{t('nameDisplay.maxTags')}</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {[0, 1, 2, 3, 4, 5].map((n) => (
+            <button key={n} onClick={() => setMaxTags(n)} className={clsx('h-9 min-w-[2.5rem] rounded-lg px-3 text-sm font-bold ring-1 ring-inset transition', maxTags === n ? 'bg-neon-cyan/15 text-neon-cyan ring-neon-cyan/40' : 'text-slate-400 ring-white/10 hover:text-white')}>{n === 0 ? t('nameDisplay.none') : n}</button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-slate-500">{t('nameDisplay.maxTagsHint')}</p>
+      </div>
+      <div className="rounded-xl bg-white/[0.03] p-4 ring-1 ring-inset ring-white/[0.06]">
+        <p className="text-sm font-semibold text-white">{t('nameDisplay.affix')}</p>
+        <p className="mt-0.5 text-xs text-slate-500">{canAffix ? t('nameDisplay.affixHint') : t('nameDisplay.affixLocked')}</p>
+        {SERVER_MODE && canAffix && (
+          <>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <input aria-label={t('nameDisplay.prefix')} placeholder={t('nameDisplay.prefix')} maxLength={24} value={affix.prefix} onChange={(e) => setAffix({ ...affix, prefix: e.target.value })} className="input-shell h-10 px-3 font-mono text-sm text-white outline-none" />
+              <input aria-label={t('nameDisplay.suffix')} placeholder={t('nameDisplay.suffix')} maxLength={24} value={affix.suffix} onChange={(e) => setAffix({ ...affix, suffix: e.target.value })} className="input-shell h-10 px-3 font-mono text-sm text-white outline-none" />
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-slate-500"><b className="text-slate-400">{t('nameDisplay.codes')}:</b> {t('nameDisplay.codesHint')}</p>
+            {err && <p className="mt-2 text-xs font-semibold text-neon-red" role="alert">{err}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" loading={busy} onClick={() => save(affix)}>{t('common.save')}</Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => save({ prefix: '', suffix: '' })}>{t('nameDisplay.reset')}</Button>
+            </div>
+          </>
+        )}
+      </div>
+      {preview && (
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('nameDisplay.preview')}</p>
+          <div className="rounded-xl bg-ink-950/60 px-4 py-3 text-sm font-bold text-white ring-1 ring-inset ring-white/[0.06]"><PlayerName user={preview} max={maxTags} compact={false} /></div>
+        </div>
+      )}
     </div>
   )
 }
@@ -281,17 +347,23 @@ export default function SettingsPage() {
         </Section>
 
         <Section id="performance" title={t('settings.performance.title')} description={t('settings.performance.description')}>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <OptionCard active={perfMode === 'auto'} onClick={() => setPerformance('auto')} icon={SparklesIcon} label={t('perf.auto')} hint={t('perf.autoHint')} />
+            <OptionCard active={perfMode === 'ultra'} onClick={() => setPerformance('ultra')} icon={Gem} label={t('perf.ultra')} hint={t('perf.ultraHint')} />
+            <OptionCard active={perfMode === 'high' || perfMode === 'off'} onClick={() => setPerformance('high')} icon={Zap} label={t('perf.high')} hint={t('perf.highHint')} />
+            <OptionCard active={perfMode === 'medium'} onClick={() => setPerformance('medium')} icon={Gauge} label={t('perf.medium')} hint={t('perf.mediumHint')} />
             <OptionCard active={perfMode === 'on'} onClick={() => setPerformance('on')} icon={Rabbit} label={t('perf.on')} hint={t('perf.onHint')} />
-            <OptionCard active={perfMode === 'off'} onClick={() => setPerformance('off')} icon={Zap} label={t('perf.off')} hint={t('perf.offHint')} />
           </div>
           <p className={clsx('mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs ring-1 ring-inset', potato ? 'bg-neon-gold/[0.06] text-slate-200 ring-neon-gold/20' : 'bg-white/[0.03] text-slate-400 ring-white/[0.06]')}>
             <span aria-hidden="true">{potato ? '🥔' : '✨'}</span>
             {potato
               ? perfMode === 'on' ? t('perf.statusOn') : t('perf.statusAuto', { why: lowSpecDevice() ? t('perf.whySpec') : t('perf.whyFps') })
-              : perfMode === 'off' ? t('perf.statusOff') : autoPotato === null ? t('perf.statusChecking') : t('perf.statusFast')}
+              : perfMode === 'ultra' ? t('perf.statusUltra') : perfMode === 'medium' ? t('perf.statusMedium') : perfMode === 'off' || perfMode === 'high' ? t('perf.statusOff') : autoPotato === null ? t('perf.statusChecking') : t('perf.statusFast')}
           </p>
+        </Section>
+
+        <Section id="nameDisplay" title={t('settings.nameDisplay.title')} description={t('settings.nameDisplay.description')}>
+          <NameDisplaySettings />
         </Section>
 
         <Section id="notifications" title={t('settings.notifications.title')} description={t('settings.notifications.description')}>

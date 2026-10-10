@@ -8,7 +8,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 export const LANGUAGES = ['id', 'en']
 export const APPEARANCES = ['dark', 'light', 'system']
 /** Potato mode: 'auto' turns it on for weak devices / low frame rate, 'on' always, 'off' never. */
-export const PERFORMANCE = ['auto', 'on', 'off']
+export const PERFORMANCE = ['auto', 'ultra', 'high', 'medium', 'on', 'off'] // on = Potato, off = High (older saves)
 export const NOTIFICATION_KEYS = ['transfers', 'redeem', 'jackpots', 'mentions', 'progress', 'friends']
 /** sfx = volume game, ui = volume antarmuka (klik, notifikasi, chat). */
 const DEFAULT_SOUND = { master: 0.7, sfx: 0.8, ui: 0.7, music: 0.4, muted: false, musicOff: false, track: null }
@@ -24,7 +24,9 @@ export const usePrefsStore = create(
       betCurrency: 'AC',
       sidebarCollapsed: false,
       performance: 'auto',
-      autoPotato: null, // result of the automatic check on this device: null = not measured yet
+      autoPotato: null,
+      maxRoleTags: 3, // how many role tags to show next to a name (the rest become "+N")
+      setMaxRoleTags: (n) => [0, 1, 2, 3, 4, 5].includes(n) && set({ maxRoleTags: n }), // result of the automatic check on this device: null = not measured yet
       setPerformance: (performance) => PERFORMANCE.includes(performance) && set({ performance }),
       setAutoPotato: (autoPotato) => set({ autoPotato: !!autoPotato }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),

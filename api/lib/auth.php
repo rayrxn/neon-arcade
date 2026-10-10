@@ -238,6 +238,15 @@ function api_profile(): array
             }
             $profile['equipped'] = $eq;
         }
+        // Status (60) and bio (200): plain text, formatting codes allowed, moderated, links blocked.
+        foreach (['status' => 60, 'bio' => 200] as $k => $max) {
+            if (!array_key_exists($k, $patch)) continue;
+            $v = trim(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', (string) ($patch[$k] ?? '')));
+            $visible = preg_replace('/&[0-9a-fk-or]/i', '', $v);
+            if (mb_strlen($visible) > $max || mb_strlen($v) > $max * 2 || preg_match('/https?:|www\.|[<>]/i', $v)) fail('errors.invalidInput');
+            if ($v !== '' && mod_check($visible)['action'] !== 'allow') fail('chat.errors.blocked');
+            $profile[$k] = $v === '' ? null : $v;
+        }
         if ($sets) {
             $vals[] = $u['id'];
             q('UPDATE users SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);

@@ -19,6 +19,14 @@ export function potatoActive(state = usePrefsStore.getState()) {
 }
 export const usePotato = () => usePrefsStore((s) => potatoActive(s))
 
+/** Effective preset: ultra | high | medium | potato. */
+export function perfPreset(state = usePrefsStore.getState()) {
+  if (potatoActive(state)) return 'potato'
+  if (state.performance === 'ultra' || state.performance === 'medium') return state.performance
+  return 'high'
+}
+export const usePerfPreset = () => usePrefsStore((s) => perfPreset(s))
+
 /** Average frames per second over `ms`, measured with requestAnimationFrame. */
 function measureFps(ms) {
   return new Promise((resolve) => {
@@ -42,11 +50,13 @@ export default function PerformanceController() {
   const performanceMode = usePrefsStore((s) => s.performance)
   const autoPotato = usePrefsStore((s) => s.autoPotato)
   const active = usePotato()
+  const preset = usePerfPreset()
 
   useEffect(() => {
     if (active) document.documentElement.dataset.potato = '1'
     else delete document.documentElement.dataset.potato
-  }, [active])
+    document.documentElement.dataset.perf = preset
+  }, [active, preset])
 
   useEffect(() => {
     if (performanceMode !== 'auto' || autoPotato !== null || lowSpecDevice() || typeof requestAnimationFrame === 'undefined') return

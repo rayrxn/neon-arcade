@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Activity, CalendarDays, Gamepad2, Heart, Sparkles, Star } from 'lucide-react'
 import clsx from 'clsx'
+import FormattedText from '@/components/ui/FormattedText'
 import Avatar from '@/components/ui/Avatar'
 import { DemoTag, Panel } from '@/components/ui/Controls'
 import { ItemPreview } from '@/pages/InventoryPage'
@@ -11,7 +12,7 @@ import { equippedOf } from '@/services/cosmetics'
 import { currentSeason, seasonTier, seasonTierProgress, seasonXpOf } from '@/services/seasons'
 import { formatCoins, formatDate, timeAgo } from '@/utils/format'
 import { pick, useT } from '@/i18n'
-import { ProfileBanner, StyledName, UserTags } from '@/components/ui/Identity'
+import { PlayerName, ProfileBanner } from '@/components/ui/Identity'
 
 /** Header profil: banner, avatar + bingkai, nama, title, badge, level, tanggal gabung. */
 export function ProfileHero({ user, progress, actions, online }) {
@@ -27,13 +28,15 @@ export function ProfileHero({ user, progress, actions, online }) {
           <Avatar user={user} size="xl" online={online} className="-mt-10 shrink-0 rounded-2xl ring-4 ring-ink-900 sm:-mt-12" />
           <div className="min-w-0 pt-3">
             <h1 className="flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-xl font-bold text-white sm:text-2xl">
-              <StyledName user={user} className="min-w-0 truncate" /> <UserTags user={user} /> {user.isDemo && <DemoTag />}
+              <PlayerName user={user} compact={false} /> {user.isDemo && <DemoTag />}
               {user.isTest && <span className="rounded bg-neon-gold/15 px-1.5 py-0.5 text-[10px] font-extrabold text-neon-gold">TEST</span>}
             </h1>
             <p className="mt-0.5 truncate text-sm text-slate-400">
               @{user.username}
               {eq.title && <span className="ml-2 text-neon-cyan">· {pick(COSMETICS[eq.title]?.name, lang)}</span>}
             </p>
+            {user.status && <p className="mt-1 text-sm text-slate-200"><FormattedText text={user.status} /></p>}
+            {user.bio && <p className="mt-1 max-w-xl whitespace-pre-line break-words text-sm text-slate-400"><FormattedText text={user.bio} /></p>}
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <span className="rounded-md bg-neon-cyan/10 px-1.5 py-0.5 font-mono text-[11px] font-bold text-neon-cyan ring-1 ring-inset ring-neon-cyan/25">Lv {lv.level}</span>
               {eq.badges.map((b) => (

@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import { EmptyState, Panel } from '@/components/ui/Controls'
 import { PageHeader } from '@/components/ui/PageKit'
-import { claimPerk, contactManager, requestMembership, setNameAffix, useCatalog, useExtras } from '@/services/platform2'
+import { claimPerk, contactManager, requestMembership, useCatalog, useExtras } from '@/services/platform2'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { toast } from '@/store/useUiStore'
 import { SERVER_MODE } from '@/config/runtime'
@@ -122,7 +122,6 @@ function MemberPerks({ tier }) {
   const user = useCurrentUser()
   const { perks } = useExtras()
   const [busy, setBusy] = useState(null)
-  const [affix, setAffix] = useState({ prefix: user?.namePrefix ?? '', suffix: user?.nameSuffix ?? '' })
   const [msg, setMsg] = useState('')
   const p = perks?.perks ?? FALLBACK[tier]
   const run = async (key, fn, ok) => {
@@ -197,12 +196,7 @@ function MemberPerks({ tier }) {
           <div className="rounded-xl bg-white/[0.03] p-4 ring-1 ring-inset ring-white/[0.06]">
             <p className="flex items-center gap-2 text-sm font-bold text-white"><PenLine className="h-4 w-4 text-cyan-200" /> {t('membership.perk.affix')}</p>
             <p className="mt-1 text-xs text-slate-400">{t('membership.affixHint')}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <input aria-label={t('membership.prefix')} placeholder={t('membership.prefix')} maxLength={10} value={affix.prefix} onChange={(e) => setAffix({ ...affix, prefix: e.target.value })} className="input-shell h-10 w-28 px-3 text-sm text-white outline-none" />
-              <span className="font-bold text-slate-300">{user?.displayName}</span>
-              <input aria-label={t('membership.suffix')} placeholder={t('membership.suffix')} maxLength={10} value={affix.suffix} onChange={(e) => setAffix({ ...affix, suffix: e.target.value })} className="input-shell h-10 w-28 px-3 text-sm text-white outline-none" />
-              <Button size="sm" loading={busy === 'a'} onClick={() => run('a', () => setNameAffix(affix.prefix, affix.suffix), () => t('membership.affixSaved'))}>{t('common.save')}</Button>
-            </div>
+            <Link to="/settings" className="mt-3 inline-flex h-9 items-center rounded-xl bg-white/[0.06] px-3 text-sm font-bold text-white hover:bg-white/[0.1]">{t('membership.affixInSettings')}</Link>
           </div>
           <div className="rounded-xl bg-white/[0.03] p-4 ring-1 ring-inset ring-white/[0.06]">
             <p className="flex items-center gap-2 text-sm font-bold text-white"><Headset className="h-4 w-4 text-cyan-200" /> {t('membership.perk.manager')}</p>

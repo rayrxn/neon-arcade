@@ -791,7 +791,7 @@ function user_extra_fields(array $u, array $profile): array
         'membership' => $tier,
         'style' => (object) style_view($u, $profile, null, $tier),
         'bannerUrl' => banner_url($u['id']),
-        'namePrefix' => $tier === 'vvip' ? ($u['name_prefix'] ?? null) : null,
-        'nameSuffix' => $tier === 'vvip' ? ($u['name_suffix'] ?? null) : null,
+        'namePrefix' => $tier === 'vvip' || is_staff_role($u['role']) ? ($u['name_prefix'] ?? null) : null,
+        'nameSuffix' => $tier === 'vvip' || is_staff_role($u['role']) ? ($u['name_suffix'] ?? null) : null,
     ];
 }

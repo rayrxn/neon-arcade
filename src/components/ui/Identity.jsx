@@ -2,6 +2,9 @@ import { Fragment, useMemo } from 'react'
 import { Crown, Dice5, Flame, Gem, Shield, Sparkles, Sprout, Star, Target, Zap } from 'lucide-react'
 import clsx from 'clsx'
 import RoleTag from './RoleTag'
+import FormattedText, { stripCodes } from './FormattedText'
+import { usePrefsStore } from '@/store/usePrefsStore'
+import { useT } from '@/i18n'
 import { cardOf, emoteMap, itemOf, roleOf, useCatalog } from '@/services/platform2'
 
 /**
@@ -43,28 +46,24 @@ export function StyledName({ user, className, children }) {
     if (!pre && !suf) return <span className={className}>{base}</span>
     return (
       <span className={clsx('name-run', className)}>
-        {pre && <span className="name-affix">{pre}</span>}
+        {pre && <FormattedText text={pre} className="name-affix" />}
         {pre && ' '}
         {base}
         {suf && ' '}
-        {suf && <span className="name-affix">{suf}</span>}
+        {suf && <FormattedText text={suf} className="name-affix" />}
       </span>
     )
   }
-  const full = typeof base === 'string' ? [pre, base, suf].filter(Boolean).join(' ') : null
+  const full = typeof base === 'string' ? [pre && stripCodes(pre), base, suf && stripCodes(suf)].filter(Boolean).join(' ') : null
   const style = { backgroundImage: gradient(colors), '--fx-a': colors[0], '--fx-b': colors[1], '--fx-c': colors[2] ?? colors[0] }
   if (anim === 'wave' && full) {
     return <span className={clsx('name-fx-wave', className)} style={{ '--fx-a': colors[0], '--fx-b': colors[1] }} aria-label={full}><Letters text={full} colors={colors} /></span>
   }
   return (
     <span className={clsx('name-fx', `name-fx--${anim}`, className)} style={style} data-text={full ?? undefined}>
-      {full ?? (
-        <>
-          {pre && `${pre} `}
-          {base}
-          {suf && ` ${suf}`}
-        </>
-      )}
+      {pre && <><FormattedText text={pre} />{' '}</>}
+      {base}
+      {suf && <>{' '}<FormattedText text={suf} /></>}
     </span>
   )
 }
@@ -107,19 +106,47 @@ export function StyleBadge({ user, className }) {
   const catalog = useCatalog()
   const b = itemOf(catalog, user?.style?.badge)
   if (!b?.style?.glyph) return null
-  return <span className={clsx('style-badge', className)} style={{ color: b.style.color ?? '#e2e8f0' }} title={b.name}>{b.style.glyph}</span>
+  return <span className={clsx('style-badge', className)} style={{ color: b.style.color ?? '#e2e8f0', '--sb': b.style.color ?? '#e2e8f0' }} title={b.description ? `${b.name} — ${b.description}` : b.name} aria-label={b.name}>{b.style.glyph}</span>
 }
 
-/** All tags for a user, in a fixed order: staff → membership → loyalty card → progression role → badge. */
-export function UserTags({ user, className, compact = false }) {
+/** All tags for a user, in a fixed order: staff → membership → loyalty card → progression role.
+ *  `max` (default: the viewer's "visible role tags" setting) hides the rest behind a "+N" chip; nothing is removed. */
+export function UserTags({ user, className, compact = false, max, withBadge = true }) {
+  const { t } = useT()
+  const pref = usePrefsStore((s) => s.maxRoleTags ?? 3)
+  const catalog = useCatalog()
   if (!user) return null
+  const limit = max ?? pref
+  const items = []
+  if (['super_admin', 'admin', 'moderator', 'support', 'developer'].includes(user.role)) items.push({ k: 'r', label: t(`admin.roles.${user.role}`), el: <RoleTag key="r" role={user.role} /> })
+  if (user.membership) items.push({ k: 'm', label: user.membership.toUpperCase(), el: <MemberTag key="m" tier={user.membership} /> })
+  if (user.loyaltyCard && user.loyaltyCard !== 'none') items.push({ k: 'c', label: cardOf(catalog, user.loyaltyCard)?.name ?? user.loyaltyCard, el: <CardTag key="c" slug={user.loyaltyCard} /> })
+  if (!compact && user.playerRole) {
+    const role = roleOf(catalog, user.playerRole)
+    if (role) items.push({ k: 'p', label: role.name, el: <PlayerRoleTag key="p" slug={user.playerRole} showNewcomer /> })
+  }
+  const shown = limit >= items.length ? items : items.slice(0, Math.max(0, limit))
+  const hidden = items.slice(shown.length)
   return (
     <span className={clsx('inline-flex flex-wrap items-center gap-1 align-middle', className)}>
-      <RoleTag role={user.role} />
-      <MemberTag tier={user.membership} />
-      <CardTag slug={user.loyaltyCard} />
-      {!compact && <PlayerRoleTag slug={user.playerRole} showNewcomer />}
-      <StyleBadge user={user} />
+      {shown.map((x) => x.el)}
+      {hidden.length > 0 && <span className="id-tag tag-more" title={hidden.map((x) => x.label).join(' · ')} aria-label={hidden.map((x) => x.label).join(', ')}>+{hidden.length}</span>}
+      {withBadge && <StyleBadge user={user} />}
+    </span>
+  )
+}
+
+/**
+ * The standard way to show a player: [ROLE TAGS] [PREFIX] Name [SUFFIX] [badge].
+ * Tags sit LEFT of the name (limited by the viewer's setting, "+N" for the rest); the equipped badge sits right.
+ */
+export function PlayerName({ user, className, nameClassName, compact = true, max, tags = true }) {
+  if (!user) return null
+  return (
+    <span className={clsx('player-name inline-flex min-w-0 items-center gap-1.5', className)}>
+      {tags && <UserTags user={user} compact={compact} max={max} withBadge={false} className="shrink-0" />}
+      <StyledName user={user} className={clsx('min-w-0 truncate', nameClassName)} />
+      <StyleBadge user={user} className="shrink-0" />
     </span>
   )
 }
