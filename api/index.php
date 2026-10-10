@@ -55,6 +55,10 @@ function route(string $method, string $path): array
         $u = current_user(false);
         return tx(fn() => crash_state($u));
     }
+    if ($method === 'GET' && $path === 'activity') {
+        $u = current_user();
+        return tx(fn() => activity_view($u, (string) ($_GET['kind'] ?? 'all')));
+    }
     if ($method === 'GET' && $path === 'stats/pnl') {
         $u = current_user();
         return tx(fn() => pnl_stats($u, (int) ($_GET['days'] ?? 7)));
