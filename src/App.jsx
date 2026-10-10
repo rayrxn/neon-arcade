@@ -29,6 +29,7 @@ import { SystemAdmin } from '@/admin/pages/System'
 import AdminLayout from '@/admin/AdminLayout'
 import { ChatModerationAdmin, EconomyAdmin, EmotesAdmin, LoyaltyAdmin, MembershipsAdmin, MissionsAdmin, PlayerRolesAdmin, ShopAdmin } from '@/admin/pages/Platform'
 import AdminDashboard from '@/admin/pages/Dashboard'
+import { FeaturesAdmin, MonitoringAdmin, QaCenter } from '@/admin/pages/Core'
 import { UserDetail, UserList } from '@/admin/pages/Users'
 import { AntiCheat, GamesAdmin, Sessions, Wallets } from '@/admin/pages/Operations'
 import { AchievementsAdmin, AnnouncementsAdmin, ChatAdmin, CodesAdmin, DailyAdmin, LogsAdmin, Moderation, QuestsAdmin, RewardsOverview, SettingsAdmin, TestModeAdmin } from '@/admin/pages/Content'
@@ -36,6 +37,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import RequireAuth from '@/components/routing/RequireAuth'
 import ThemeController from '@/components/runtime/ThemeController'
 import PerformanceController from '@/components/runtime/PerformanceController'
+import BannedScreen from '@/components/runtime/BannedScreen'
 import PlatformRuntime from '@/components/runtime/PlatformRuntime'
 import ServerGate from '@/components/runtime/ServerGate'
 import RootBoundary from '@/components/runtime/RootBoundary'
@@ -56,6 +58,7 @@ export default function App() {
       <div className="arcade-bg" aria-hidden />
       <ThemeController />
       <PerformanceController />
+      <BannedScreen />
       <RootBoundary>
       <ServerGate>
       <PlatformRuntime />
@@ -102,7 +105,10 @@ export default function App() {
             <Route path="wallets" element={<Guard perm="wallet.manage"><Wallets /></Guard>} />
             <Route path="games" element={<Guard perm="games.manage"><GamesAdmin /></Guard>} />
             <Route path="sessions" element={<Guard perm="sessions.view"><Sessions /></Guard>} />
-            <Route path="anticheat" element={<Guard perm="anticheat"><AntiCheat /></Guard>} />
+            <Route path="anticheat" element={<Guard perm={['anticheat', 'security.review']}><AntiCheat /></Guard>} />
+            <Route path="features" element={<Guard perm="features.manage"><FeaturesAdmin /></Guard>} />
+            <Route path="monitoring" element={<Guard perm={['errors.view', 'system.manage']}><MonitoringAdmin /></Guard>} />
+            <Route path="qa" element={<Guard perm="qa.run"><QaCenter /></Guard>} />
             <Route path="moderation" element={<Guard perm="reports.view"><ModerationQueue /></Guard>} />
             <Route path="support" element={<Guard perm="support.manage"><SupportAdmin /></Guard>} />
             <Route path="system" element={<Guard perm="system.manage"><SystemAdmin /></Guard>} />

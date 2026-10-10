@@ -62,7 +62,7 @@ function current_user(bool $required = true): ?array
             q('DELETE FROM sessions WHERE user_id = ?', [$u['id']]);
             set_session_cookie('', -1);
             $GLOBALS['NEON_USER'] = null;
-            fail($block, ['reason' => $u['ban_reason'] ?? '—', 'until' => iso_to_ms($u['ban_until'])], 403);
+            fail($block, ban_vars($u), 403);
         }
     }
     if ($u) touch_presence($u);
@@ -76,6 +76,16 @@ function current_user(bool $required = true): ?array
     return $u;
 }
 
+/** Details shown on the banned screen (reason, until, when, issued by). */
+function ban_vars(array $u): array
+{
+    $until = iso_to_ms($u['ban_until'] ?? null);
+    return [
+        'reason' => $u['ban_reason'] ?? '—', 'until' => $until, 'permanent' => $until === null,
+        'at' => iso_to_ms($u['banned_at'] ?? null), 'by' => !empty($u['banned_by']) ? username_of($u['banned_by']) : null,
+    ];
+}
+
 function normalize_email($email): string
 {
     return strtolower(trim((string) $email));
@@ -87,6 +97,7 @@ function api_register(): array
     $email = normalize_email(arg('email', ''));
     $password = (string) arg('password', '');
     if (!preg_match(USERNAME_RE, $username)) fail('validation.usernameFormat');
+    captcha_require_tx();
     if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120) fail('validation.emailFormat');
     if (strlen($password) < 8 || strlen($password) > 200) fail('validation.passwordLength');
     $hash = password_hash($password, PASSWORD_ARGON2ID);
@@ -106,6 +117,7 @@ function api_login(): array
     // Login boleh pakai email atau username.
     $email = normalize_email(arg('email', ''));
     $password = (string) arg('password', '');
+    captcha_require_tx();
     return tx(function () use ($email, $password) {
         if (!str_contains($email, '@')) {
             $byName = qv('SELECT email FROM users WHERE username = ?', [$email]);
@@ -128,7 +140,7 @@ function api_login(): array
             fail($fails >= 5 ? 'errors.tooManyAttempts' : 'errors.wrongCredentials', ['minutes' => 15], 401);
         }
         $block = qv('SELECT account_block(?::uuid)', [$u['id']]);
-        if ($block) fail($block, ['reason' => $u['ban_reason'] ?? '—', 'until' => iso_to_ms($u['ban_until'])], 403);
+        if ($block) fail($block, ban_vars($u), 403);
         if (password_needs_rehash($u['password_hash'], PASSWORD_ARGON2ID)) {
             q('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_ARGON2ID), $u['id']]);
         }

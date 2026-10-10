@@ -13,7 +13,7 @@ import { ErrorBoundary } from '@/components/ui/PageKit'
 import { useAdminStore } from '@/store/useAdminStore'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { isStaff } from '@/config/roles'
-import { maintenanceActive } from '@/services/system'
+import { maintenanceBlocks } from '@/services/system'
 import { useNow } from '@/hooks/useNow'
 import PopupCenter from '@/components/notifications/PopupCenter'
 import UpdateLog from '@/components/updates/UpdateLog'
@@ -25,7 +25,7 @@ export default function AppLayout() {
   const user = useCurrentUser()
   useAdminStore((s) => s.system?.maintenance)
   const now = useNow(15_000)
-  const locked = maintenanceActive(now) && !isStaff(user?.role) && !pathname.startsWith('/support')
+  const locked = maintenanceBlocks(user?.role ?? 'user', now) && user?.role !== 'super_admin' && !pathname.startsWith('/support')
 
   useEffect(() => {
     setMusicDuck(pathname.startsWith('/games/'))

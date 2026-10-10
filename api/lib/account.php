@@ -37,6 +37,7 @@ function api_forgot(): array
 {
     $email = normalize_email(arg('email', ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('validation.emailFormat');
+    captcha_require_tx();
     $ip = client_ip();
     return tx(function () use ($email, $ip) {
         if ((int) qv("SELECT count(*) FROM email_tokens WHERE ip = ?::inet AND kind = 'reset' AND created_at > now() - interval '1 hour'", [$ip]) >= 10) fail('auth.errors.tooManyEmails', ['minutes' => 60], 429);

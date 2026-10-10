@@ -15,6 +15,7 @@ import { translate } from '@/i18n'
 import { emit } from './events'
 import { play } from './sound'
 import { deferUntilReveal } from './reveal'
+import { captchaProof } from './captcha'
 
 /**
  * Jembatan ke API server (mode produksi). Server memegang akun, saldo, game, dan progres;
@@ -37,13 +38,19 @@ const lang = () => usePrefsStore.getState().language
  * sebelum itu dibuang, supaya polling yang masih berjalan tidak "memasukkan" user lagi.
  */
 let authGen = 0
+const BANNED_CODES = new Set(['errors.bannedPermanent', 'errors.bannedUntil'])
 const AUTH_PATHS = new Set(['auth/login', 'auth/register', 'auth/logout', 'auth/forgot', 'auth/reset/check', 'auth/reset', 'auth/verify'])
 export const LOGOUT_KEY = 'neon-arcade:logout'
+const CAPTCHA_PATHS = new Set(['auth/login', 'auth/register', 'auth/forgot'])
 
 /** Panggil API. Error server → AppError dengan kode i18n yang sama seperti mode lokal. */
 export async function api(path, body, { method } = {}) {
   const m = method ?? (body === undefined ? 'GET' : 'POST')
   const gen = authGen
+  if (m === 'POST' && CAPTCHA_PATHS.has(path) && !body?.captcha) {
+    const captcha = await captchaProof(() => api('captcha'))
+    if (captcha) body = { ...body, captcha }
+  }
   let res
   try {
     res = await fetch(`${SERVER_API}/${path}`, {
@@ -67,6 +74,12 @@ export async function api(path, body, { method } = {}) {
   const code = json?.error?.code ?? 'errors.generic'
   const vars = json?.error?.vars ?? {}
   // Sesi habis / akun diblokir di server → keluar di browser juga.
+  // Banned (on login or mid-session): show the dedicated banned screen instead of a toast.
+  if (res.status === 403 && BANNED_CODES.has(code)) {
+    if (useAuthStore.getState().session) clearSession()
+    useAuthStore.setState({ banned: { code, ...vars } })
+    throw new AppError(code, vars)
+  }
   if (res.status === 401 || res.status === 403) {
     if (useAuthStore.getState().session && path !== 'auth/login') {
       clearSession()
@@ -198,7 +211,7 @@ export function adminSync() {
         return { byUser }
       })
       const a = data.admin ?? {}
-      useAdminStore.setState((s) => ({ logs: a.logs ?? s.logs, events: a.events ?? s.events, errors: a.errors ?? s.errors, codes: a.codes ?? s.codes, v2: a.v2 ?? s.v2 }))
+      useAdminStore.setState((s) => ({ logs: a.logs ?? s.logs, events: a.events ?? s.events, errors: a.errors ?? s.errors, codes: a.codes ?? s.codes, v2: a.v2 ?? s.v2, v3: a.v3 ?? s.v3 }))
       return data
     })
     .catch(() => null)

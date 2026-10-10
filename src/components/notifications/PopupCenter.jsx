@@ -25,7 +25,7 @@ export default function PopupCenter() {
   const n = pending[pending.length - 1]
 
   useEffect(() => {
-    if (n) play(n.kind === 'announcement' ? 'notification' : 'error')
+    if (n && !(n.kind === 'announcement' && n.data?.sound === false)) play(n.kind === 'announcement' ? 'notification' : 'error')
   }, [n?.id])
 
   if (!n || !user) return null

@@ -1,0 +1,99 @@
+/** Phase 13 — v2.0 master update. */
+export default {
+  play: {
+    errors: {
+      maxBet: 'The maximum bet here is {max} {currency}.',
+      loyaltyMaxShort: 'Max bet here: {max} {currency}.',
+      gameOff: 'This game is turned off right now.',
+      gameMaintenance: 'This game is under maintenance. Try again later.',
+      bettingOff: 'Betting is paused for this game right now.',
+      newSessionsOff: 'New rounds are paused for this game. Rounds already in progress can finish.',
+    },
+  },
+  banned: {
+    title: 'Account banned', subtitle: 'This account can’t use Neon Arcade right now.',
+    status: 'Status', permanent: 'Permanent ban', temporary: 'Temporary ban', until: 'Ends', never: 'Never', issued: 'Issued', by: 'Issued by', staff: 'Staff',
+    reason: 'Reason', noReason: 'No reason given.', appeal: 'Think this is a mistake? Contact the Neon Arcade team from another account or the community channel.', logout: 'Log out',
+  },
+  missions: { status: { none: 'Not claimed' } },
+  auth: {
+    errors: {
+      captcha: 'The anti-bot check failed. Please try again.',
+      captchaExpired: 'The anti-bot check expired. Please try again.',
+    },
+    checking: 'Checking you’re human…',
+  },
+  errors: { featureOff: '{feature} is not available right now.' },
+  maintenance: { upcoming: 'Scheduled maintenance starts {time}' },
+  system: {
+    startsAt: 'Starts at (optional)', bypassAdmins: 'Staff can still enter', bypassTesters: 'Testers can still enter', preview: 'Preview player screen',
+  },
+  support: {
+    status: { CLAIMED: 'Claimed' },
+    errors: { claimed: 'This ticket is already claimed by @{name}.' },
+    priority: { low: 'Low', normal: 'Normal', high: 'High', urgent: 'Urgent' },
+    priorityLabel: 'Priority', escalated: 'Escalated', claim: 'Claim ticket', takeOver: 'Take over', escalate: 'Escalate',
+    escalatePh: 'Why does this need a senior admin?', closeMine: 'My problem is solved — close this ticket',
+  },
+  admin: {
+    serverOnly: 'This page works on the live server only.',
+    errors: { confirm: 'Type the confirmation word exactly.' },
+    nav: { features: 'Feature flags', monitoring: 'Monitoring', qa: 'QA center' },
+    cols: { severity: 'Severity', bet: 'Bet' },
+    confidence: 'Confidence', trigger: 'Why it was flagged',
+    severity: { info: 'Info', low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' },
+    severityNote: 'Fast clicking, retries and lag are normal. Only high or critical events with strong confidence open a report or freeze an account; everything else waits here for a person to review.',
+    flagTabs: { escalated: 'Escalated' },
+    flagStatus: { false_positive: 'False positive', escalated: 'Escalated' },
+    ac: { falsePositive: 'False positive', escalate: 'Escalate' },
+    gc: {
+      controls: 'Controls', bettingOff: 'Betting off', newOff: 'New rounds off', scheduled: 'Scheduled', open: 'Open rounds',
+      emergency: 'Emergency shutdown', emergencyGo: 'Shut down now', typeConfirm: 'Type {word} to confirm',
+      emergencyHint: 'Turns on site maintenance, stops new rounds in every game and cancels every open round with a full refund. Use only when something is badly wrong.',
+      betting: 'Betting allowed', newSessions: 'New rounds allowed', from: 'Maintenance from', until: 'Maintenance until', message: 'Message for players', messagePh: 'Shown on the game page',
+      forceEnd: 'Also end open rounds now', forceEndHint: 'Every open round in this game is cancelled and the stake is refunded.',
+      openRounds: 'Open rounds ({n})', noOpen: 'No rounds are open right now.', end: 'End round', endAll: 'End all open rounds',
+      endHint: 'The round is cancelled and the player gets their {amount} stake back.', endAllHint: '{n} open rounds will be cancelled and refunded.',
+    },
+    ann: {
+      target: 'Audience', priority: 'Priority', delivered: 'Sent', sound: 'Play a sound', resend: 'Send it again', preview: 'Preview',
+      priorities: { low: 'Low', normal: 'Normal', high: 'High', urgent: 'Urgent' },
+      targets: {
+        all: 'Every player.', here: 'Players online right now.', vip: 'VIP members.', vvip: 'VVIP members.', members: 'All VIP and VVIP members.',
+        tester: 'Testers only.', moderator: 'Moderators only.', staff: 'All staff.',
+      },
+    },
+    features: {
+      desc: 'Turn a feature off, open it to Testers or VIP members first, or make it public. The server enforces it.',
+      feature: 'Feature', note: 'Owners and Admins can always open every feature to check it.',
+      states: { off: 'Off', tester: 'Testers', vip: 'VIP', public: 'Public' },
+    },
+    monitor: {
+      desc: 'Server errors, failed requests and crashes reported by players’ browsers.',
+      load: 'Load latest', clear: 'Clear old errors', clearHint: 'Errors older than one hour are deleted.', total24: 'Errors (24 h)', api: 'Server', client: 'Browser',
+      top: 'Most frequent (24 h)', none: 'Nothing recorded.', where: 'Where', code: 'Code', last: 'Last seen', loadHint: 'Press “Load latest” to see the newest entries.',
+      tabs: { all: 'All', api: 'Server', client: 'Browser' },
+    },
+    qa: {
+      desc: 'Read-only health checks against the live database: tables, functions, wallet ledger, double rewards, stuck rounds, security and configuration.',
+      run: 'Run checks', hint: 'Press “Run checks”. Nothing is changed.', ranAt: 'Ran {time} · {ms} ms',
+      status: { pass: 'Passed', info: 'Info', warn: 'Warnings', error: 'Failed' },
+      groups: { database: 'Database', economy: 'Economy', games: 'Games', system: 'System', security: 'Security' },
+      checks: {
+        db_connect: 'Database connection', db_tables: 'Required tables', db_fn_game_start: 'Function game_start', db_fn_raise_flag: 'Function raise_flag', db_fn_flag_policy: 'Function flag_policy',
+        db_fn_maintenance_blocks: 'Function maintenance_blocks', db_fn_game_blocked: 'Function game_blocked', db_fn_wallet_post: 'Function wallet_post',
+        economy_ledger: 'Wallet balances match the ledger', economy_negative: 'No negative balances', economy_doubleReward: 'No reward paid twice',
+        games_staleRounds: 'No stuck rounds', games_config: 'Valid bet limits', games_paused: 'Paused games',
+        system_maintenance: 'Maintenance', system_errors1h: 'Error rate', security_captcha: 'Anti-bot captcha', security_critical: 'Critical security events', mail_config: 'Email sending', console_key: 'Owner console',
+      },
+    },
+    eco: {
+      players: 'Players', circAC: 'AC in circulation', circAG: 'AG in circulation', avg: 'avg', median: 'median', alerts: 'Safeguard flags',
+      safeguards: 'Safeguards (flag → review → action)', safeguardNote: 'These are flags only. Nothing is changed until a person reviews and acts.',
+      alert: { rtp: 'RTP over 105%', fastGain: 'Fast gain (24 h)' },
+      flows: 'Generated / spent (7 days)', category: 'Category', generated: 'Generated', spent: 'Spent',
+      distribution: 'AG distribution', distributionNote: 'Players by AG balance (test accounts excluded).',
+      games: 'Games (7 days)', rounds: 'Rounds', wagered: 'Wagered', top: 'Richest players',
+    },
+  },
+}

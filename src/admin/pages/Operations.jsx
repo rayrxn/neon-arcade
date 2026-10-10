@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Ban, Check, Eye, Lock, Search as SearchIcon, ShieldX, Snowflake, XCircle } from 'lucide-react'
+import { Ban, Check, Eye, Lock, Search as SearchIcon, ShieldAlert, ShieldX, Siren, SlidersHorizontal, Snowflake, XCircle } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import ReasonDialog from '@/components/admin/ReasonDialog'
@@ -14,7 +14,17 @@ import { GAMES } from '@/config/games'
 import { can } from '@/config/roles'
 import * as admin from '@/services/admin'
 import { formatCoins, formatDateTime, timeAgo } from '@/utils/format'
+import { SERVER_MODE } from '@/config/runtime'
+import { adminCall } from '@/services/server'
 import { useT } from '@/i18n'
+
+const SEVERITIES = ['info', 'low', 'medium', 'high', 'critical']
+const SEVERITY_TONE = { info: 'cyan', low: 'slate', medium: 'gold', high: 'red', critical: 'red' }
+function SeverityBadge({ f }) {
+  const { t } = useT()
+  const sev = f.severity ?? f.risk
+  return <Badge tone={SEVERITY_TONE[sev] ?? 'slate'}>{t(`admin.severity.${sev}`)}{f.confidence != null ? ` · ${f.confidence}%` : ''}</Badge>
+}
 
 // ───────────────────────────── Wallets ─────────────────────────────
 
@@ -102,43 +112,117 @@ export function Wallets() {
 
 // ───────────────────────────── Games ─────────────────────────────
 
+const toLocalInput = (ms) => (ms ? new Date(ms - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '')
+const fromLocalInput = (v) => (v ? new Date(v).getTime() : null)
+
 export function GamesAdmin() {
   const { t } = useT()
   const me = useCurrentUser()
   const config = useAdminStore((s) => s.gameConfig)
+  const v3 = useAdminStore((s) => s.v3)
   const progress = useProgressStore((s) => s.byUser)
   const [dialog, setDialog] = useState(null)
-  const [maxBet, setMaxBet] = useState(20000000)
-  const played = (slug) => Object.values(progress).reduce((s, p) => s + (p.stats.perGame[slug]?.played ?? 0), 0)
+  const [form, setForm] = useState({})
+  const played = (slug) => Object.values(progress).reduce((s, p) => s + (p.stats?.perGame?.[slug]?.played ?? 0), 0)
+  const open = v3?.openSessions ?? []
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e }))
+  const openControls = (g) => {
+    const c = config[g.slug] ?? {}
+    setForm({ status: c.status ?? 'live', bettingEnabled: c.bettingEnabled ?? true, newSessions: c.newSessions ?? true, maxBet: c.maxBet ?? 1500000000, maxBetAG: c.maxBetAG ?? 100000,
+      maintenanceMessage: c.maintenanceMessage ?? '', maintenanceFrom: toLocalInput(c.maintenanceFrom), maintenanceUntil: toLocalInput(c.maintenanceUntil), forceEnd: false })
+    setDialog({ kind: 'controls', game: g })
+  }
+  const flags = (c) => [
+    c?.bettingEnabled === false && <Badge key="b" tone="gold">{t('admin.gc.bettingOff')}</Badge>,
+    c?.newSessions === false && <Badge key="n" tone="gold">{t('admin.gc.newOff')}</Badge>,
+    c?.maintenanceFrom && <Badge key="m" tone="cyan">{t('admin.gc.scheduled')}</Badge>,
+  ].filter(Boolean)
 
   return (
-    <AdminPage title={t('admin.nav.games')} description={t('admin.gamesDesc')}>
+    <AdminPage title={t('admin.nav.games')} description={t('admin.gamesDesc')}
+      actions={SERVER_MODE && can(me.role, 'system.manage') && <Button variant="danger" size="sm" onClick={() => { setForm({ message: '', confirm: '' }); setDialog({ kind: 'emergency' }) }}><Siren className="h-4 w-4" /> {t('admin.gc.emergency')}</Button>}>
       <Card bodyClassName="">
         <Table
           rows={GAMES.map((g) => ({ ...g, id: g.slug }))}
           columns={[
             { key: 'n', label: t('admin.cols.game'), render: (g) => <span className="font-semibold text-white">{g.name}</span> },
-            { key: 't', label: t('admin.cols.type'), render: (g) => t(`games.categories.${g.category}`) },
             { key: 'p', label: t('admin.kpi.gamesPlayed'), align: 'right', mono: true, render: (g) => formatCoins(played(g.slug)) },
-            { key: 'mb', label: t('admin.maxBet'), align: 'right', mono: true, render: (g) => formatCoins(config[g.slug]?.maxBet ?? 20000000) },
+            { key: 'mb', label: t('admin.maxBet'), align: 'right', mono: true, render: (g) => <span>{formatCoins(config[g.slug]?.maxBet ?? 1500000000)} AC<br /><span className="text-slate-500">{formatCoins(config[g.slug]?.maxBetAG ?? 100000)} AG</span></span> },
             { key: 's', label: t('admin.cols.status'), render: (g) => {
               const st = !g.load ? 'soon' : config[g.slug]?.status ?? 'live'
-              return <Badge tone={st === 'live' ? 'green' : st === 'soon' ? 'slate' : st === 'maintenance' ? 'gold' : 'red'}>{t(`admin.gameStatus.${st}`)}</Badge>
+              return <span className="flex flex-wrap gap-1"><Badge tone={st === 'live' ? 'green' : st === 'soon' ? 'slate' : st === 'maintenance' ? 'gold' : 'red'}>{t(`admin.gameStatus.${st}`)}</Badge>{flags(config[g.slug])}</span>
             } },
+            { key: 'o', label: t('admin.gc.open'), align: 'right', mono: true, render: (g) => open.filter((s) => s.game === g.slug).length || '—' },
             { key: 'a', label: '', align: 'right', render: (g) => g.load && can(me.role, 'games.manage') && (
-              <span className="flex justify-end gap-1.5">
-                {['live', 'maintenance', 'disabled'].filter((s) => s !== (config[g.slug]?.status ?? 'live')).map((s) => <Button key={s} size="sm" variant="ghost" onClick={() => setDialog({ kind: 'status', game: g, status: s })}>{t(`admin.gameStatus.${s}`)}</Button>)}
-                <Button size="sm" variant="ghost" onClick={() => { setMaxBet(config[g.slug]?.maxBet ?? 20000000); setDialog({ kind: 'maxBet', game: g }) }}>{t('admin.maxBet')}</Button>
-              </span>
+              <Button size="sm" variant="ghost" onClick={() => (SERVER_MODE ? openControls(g) : setDialog({ kind: 'status', game: g, status: (config[g.slug]?.status ?? 'live') === 'live' ? 'maintenance' : 'live' }))}><SlidersHorizontal className="h-4 w-4" /> {t('admin.gc.controls')}</Button>
             ) },
           ]}
         />
       </Card>
-      {dialog && (
-        <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} tone="primary"
-          title={dialog.kind === 'status' ? `${dialog.game.name} → ${t(`admin.gameStatus.${dialog.status}`)}` : `${dialog.game.name} · ${t('admin.maxBet')}`}
-          onConfirm={(r) => (dialog.kind === 'status' ? admin.setGameStatus(dialog.game.slug, dialog.status, r) : admin.setGameMaxBet(dialog.game.slug, maxBet, r))}>
-          {dialog.kind === 'maxBet' && <FormField label={t('admin.maxBet')}><input id="g-max" inputMode="numeric" value={maxBet} onChange={(e) => setMaxBet(Number(e.target.value.replace(/\D/g, '')) || 0)} className={inputCls} /></FormField>}
+
+      {SERVER_MODE && can(me.role, 'sessions.terminate') && (
+        <Card title={t('admin.gc.openRounds', { n: open.length })} actions={open.length > 0 && <Button size="sm" variant="danger" onClick={() => setDialog({ kind: 'endAll' })}>{t('admin.gc.endAll')}</Button>} bodyClassName="">
+          <Table
+            rows={open}
+            empty={t('admin.gc.noOpen')}
+            columns={[
+              { key: 'u', label: t('admin.cols.user'), render: (s) => <Link to={`/admin/users/${s.userId}`} className="text-neon-cyan">@{s.username}</Link> },
+              { key: 'g', label: t('admin.cols.game'), render: (s) => GAMES.find((g) => g.slug === s.game)?.name ?? s.game },
+              { key: 'b', label: t('admin.cols.bet'), align: 'right', mono: true, render: (s) => `${formatCoins(s.bet)} ${s.currency}` },
+              { key: 't', label: t('admin.cols.time'), render: (s) => <span className="text-xs">{timeAgo(s.startedAt)}</span> },
+              { key: 'a', label: '', align: 'right', render: (s) => <Button size="sm" variant="ghost" onClick={() => setDialog({ kind: 'end', session: s })}>{t('admin.gc.end')}</Button> },
+            ]}
+          />
+        </Card>
+      )}
+
+      {dialog?.kind === 'status' && (
+        <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} tone="primary" title={`${dialog.game.name} → ${t(`admin.gameStatus.${dialog.status}`)}`}
+          onConfirm={(r) => admin.setGameStatus(dialog.game.slug, dialog.status, r)} />
+      )}
+      {dialog?.kind === 'controls' && (
+        <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} tone="primary" title={`${dialog.game.name} · ${t('admin.gc.controls')}`}
+          onConfirm={(r) => adminCall('setGameControls', {
+            slug: dialog.game.slug, reason: r, forceEnd: form.forceEnd,
+            patch: { status: form.status, bettingEnabled: form.bettingEnabled, newSessions: form.newSessions, maxBet: Number(form.maxBet) || 0, maxBetAG: Number(form.maxBetAG) || 0,
+              maintenanceMessage: form.maintenanceMessage, maintenanceFrom: fromLocalInput(form.maintenanceFrom), maintenanceUntil: fromLocalInput(form.maintenanceUntil) },
+          })}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label={t('admin.cols.status')}>
+              <select id="gc-status" value={form.status} onChange={set('status')} className={inputCls}>
+                {['live', 'maintenance', 'disabled'].map((s) => <option key={s} value={s}>{t(`admin.gameStatus.${s}`)}</option>)}
+              </select>
+            </FormField>
+            <div className="flex flex-col justify-end gap-2 text-sm text-slate-300">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={form.bettingEnabled} onChange={set('bettingEnabled')} /> {t('admin.gc.betting')}</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={form.newSessions} onChange={set('newSessions')} /> {t('admin.gc.newSessions')}</label>
+            </div>
+            <FormField label={`${t('admin.maxBet')} (AC)`}><input id="gc-max" inputMode="numeric" value={form.maxBet} onChange={(e) => setForm((f) => ({ ...f, maxBet: e.target.value.replace(/\D/g, '') }))} className={inputCls} /></FormField>
+            <FormField label={`${t('admin.maxBet')} (AG)`}><input id="gc-max-ag" inputMode="numeric" value={form.maxBetAG} onChange={(e) => setForm((f) => ({ ...f, maxBetAG: e.target.value.replace(/\D/g, '') }))} className={inputCls} /></FormField>
+            <FormField label={t('admin.gc.from')}><input id="gc-from" type="datetime-local" value={form.maintenanceFrom} onChange={set('maintenanceFrom')} className={inputCls} /></FormField>
+            <FormField label={t('admin.gc.until')}><input id="gc-until" type="datetime-local" value={form.maintenanceUntil} onChange={set('maintenanceUntil')} className={inputCls} /></FormField>
+          </div>
+          <FormField label={t('admin.gc.message')}><input id="gc-msg" value={form.maintenanceMessage} maxLength={300} onChange={set('maintenanceMessage')} className={inputCls} placeholder={t('admin.gc.messagePh')} /></FormField>
+          <label className="flex items-start gap-2 text-sm text-slate-300"><input type="checkbox" className="mt-1" checked={form.forceEnd} onChange={set('forceEnd')} /> <span>{t('admin.gc.forceEnd')}<br /><span className="text-xs text-slate-500">{t('admin.gc.forceEndHint')}</span></span></label>
+        </ReasonDialog>
+      )}
+      {dialog?.kind === 'end' && (
+        <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} title={t('admin.gc.end')} description={`@${dialog.session.username} · ${dialog.session.game}`}
+          onConfirm={(r) => adminCall('endSession', { sessionId: dialog.session.id, reason: r })}>
+          <p className="text-sm text-slate-400">{t('admin.gc.endHint', { amount: `${formatCoins(dialog.session.bet)} ${dialog.session.currency}` })}</p>
+        </ReasonDialog>
+      )}
+      {dialog?.kind === 'endAll' && (
+        <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} title={t('admin.gc.endAll')} onConfirm={(r) => adminCall('endGameSessions', { reason: r })}>
+          <p className="text-sm text-slate-400">{t('admin.gc.endAllHint', { n: open.length })}</p>
+        </ReasonDialog>
+      )}
+      {dialog?.kind === 'emergency' && (
+        <ReasonDialog open onClose={() => setDialog(null)} adminName={me.username} title={t('admin.gc.emergency')} confirmLabel={t('admin.gc.emergencyGo')}
+          onConfirm={(r) => adminCall('emergencyShutdown', { reason: r, message: form.message, confirm: form.confirm })}>
+          <p className="text-sm text-slate-400">{t('admin.gc.emergencyHint')}</p>
+          <FormField label={t('admin.gc.message')}><input id="em-msg" value={form.message} maxLength={300} onChange={set('message')} className={inputCls} /></FormField>
+          <FormField label={t('admin.gc.typeConfirm', { word: 'SHUTDOWN' })}><input id="em-confirm" value={form.confirm} onChange={set('confirm')} className={inputCls} autoComplete="off" /></FormField>
         </ReasonDialog>
       )}
     </AdminPage>
@@ -186,7 +270,7 @@ export function AntiCheat() {
   const [selected, setSelected] = useState(null)
   const [dialog, setDialog] = useState(null)
   const flags = admin.allFlags()
-  const shown = flags.filter((f) => (tab === 'all' ? true : tab === 'open' ? f.status === 'open' || f.status === 'reviewing' : f.status === tab))
+  const shown = flags.filter((f) => (tab === 'all' ? true : tab === 'open' ? f.status === 'open' || f.status === 'reviewing' : tab === 'dismissed' ? f.status === 'dismissed' || f.status === 'false_positive' : f.status === tab))
   const sel = selected && flags.find((f) => f.id === selected.id)
   const selUser = sel && Object.values(users).find((u) => u.id === sel.userId)
   const session = sel?.sessionId && useProgressStore.getState().byUser[sel.userId]?.sessions.find((s) => s.id === sel.sessionId)
@@ -195,15 +279,18 @@ export function AntiCheat() {
   const actions = sel && [
     ['reviewing', <Eye key="e" className="h-4 w-4" />, t('admin.ac.review'), 'ghost', () => admin.updateFlag(sel.userId, sel.id, 'reviewing', 'Opened for review')],
     ['dismissed', <XCircle key="x" className="h-4 w-4" />, t('admin.ac.dismiss'), 'ghost'],
+    ['false_positive', <XCircle key="fp" className="h-4 w-4" />, t('admin.ac.falsePositive'), 'ghost'],
+    ['escalated', <ShieldAlert key="es" className="h-4 w-4" />, t('admin.ac.escalate'), 'ghost'],
     ['confirmed', <Check key="c" className="h-4 w-4" />, t('admin.ac.confirm'), 'danger'],
   ]
 
   return (
     <AdminPage title={t('admin.nav.anticheat')} description={t('admin.anticheatDesc')}>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {['low', 'medium', 'high', 'critical'].map((r) => <Kpi key={r} label={t(`admin.risk.${r}`)} value={flags.filter((f) => f.risk === r && f.status === 'open').length} tone={r === 'critical' || r === 'high' ? 'text-neon-red' : r === 'medium' ? 'text-neon-gold' : undefined} />)}
+        {SEVERITIES.map((r) => <Kpi key={r} label={t(`admin.severity.${r}`)} value={flags.filter((f) => (f.severity ?? f.risk) === r && (f.status === 'open' || f.status === 'reviewing')).length} tone={r === 'critical' || r === 'high' ? 'text-neon-red' : r === 'medium' ? 'text-neon-gold' : undefined} />)}
       </div>
-      <Tabs value={tab} onChange={setTab} options={['open', 'confirmed', 'dismissed', 'all'].map((v) => ({ value: v, label: t(`admin.flagTabs.${v}`) }))} />
+      <p className="text-xs text-slate-500">{t('admin.severityNote')}</p>
+      <Tabs value={tab} onChange={setTab} options={['open', 'escalated', 'confirmed', 'dismissed', 'all'].map((v) => ({ value: v, label: t(`admin.flagTabs.${v}`) }))} />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card bodyClassName="">
           <Table
@@ -214,9 +301,9 @@ export function AntiCheat() {
               { key: 'at', label: t('admin.cols.time'), render: (f) => <span className="text-xs">{timeAgo(f.at)}</span> },
               { key: 'u', label: t('admin.cols.user'), render: (f) => `@${f.username}` },
               { key: 'type', label: t('admin.cols.flag'), render: (f) => t(`admin.flags.${f.type}`) },
-              { key: 'risk', label: t('admin.cols.risk'), render: (f) => <Badge tone={RISK_TONE[f.risk]}>{t(`admin.risk.${f.risk}`)}</Badge> },
+              { key: 'risk', label: t('admin.cols.severity'), render: (f) => <SeverityBadge f={f} /> },
               { key: 'n', label: '×', align: 'right', mono: true, render: (f) => f.count ?? 1 },
-              { key: 's', label: t('admin.cols.status'), render: (f) => <Badge tone={f.status === 'confirmed' ? 'red' : f.status === 'dismissed' ? 'slate' : 'gold'}>{t(`admin.flagStatus.${f.status}`)}</Badge> },
+              { key: 's', label: t('admin.cols.status'), render: (f) => <Badge tone={f.status === 'confirmed' || f.status === 'escalated' ? 'red' : f.status === 'dismissed' || f.status === 'false_positive' ? 'slate' : 'gold'}>{t(`admin.flagStatus.${f.status}`)}</Badge> },
             ]}
           />
         </Card>
@@ -229,7 +316,8 @@ export function AntiCheat() {
                 {[
                   [t('admin.cols.user'), <Link key="u" to={`/admin/users/${sel.userId}`} className="text-neon-cyan">@{sel.username}</Link>],
                   [t('admin.cols.flag'), t(`admin.flags.${sel.type}`)],
-                  [t('admin.cols.risk'), <Badge key="r" tone={RISK_TONE[sel.risk]}>{t(`admin.risk.${sel.risk}`)}</Badge>],
+                  [t('admin.cols.severity'), <SeverityBadge key="r" f={sel} />],
+                  [t('admin.confidence'), `${sel.confidence ?? 50}%`],
                   [t('admin.cols.game'), sel.game ?? '—'],
                   ['Session ID', <span key="s" className="font-mono text-xs">{sel.sessionId ?? '—'}</span>],
                   [t('admin.cols.time'), formatDateTime(sel.at)],
@@ -247,6 +335,7 @@ export function AntiCheat() {
                   <pre className="overflow-x-auto whitespace-pre-wrap break-all font-mono text-[11px] text-slate-400">{JSON.stringify({ bet: session.bet, payout: session.payout, multiplier: session.multiplier, durationMs: session.durationMs, nonce: session.nonce, seedHash: session.serverSeedHash?.slice(0, 16), detail: session.detail, invalidated: session.invalidated }, null, 1)}</pre>
                 </div>
               )}
+              {sel.reason && <p className="rounded-lg bg-white/[0.03] p-3 text-xs leading-relaxed text-slate-300 ring-1 ring-inset ring-white/[0.06]"><span className="font-semibold text-slate-200">{t('admin.trigger')}:</span> {sel.reason}</p>}
               <p className="text-[11px] text-slate-500">{t('admin.metadataNote')}</p>
               <div>
                 <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('admin.previousViolations', { count: previous.length })}</p>
@@ -255,9 +344,9 @@ export function AntiCheat() {
                 </ul>
               </div>
               {sel.reviewedBy && <p className="text-xs text-slate-500">{t('admin.reviewedBy', { admin: sel.reviewedBy, reason: sel.reviewReason })}</p>}
-              {can(me.role, 'anticheat') && (
+              {(can(me.role, 'anticheat') || can(me.role, 'security.review')) && (
                 <div className="flex flex-wrap gap-2 border-t hairline pt-3">
-                  {actions.map(([status, icon, label, variant]) => <Button key={status} size="sm" variant={variant} disabled={sel.status === status} onClick={() => setDialog({ kind: 'flag', status })}>{icon} {label}</Button>)}
+                  {actions.filter(([status]) => status !== 'confirmed' || can(me.role, 'anticheat')).map(([status, icon, label, variant]) => <Button key={status} size="sm" variant={variant} disabled={sel.status === status} onClick={() => setDialog({ kind: 'flag', status })}>{icon} {label}</Button>)}
                   {session && !session.invalidated && can(me.role, 'sessions.invalidate') && <Button size="sm" variant="danger" onClick={() => setDialog({ kind: 'cancel' })}><ShieldX className="h-4 w-4" /> {t('admin.ac.cancelReward')}</Button>}
                   {can(me.role, 'users.freeze') && selUser && !selUser.walletFrozen && <Button size="sm" variant="ghost" onClick={() => setDialog({ kind: 'walletFreeze' })}><Snowflake className="h-4 w-4" /> {t('admin.ua.walletFreeze')}</Button>}
                   {can(me.role, 'users.freeze') && selUser?.status === 'active' && <Button size="sm" variant="ghost" onClick={() => setDialog({ kind: 'freeze' })}><Lock className="h-4 w-4" /> {t('admin.ua.freeze')}</Button>}

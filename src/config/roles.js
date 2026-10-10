@@ -42,6 +42,12 @@ export const PERMISSIONS = [
   'rewards.manage', // misi & klaim hadiah
   'memberships.manage', // VIP / VVIP (Owner)
   'moderation.config', // kata terlarang & tingkat moderasi
+  'sessions.terminate', // end open rounds (refund) and sign players out
+  'security.review', // security events: dismiss, false positive, review, escalate
+  'features.manage', // feature flags OFF / TESTER / VIP / PUBLIC (Owner)
+  'maintenance.manage', // global + per-game maintenance
+  'errors.view', // error monitoring
+  'qa.run', // QA center checks
 ]
 
 const ALL = new Set(PERMISSIONS)
@@ -52,15 +58,15 @@ const ALL = new Set(PERMISSIONS)
  */
 export const ROLE_PERMISSIONS = {
   super_admin: ALL,
-  admin: new Set(PERMISSIONS.filter((p) => !['roles.manage', 'testmode', 'release.reset', 'economy.manage', 'loyalty.manage', 'playerroles.manage', 'memberships.manage'].includes(p))),
-  moderator: new Set(['dashboard', 'users.view', 'users.ban', 'users.warn', 'moderation', 'reports.view', 'reports.manage', 'sessions.view', 'logs.view']),
+  admin: new Set(PERMISSIONS.filter((p) => !['roles.manage', 'testmode', 'release.reset', 'economy.manage', 'loyalty.manage', 'playerroles.manage', 'memberships.manage', 'features.manage'].includes(p))),
+  moderator: new Set(['dashboard', 'users.view', 'users.ban', 'users.warn', 'moderation', 'reports.view', 'reports.manage', 'sessions.view', 'logs.view', 'security.review']),
   support: new Set(['dashboard', 'users.view', 'users.warn', 'sessions.view', 'rewards.view', 'reports.view', 'support.manage']),
-  developer: new Set(['dashboard', 'testmode', 'sessions.view']),
+  developer: new Set(['dashboard', 'testmode', 'sessions.view', 'errors.view', 'qa.run']),
   user: new Set(),
 }
 
 /** Urutan kekuatan role: staf tidak boleh menindak role yang setara/lebih tinggi. */
 export const ROLE_RANK = { super_admin: 5, admin: 4, moderator: 3, support: 2, developer: 1, user: 0 }
 
-export const can = (role, permission) => !!ROLE_PERMISSIONS[role ?? 'user']?.has(permission)
+export const can = (role, permission) => (Array.isArray(permission) ? permission.some((p) => can(role, p)) : !!ROLE_PERMISSIONS[role ?? 'user']?.has(permission))
 export const isStaff = (role) => STAFF_ROLES.has(role)

@@ -14,7 +14,22 @@ export const systemSettings = () => useAdminStore.getState().system ?? {}
 
 export function maintenanceActive(now = Date.now()) {
   const m = systemSettings().maintenance
-  return !!m?.enabled && (!m.until || m.until > now)
+  return !!m?.enabled && (!m.startsAt || m.startsAt <= now) && (!m.until || m.until > now)
+}
+
+/** Scheduled maintenance that has not started yet (for the countdown banner). */
+export function maintenanceUpcoming(now = Date.now()) {
+  const m = systemSettings().maintenance
+  return m?.enabled && m.startsAt && m.startsAt > now ? m : null
+}
+
+/** Same rule as the server: staff bypass when allowed, Testers when allowed, players never. */
+export function maintenanceBlocks(role, now = Date.now()) {
+  if (!maintenanceActive(now)) return false
+  const m = systemSettings().maintenance
+  if (['super_admin', 'admin', 'moderator', 'support'].includes(role)) return m.bypassAdmins === false
+  if (role === 'developer') return m.bypassTesters === false
+  return true
 }
 
 function storageOk() {

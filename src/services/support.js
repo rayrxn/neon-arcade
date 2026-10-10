@@ -16,7 +16,7 @@ import { adminCall, social } from './server'
  * ubah status, tutup/buka, catatan internal (tidak terlihat user).
  */
 export const TICKET_CATEGORIES = ['account', 'wallet', 'game', 'bug', 'report', 'other']
-export const TICKET_STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_USER', 'RESOLVED', 'CLOSED']
+export const TICKET_STATUSES = ['OPEN', 'CLAIMED', 'IN_PROGRESS', 'WAITING_FOR_USER', 'RESOLVED', 'CLOSED']
 const OPEN_LIMIT = 3
 const CREATE_COOLDOWN = 120_000
 const REOPEN_WINDOW = 7 * 86_400_000
@@ -156,3 +156,9 @@ export function reopenTicket(ticketId) {
   save(ticketId, (t) => ({ ...t, status: 'OPEN', updatedAt: now, history: [...t.history, { at: now, by: user.username, status: 'OPEN', action: 'reopen' }] }))
   emit('TICKET_UPDATED', { ticketId, by: user.id, status: 'OPEN' })
 }
+
+/** Server-only ticket workflow (claim, priority, escalate, player close). */
+export const claimTicket = (ticketId, force = false) => adminCall('ticketClaim', { ticketId, force })
+export const setTicketPriority = (ticketId, priority) => adminCall('ticketPriority', { ticketId, priority })
+export const escalateTicket = (ticketId, reason) => adminCall('ticketEscalate', { ticketId, reason })
+export const closeMyTicket = (ticketId) => social('ticket/close', { ticketId })

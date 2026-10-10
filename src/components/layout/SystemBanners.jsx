@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { FlaskConical, Megaphone, Wrench, X } from 'lucide-react'
 import clsx from 'clsx'
 import { useCurrentUser } from '@/store/useAuthStore'
+import { maintenanceUpcoming } from '@/services/system'
+import { formatCountdown, formatDateTime } from '@/utils/format'
 import { activeAnnouncements, useAdminStore } from '@/store/useAdminStore'
 import { useNow } from '@/hooks/useNow'
 import { useT } from '@/i18n'
@@ -28,9 +30,12 @@ export default function SystemBanners() {
   const { t } = useT()
   const user = useCurrentUser()
   const list = useAdminStore((s) => s.announcements)
-  const now = useNow(60_000)
+  const now = useNow(1000)
+  useAdminStore((s) => s.system?.maintenance)
+  const soon = maintenanceUpcoming(now)
   const [dismissed, setDismissed] = useState(readDismissed)
-  const active = activeAnnouncements(list, now).filter((a) => !dismissed.includes(a.id)).slice(0, 2)
+  const PRI = { urgent: 0, high: 1, normal: 2, low: 3 }
+  const active = activeAnnouncements(list, now).filter((a) => !dismissed.includes(a.id)).sort((a, b) => (PRI[a.priority] ?? 2) - (PRI[b.priority] ?? 2)).slice(0, 2)
 
   const dismiss = (id) => {
     const next = [...dismissed, id]
@@ -51,11 +56,18 @@ export default function SystemBanners() {
           <span className="rounded-md bg-neon-gold/15 px-2 py-0.5 font-mono text-[11px] uppercase">force: {user.testControl ?? 'off'}</span>
         </div>
       )}
+      {soon && (
+        <div className="flex flex-wrap items-center gap-2.5 rounded-xl bg-neon-gold/[0.08] px-4 py-2.5 text-sm text-neon-gold ring-1 ring-inset ring-neon-gold/30" role="status">
+          <Wrench className="h-4 w-4 shrink-0" />
+          <span className="flex-1 font-semibold">{t('maintenance.upcoming', { time: formatDateTime(soon.startsAt) })}{soon.message ? ` · ${soon.message}` : ''}</span>
+          <span className="num rounded-md bg-neon-gold/15 px-2 py-0.5 font-mono text-xs">{formatCountdown(soon.startsAt - now)}</span>
+        </div>
+      )}
       <AnimatePresence initial={false}>
         {active.map((a) => {
           const Icon = a.type === 'maintenance' ? Wrench : Megaphone
           return (
-            <motion.div key={a.id} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className={clsx('flex items-start gap-3 rounded-xl px-4 py-3 ring-1 ring-inset', TONE[a.type] ?? TONE.info)}>
+            <motion.div key={a.id} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className={clsx('flex items-start gap-3 rounded-xl px-4 py-3 ring-1 ring-inset', TONE[a.type] ?? TONE.info, a.priority === 'urgent' && 'ring-2')}>
               <Icon className="mt-0.5 h-4 w-4 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold">{a.title}</p>

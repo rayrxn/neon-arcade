@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   Activity, ArrowLeft, Award, ChartColumn, CalendarCheck, FileText, FlaskConical, Gamepad2, Gift, LayoutDashboard,
   ListChecks, Megaphone, Menu, MessagesSquare, ScrollText, Settings, ShieldAlert, ShieldBan, Ticket, Users, Wallet, X, LifeBuoy, Server, Gavel,
-  Filter, Coins, WalletCards, BadgeCheck, ShoppingBag, Smile, Target, Gem, ChevronDown,
+  Filter, Coins, WalletCards, BadgeCheck, ShoppingBag, Smile, Target, Gem, ChevronDown, ToggleRight, Bug, ClipboardCheck,
 } from 'lucide-react'
 import clsx from 'clsx'
 import Avatar from '@/components/ui/Avatar'
@@ -33,7 +33,7 @@ export const ADMIN_SECTIONS = [
   // Games & fairness
   { path: 'games', key: 'games', icon: Gamepad2, perm: 'games.manage', group: 'games' },
   { path: 'sessions', key: 'sessions', icon: Activity, perm: 'sessions.view', group: 'games' },
-  { path: 'anticheat', key: 'anticheat', icon: ShieldAlert, perm: 'anticheat', group: 'games' },
+  { path: 'anticheat', key: 'anticheat', icon: ShieldAlert, perm: ['anticheat', 'security.review'], group: 'games' },
   { path: 'testmode', key: 'testmode', icon: FlaskConical, perm: 'testmode', group: 'games' },
   // Community
   { path: 'moderation', key: 'moderation', icon: Gavel, perm: 'reports.view', group: 'community' },
@@ -54,6 +54,9 @@ export const ADMIN_SECTIONS = [
   { path: 'emotes', key: 'emotes', icon: Smile, perm: 'emotes.manage', group: 'rewards' },
   // Site
   { path: 'system', key: 'system', icon: Server, perm: 'system.manage', group: 'system' },
+  { path: 'features', key: 'features', icon: ToggleRight, perm: 'features.manage', group: 'system' },
+  { path: 'monitoring', key: 'monitoring', icon: Bug, perm: ['errors.view', 'system.manage'], group: 'system' },
+  { path: 'qa', key: 'qa', icon: ClipboardCheck, perm: 'qa.run', group: 'system' },
   { path: 'settings', key: 'settings', icon: Settings, perm: 'dashboard', group: 'system' },
 ]
 export const ADMIN_GROUPS = ['overview', 'players', 'games', 'community', 'rewards', 'system']

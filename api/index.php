@@ -15,6 +15,7 @@ require __DIR__ . '/lib/admin2.php';
 require __DIR__ . '/lib/platform3.php';
 require __DIR__ . '/lib/mail.php';
 require __DIR__ . '/lib/account.php';
+require __DIR__ . '/lib/v2core.php';
 
 /** Jalankan aksi yang mengubah progres user dalam satu transaksi, lalu kirim snapshot state. */
 function with_user(callable $fn, bool $lightWhenOpen = false): array
@@ -41,6 +42,8 @@ function route(string $method, string $path): array
         return ['status' => 'ok', 'db' => (bool) qv('SELECT 1'), 'serverTime' => now_ms(), 'version' => 1];
     }
     if ($method === 'GET' && $path === 'me') return api_me();
+    if ($method === 'GET' && $path === 'captcha') return captcha_challenge();
+    if ($method === 'GET' && $path === 'features') return features_view(current_user(false));
     if ($method === 'GET' && $path === 'sync') {
         $u = current_user();
         return tx(fn() => sync_view($u));
@@ -187,6 +190,7 @@ function route(string $method, string $path): array
         case 'report': $u = current_user(); return ['result' => tx(fn() => report_create($u, body()))];
         case 'ticket/create': $u = current_user(); return ['result' => tx(fn() => ticket_create($u, body()))];
         case 'ticket/reply': $u = current_user(); return ['result' => tx(fn() => ticket_reply($u, (string) arg('ticketId', ''), arg('text', '')))];
+        case 'ticket/close': $u = current_user(); return ['result' => tx(fn() => ticket_close_by_user($u, (string) arg('ticketId', '')))];
         case 'ticket/reopen': $u = current_user(); return ['result' => tx(fn() => ticket_reopen($u, (string) arg('ticketId', '')))];
         case 'admin/action': {
             $u = current_user();

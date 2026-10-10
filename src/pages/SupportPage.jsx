@@ -8,7 +8,8 @@ import { PageHeader, QueryView, useQuery } from '@/components/ui/PageKit'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { useAdminStore } from '@/store/useAdminStore'
 import { toast } from '@/store/useUiStore'
-import { createTicket, myTickets, reopenTicket, replyTicket, TICKET_CATEGORIES } from '@/services/support'
+import { closeMyTicket, createTicket, myTickets, reopenTicket, replyTicket, TICKET_CATEGORIES } from '@/services/support'
+import { SERVER_MODE } from '@/config/runtime'
 import { formatDateTime, timeAgo } from '@/utils/format'
 import { errorKey } from '@/utils/errors'
 import { useT } from '@/i18n'
@@ -131,6 +132,7 @@ function Reply({ ticket }) {
         <Button type="submit" disabled={text.trim().length < 2}><Send className="h-4 w-4" /></Button>
       </div>
       {error && <p className="mt-1.5 text-xs font-semibold text-neon-red">{error}</p>}
+      {SERVER_MODE && <button type="button" onClick={async () => { try { await closeMyTicket(ticket.id) } catch (err) { setError(t(errorKey(err), err?.vars)) } }} className="mt-2 text-xs font-semibold text-slate-500 hover:text-slate-300">{t('support.closeMine')}</button>}
     </form>
   )
 }

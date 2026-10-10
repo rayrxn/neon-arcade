@@ -6,9 +6,10 @@ import { formatCountdown, formatDateTime } from '@/utils/format'
 import { useT } from '@/i18n'
 
 /** Ditampilkan ke user biasa saat maintenance aktif. Staff tetap bisa masuk. */
-export default function MaintenanceScreen() {
+export default function MaintenanceScreen({ preview }) {
   const { t } = useT()
-  const m = useAdminStore((s) => s.system?.maintenance)
+  const live = useAdminStore((s) => s.system?.maintenance)
+  const m = preview ?? live
   const now = useNow(1000)
   return (
     <div className="glass mx-auto max-w-lg rounded-3xl px-6 py-12 text-center">

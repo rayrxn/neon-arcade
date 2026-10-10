@@ -10,6 +10,8 @@ import { STATUS_META } from '@/pages/StatusPage'
 import { useAdminStore } from '@/store/useAdminStore'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { usePlatformStore } from '@/store/usePlatformStore'
+import Modal from '@/components/ui/Modal'
+import MaintenanceScreen from '@/components/layout/MaintenanceScreen'
 import { endSeasonNow, setAutoFreeze, setMaintenance, setServiceStatus, setSlowMode } from '@/services/admin'
 import { serviceStatus, SERVICES, STATUSES } from '@/services/system'
 import { formatDate, formatDateTime } from '@/utils/format'
@@ -24,14 +26,16 @@ export function SystemAdmin() {
   const errors = useAdminStore((s) => s.errors)
   const season = usePlatformStore((s) => s.season)
   const slow = usePlatformStore((s) => s.chatSettings?.slowMode ?? 0)
-  const [maint, setMaint] = useState({ enabled: system.maintenance.enabled, message: system.maintenance.message, until: toLocal(system.maintenance.until) })
+  const [maint, setMaint] = useState({ enabled: system.maintenance.enabled, message: system.maintenance.message, until: toLocal(system.maintenance.until), startsAt: toLocal(system.maintenance.startsAt),
+    bypassAdmins: system.maintenance.bypassAdmins !== false, bypassTesters: system.maintenance.bypassTesters !== false })
+  const [preview, setPreview] = useState(false)
   const [svc, setSvc] = useState({ service: 'chat', status: 'DEGRADED', note: '' })
   const [slowValue, setSlowValue] = useState(slow)
   const [dialog, setDialog] = useState(null)
   const statuses = serviceStatus()
 
   const dialogs = {
-    maintenance: { title: maint.enabled ? t('system.maintenanceOn') : t('system.maintenanceOff'), run: (r) => setMaintenance({ enabled: maint.enabled, message: maint.message, until: maint.until ? new Date(maint.until).getTime() : null }, r) },
+    maintenance: { title: maint.enabled ? t('system.maintenanceOn') : t('system.maintenanceOff'), run: (r) => setMaintenance({ enabled: maint.enabled, message: maint.message, until: maint.until ? new Date(maint.until).getTime() : null, startsAt: maint.startsAt ? new Date(maint.startsAt).getTime() : null, bypassAdmins: maint.bypassAdmins, bypassTesters: maint.bypassTesters }, r) },
     service: { title: t('system.setService', { service: t(`status.services.${svc.service}`) }), run: (r) => setServiceStatus(svc.service, svc.status === 'auto' ? null : svc.status, r, svc.note) },
     autofreeze: { title: system.autoFreezeCritical ? t('system.autoFreezeOff') : t('system.autoFreezeOn'), run: (r) => setAutoFreeze(!system.autoFreezeCritical, r) },
     slow: { title: t('system.slowMode'), run: (r) => setSlowMode(slowValue, r) },
@@ -46,9 +50,17 @@ export function SystemAdmin() {
           <div className="space-y-3">
             <label className="flex items-center justify-between gap-3 text-sm text-slate-300">{t('system.maintenanceEnabled')} <Switch checked={maint.enabled} onChange={(v) => setMaint({ ...maint, enabled: v })} label={t('system.maintenanceEnabled')} /></label>
             <FormField label={t('system.message')}><input value={maint.message} onChange={(e) => setMaint({ ...maint, message: e.target.value })} maxLength={300} placeholder={t('maintenance.defaultMessage')} className={inputCls} /></FormField>
-            <FormField label={t('system.eta')}><input type="datetime-local" value={maint.until} onChange={(e) => setMaint({ ...maint, until: e.target.value })} className={inputCls} /></FormField>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FormField label={t('system.startsAt')}><input type="datetime-local" value={maint.startsAt} onChange={(e) => setMaint({ ...maint, startsAt: e.target.value })} className={inputCls} /></FormField>
+              <FormField label={t('system.eta')}><input type="datetime-local" value={maint.until} onChange={(e) => setMaint({ ...maint, until: e.target.value })} className={inputCls} /></FormField>
+            </div>
+            <label className="flex items-center justify-between gap-3 text-sm text-slate-300">{t('system.bypassAdmins')} <Switch checked={maint.bypassAdmins} onChange={(v) => setMaint({ ...maint, bypassAdmins: v })} label={t('system.bypassAdmins')} /></label>
+            <label className="flex items-center justify-between gap-3 text-sm text-slate-300">{t('system.bypassTesters')} <Switch checked={maint.bypassTesters} onChange={(v) => setMaint({ ...maint, bypassTesters: v })} label={t('system.bypassTesters')} /></label>
             <p className="text-[11px] text-slate-500">{t('system.maintenanceNote')}</p>
-            <Button size="sm" onClick={() => setDialog('maintenance')}>{t('common.save')}</Button>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => setDialog('maintenance')}>{t('common.save')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setPreview(true)}>{t('system.preview')}</Button>
+            </div>
           </div>
         </Card>
 
@@ -120,6 +132,9 @@ export function SystemAdmin() {
       </Card>
 
       {d && <ReasonDialog open onClose={() => setDialog(null)} title={d.title} adminName={me.username} tone={dialog === 'season' ? 'danger' : 'primary'} onConfirm={d.run} />}
+      <Modal open={preview} onClose={() => setPreview(false)} title={t('system.preview')} size="lg">
+        <MaintenanceScreen preview={{ enabled: true, message: maint.message, until: maint.until ? new Date(maint.until).getTime() : null }} />
+      </Modal>
     </AdminPage>
   )
 }

@@ -8,16 +8,24 @@ import { TicketStatus, TicketThread } from '@/pages/SupportPage'
 import { useAdminStore } from '@/store/useAdminStore'
 import { toast } from '@/store/useUiStore'
 import { staffList } from '@/services/admin'
-import { addTicketNote, assignTicket, reopenTicket, replyTicket, setTicketStatus, TICKET_STATUSES } from '@/services/support'
+import { addTicketNote, assignTicket, claimTicket, escalateTicket, reopenTicket, replyTicket, setTicketPriority, setTicketStatus, TICKET_STATUSES } from '@/services/support'
+import { useCurrentUser } from '@/store/useAuthStore'
+import { SERVER_MODE } from '@/config/runtime'
 import { formatDateTime, timeAgo } from '@/utils/format'
 import { errorKey } from '@/utils/errors'
 import { useT } from '@/i18n'
+
+const PRIORITY_TONE = { low: 'slate', normal: 'cyan', high: 'gold', urgent: 'red' }
+const PRIORITY_RANK = { low: 0, normal: 1, high: 2, urgent: 3 }
 
 function TicketAdmin({ ticket, onClose }) {
   const { t } = useT()
   const [reply, setReply] = useState('')
   const [note, setNote] = useState('')
   const staff = staffList('support.manage')
+  const me = useCurrentUser()
+  const [escalating, setEscalating] = useState(false)
+  const [escReason, setEscReason] = useState('')
   const run = async (fn) => {
     try {
       await fn()
@@ -33,11 +41,32 @@ function TicketAdmin({ ticket, onClose }) {
       <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-2">
           <TicketStatus status={ticket.status} />
+          {ticket.priority && ticket.priority !== 'normal' && <Badge tone={PRIORITY_TONE[ticket.priority]}>{t(`support.priority.${ticket.priority}`)}</Badge>}
+          {ticket.escalated && <Badge tone="red">{t('support.escalated')}</Badge>}
           <Link to={`/admin/users/${ticket.userId}`} className="text-xs font-semibold text-neon-cyan hover:underline">{t('moderation.actions.openUser')}</Link>
           {ticket.info.sessionId && <span className="font-mono text-[11px] text-slate-500">session {ticket.info.sessionId}</span>}
           {ticket.info.txId && <span className="font-mono text-[11px] text-slate-500">tx {ticket.info.txId}</span>}
         </div>
-        <div className="grid gap-2 sm:grid-cols-2">
+        {SERVER_MODE && (
+          <div className="flex flex-wrap gap-2">
+            {ticket.assignee?.id !== me?.id && !['RESOLVED', 'CLOSED'].includes(ticket.status) && <Button size="sm" onClick={() => run(() => claimTicket(ticket.id, !!ticket.assignee))}>{ticket.assignee ? t('support.takeOver') : t('support.claim')}</Button>}
+            {!ticket.escalated && <Button size="sm" variant="ghost" onClick={() => setEscalating((v) => !v)}>{t('support.escalate')}</Button>}
+          </div>
+        )}
+        {escalating && (
+          <form onSubmit={async (e) => { e.preventDefault(); if (await run(() => escalateTicket(ticket.id, escReason))) setEscalating(false) }} className="flex gap-2">
+            <input value={escReason} onChange={(e) => setEscReason(e.target.value)} placeholder={t('support.escalatePh')} className={inputCls} />
+            <Button type="submit" size="sm" variant="danger">{t('support.escalate')}</Button>
+          </form>
+        )}
+        <div className="grid gap-2 sm:grid-cols-3">
+          {SERVER_MODE && (
+            <FormField label={t('support.priorityLabel')}>
+              <select value={ticket.priority ?? 'normal'} onChange={(e) => run(() => setTicketPriority(ticket.id, e.target.value))} className={inputCls}>
+                {['low', 'normal', 'high', 'urgent'].map((p) => <option key={p} value={p}>{t(`support.priority.${p}`)}</option>)}
+              </select>
+            </FormField>
+          )}
           <FormField label={t('support.statusLabel')}>
             <select value={ticket.status} onChange={(e) => run(() => setTicketStatus(ticket.id, e.target.value))} className={inputCls}>
               {TICKET_STATUSES.map((s) => <option key={s} value={s}>{t(`support.status.${s}`)}</option>)}
@@ -81,7 +110,7 @@ export function SupportAdmin() {
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase()
     // Priority support: VVIP first, then VIP, then everyone else (newest first inside each group).
-    const rank = (x) => (x.memberTier === 'vvip' ? 2 : x.memberTier === 'vip' ? 1 : 0)
+    const rank = (x) => (x.escalated ? 10 : 0) + (PRIORITY_RANK[x.priority] ?? 0) * 3 + (x.memberTier === 'vvip' ? 2 : x.memberTier === 'vip' ? 1 : 0)
     return tickets
       .filter((x) => x.status === tab)
       .filter((x) => !term || [x.id, x.username, x.subject].some((v) => v.toLowerCase().includes(term)))
@@ -102,6 +131,7 @@ export function SupportAdmin() {
             { key: 'user', label: t('admin.cols.user'), render: (x) => <span className="flex items-center gap-1.5">@{x.username} {x.memberTier && <Badge tone={x.memberTier === 'vvip' ? 'cyan' : 'purple'}>{x.memberTier.toUpperCase()}</Badge>}</span> },
             { key: 'subject', label: t('support.subject'), render: (x) => <span className="line-clamp-1">{x.subject}</span> },
             { key: 'cat', label: t('support.category'), render: (x) => t(`support.categories.${x.category}`) },
+            { key: 'pri', label: t('support.priorityLabel'), render: (x) => <span className="flex gap-1"><Badge tone={PRIORITY_TONE[x.priority ?? 'normal']}>{t(`support.priority.${x.priority ?? 'normal'}`)}</Badge>{x.escalated && <Badge tone="red">!</Badge>}</span> },
             { key: 'assignee', label: t('moderation.assignee'), render: (x) => (x.assignee ? `@${x.assignee.name}` : '—') },
             { key: 'upd', label: t('support.updated'), render: (x) => <span className="text-xs text-slate-500">{timeAgo(x.updatedAt)}</span> },
           ]}

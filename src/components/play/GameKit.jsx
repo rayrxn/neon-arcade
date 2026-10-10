@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Award, CheckCircle2, ShieldCheck, Sparkles, Target, Trophy } from 'lucide-react'
@@ -11,6 +11,7 @@ import { SERVER_MODE } from '@/config/runtime'
 import { useExtras } from '@/services/platform2'
 import { useCurrentUser } from '@/store/useAuthStore'
 import { usePlatformStore } from '@/store/usePlatformStore'
+import { useAdminStore } from '@/store/useAdminStore'
 import { useProgress } from '@/store/useProgressStore'
 import { useFairnessStore } from '@/store/useFairnessStore'
 import { toast } from '@/store/useUiStore'
@@ -91,10 +92,21 @@ export function useBetCurrency() {
 }
 
 /** Highest bet allowed by the player's Loyalty Card for a currency. */
+/** Current game (set by GameShell) so controls can apply the game's own limits. */
+export const GameSlugContext = createContext(null)
+
+/**
+ * The bet limit shown and enforced in the input. Same formula as the server (bet_limits):
+ * min(loyalty card × membership bonus with the global cap, this game's own cap).
+ */
 export function useMaxBet(currency) {
   const loyalty = useExtras().loyalty
+  const slug = useContext(GameSlugContext)
+  const game = useAdminStore((s) => (slug ? s.gameConfig[slug] : null))
   if (!SERVER_MODE) return LIMITS.maxBet
-  return Math.floor(currency === 'AG' ? loyalty.maxBetAG ?? 10 : loyalty.maxBetAC ?? 250000)
+  const card = Math.floor(currency === 'AG' ? loyalty.maxBetAG ?? 10 : loyalty.maxBetAC ?? 250000)
+  const gameCap = currency === 'AG' ? game?.maxBetAG : game?.maxBet
+  return gameCap ? Math.min(card, Math.floor(gameCap)) : card
 }
 
 /** Bet input: AC/AG switch, ½, 2×, Max. Whole numbers, limited by balance and Loyalty Card. */
@@ -318,6 +330,7 @@ export function GameShell({ game, controls, stage, outcome }) {
   const { t } = useT()
   const nonce = useFairnessStore((s) => s.nonce)
   return (
+    <GameSlugContext.Provider value={game.slug}>
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/games" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 ring-1 ring-inset ring-white/10 hover:text-white focus-ring" aria-label={t('games.back')}>
@@ -345,6 +358,7 @@ export function GameShell({ game, controls, stage, outcome }) {
         <LiveFeed slug={game.slug} />
       </div>
     </div>
+    </GameSlugContext.Provider>
   )
 }
 

@@ -300,7 +300,10 @@ export function allFlags() {
 }
 
 export function updateFlag(userId, flagId, status, reason) {
-  if (SERVER_MODE) return adminCall('updateFlag', { userId, flagId, status, reason })
+  if (SERVER_MODE) {
+    const decision = { reviewing: 'review', dismissed: 'dismiss', confirmed: 'confirm', false_positive: 'false_positive', escalated: 'escalate', open: 'reopen' }[status]
+    return adminCall('reviewFlag', { flagId, decision, reason })
+  }
   const admin = requirePerm('anticheat')
   const r = requireReason(reason)
   const target = getUserById(userId)
@@ -511,8 +514,8 @@ export function staffList(permission) {
 
 // ───────────────────────────── System ─────────────────────────────
 
-export function setMaintenance({ enabled, message, until }, reason) {
-  if (SERVER_MODE) return adminCall('setMaintenance', { enabled, message, until, reason })
+export function setMaintenance({ enabled, message, until, startsAt, bypassAdmins, bypassTesters }, reason) {
+  if (SERVER_MODE) return adminCall('setMaintenance', { enabled, message, until, startsAt, bypassAdmins, bypassTesters, reason })
   const admin = requirePerm('system.manage')
   const r = requireReason(reason)
   const before = useAdminStore.getState().system.maintenance

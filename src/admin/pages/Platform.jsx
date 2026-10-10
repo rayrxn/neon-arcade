@@ -20,6 +20,7 @@ import { SERVER_MODE } from '@/config/runtime'
 import { errorKey } from '@/utils/errors'
 import { formatCoins, formatDateTime } from '@/utils/format'
 import { useT } from '@/i18n'
+import { EconomyAnalytics } from './Core'
 
 /**
  * Owner panel for platform v2. Every button calls an admin action on the server, which checks
@@ -117,6 +118,7 @@ export function EconomyAdmin() {
   if (!SERVER_MODE) return <LiveOnly title={t('adm2.economy.title')} />
   return (
     <AdminPage title={t('adm2.economy.title')} description={t('adm2.economy.desc')}>
+      <EconomyAnalytics />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card title={t('adm2.economy.converter')}>
           <div className="grid gap-3 sm:grid-cols-3">

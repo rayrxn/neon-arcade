@@ -21,7 +21,7 @@ const GAME_SLUGS = ['dice', 'limbo', 'coinflip', 'plinko', 'roulette', 'case-ope
 const REPORT_TYPES = ['player', 'message', 'profile', 'game', 'technical', 'other'];
 const REPORT_REASONS = ['cheating', 'harassment', 'spam', 'offensive', 'scam', 'bug', 'other'];
 const TICKET_CATEGORIES = ['account', 'wallet', 'game', 'bug', 'report', 'other'];
-const TICKET_STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_USER', 'RESOLVED', 'CLOSED'];
+const TICKET_STATUSES = ['OPEN', 'CLAIMED', 'IN_PROGRESS', 'WAITING_FOR_USER', 'RESOLVED', 'CLOSED'];
 
 function is_staff_role(string $role): bool
 {
@@ -140,13 +140,15 @@ function ticket_view(array $t, bool $staff): array
         'messages' => $messages, 'notes' => $notes, 'history' => jdec($t['history'], []),
         // Priority support: tickets of VIP / VVIP members are shown first to staff.
         'memberTier' => member_tier($t['user_id']),
+        'priority' => $t['priority'] ?? 'normal', 'escalated' => (bool) ($t['escalated'] ?? false), 'closedByUser' => (bool) ($t['closed_by_user'] ?? false),
     ];
 }
 
 function announcement_view(array $a): array
 {
     return ['id' => $a['id'], 'title' => $a['title'], 'message' => $a['message'], 'type' => $a['type'], 'startAt' => iso_to_ms($a['start_at']), 'endAt' => iso_to_ms($a['end_at']),
-        'active' => (bool) $a['active'], 'createdAt' => iso_to_ms($a['created_at']), 'createdBy' => username_of($a['created_by'])];
+        'active' => (bool) $a['active'], 'createdAt' => iso_to_ms($a['created_at']), 'createdBy' => username_of($a['created_by']),
+        'target' => $a['target'] ?? 'all', 'priority' => $a['priority'] ?? 'normal', 'sound' => (bool) ($a['sound'] ?? true), 'deliveredAt' => iso_to_ms($a['delivered_at'] ?? null)];
 }
 
 function system_view(): array
@@ -157,7 +159,8 @@ function system_view(): array
         $services[$o['service']] = ['status' => $o['status'], 'note' => $o['note'], 'by' => $o['username'], 'at' => iso_to_ms($o['updated_at'])];
     }
     return [
-        'maintenance' => ['enabled' => (bool) $s['maintenance_enabled'], 'message' => (string) ($s['maintenance_message'] ?? ''), 'until' => iso_to_ms($s['maintenance_until'])],
+        'maintenance' => ['enabled' => (bool) $s['maintenance_enabled'], 'message' => (string) ($s['maintenance_message'] ?? ''), 'until' => iso_to_ms($s['maintenance_until']),
+            'startsAt' => iso_to_ms($s['maintenance_starts_at'] ?? null), 'bypassAdmins' => (bool) ($s['maintenance_bypass_admins'] ?? true), 'bypassTesters' => (bool) ($s['maintenance_bypass_testers'] ?? true)],
         'services' => (object) $services,
         'autoFreezeCritical' => (bool) $s['auto_freeze_critical'],
     ];
@@ -166,7 +169,15 @@ function system_view(): array
 function game_config_view(): array
 {
     $out = [];
-    foreach (q('SELECT slug, status, max_bet FROM games')->fetchAll() as $g) $out[$g['slug']] = ['status' => $g['status'], 'maxBet' => (int) $g['max_bet']];
+    foreach (q('SELECT * FROM games')->fetchAll() as $g) {
+        $scheduled = $g['maintenance_from'] !== null && strtotime((string) $g['maintenance_from']) <= time() && ($g['maintenance_until'] === null || strtotime((string) $g['maintenance_until']) > time());
+        $out[$g['slug']] = [
+            'status' => $scheduled && $g['status'] === 'live' ? 'maintenance' : $g['status'],
+            'maxBet' => (int) $g['max_bet'], 'maxBetAG' => (int) $g['max_bet_ag'],
+            'bettingEnabled' => (bool) $g['betting_enabled'], 'newSessions' => (bool) $g['new_sessions'],
+            'maintenanceMessage' => $g['maintenance_message'], 'maintenanceFrom' => iso_to_ms($g['maintenance_from']), 'maintenanceUntil' => iso_to_ms($g['maintenance_until']),
+        ];
+    }
     return $out;
 }
 
@@ -193,6 +204,7 @@ function code_usage_view(): array
 function sync_view(array $me): array
 {
     settle_transfers();
+    deliver_announcements();
     $staff = is_staff_role($me['role']);
     $users = [];
     $progress = [];
@@ -236,7 +248,8 @@ function sync_view(array $me): array
             'live' => live_results(), 'vipRoom' => $vipRoom,
         ],
         'admin' => [
-            'announcements' => array_map('announcement_view', q('SELECT * FROM announcements ORDER BY created_at DESC LIMIT 100')->fetchAll()),
+            'announcements' => array_values(array_map('announcement_view', array_filter(q('SELECT * FROM announcements ORDER BY created_at DESC LIMIT 100')->fetchAll(), fn($an) => announce_reaches($me, (string) ($an['target'] ?? 'all'))))),
+            'features' => features_view($me),
             'gameConfig' => (object) game_config_view(),
             'system' => system_view(),
             'reports' => array_map('report_view', $reportRows),

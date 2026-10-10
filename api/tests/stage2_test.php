@@ -277,8 +277,13 @@ if ($win) {
     check('sesi di progres ditandai INVALID', me('p1')['progress']['sessions'][array_search($win['id'], array_column(me('p1')['progress']['sessions'], 'id'))]['status'] === 'INVALID');
 }
 tx(fn() => raise_flag($P1, 'abnormalReward', 'high', null, '≤ 1000×', '5000×'));
-$fid = (string) qv("SELECT id FROM cheat_flags WHERE user_id = ? AND type = 'abnormalReward'", [$P1]);
-check('flag high → kasus moderasi otomatis', (int) qv('SELECT count(*) FROM reports WHERE flag_id = ?', [$fid]) === 1);
+$fid0 = (string) qv("SELECT id FROM cheat_flags WHERE user_id = ? AND type = 'abnormalReward'", [$P1]);
+check('big payout from server RNG → info only, no moderation case', (int) qv('SELECT count(*) FROM reports WHERE flag_id = ?', [$fid0]) === 0
+    && qv('SELECT severity FROM cheat_flags WHERE id = ?', [$fid0]) === 'info');
+tx(fn() => raise_flag($P1, 'impossibleXp', 'high', null, '<= 70 XP', '500 XP'));
+$fid = (string) qv("SELECT id FROM cheat_flags WHERE user_id = ? AND type = 'impossibleXp'", [$P1]);
+check('strong high-severity flag → moderation case', (int) qv('SELECT count(*) FROM reports WHERE flag_id = ?', [$fid]) === 1
+    && qv('SELECT severity FROM cheat_flags WHERE id = ?', [$fid]) === 'high' && (int) qv('SELECT confidence FROM cheat_flags WHERE id = ?', [$fid]) >= 70);
 check('flag terlihat di snapshot admin', count(call('GET', 'admin/snapshot', [], 'own')['data']['progress'][$P1]['flags']) >= 1);
 check('review flag', admin('own', 'updateFlag', ['userId' => $P1, 'flagId' => $fid, 'status' => 'dismissed', 'reason' => 'false positive'])['ok']);
 
@@ -297,7 +302,7 @@ check('override status layanan', admin('own', 'setServiceStatus', ['service' => 
 admin('own', 'setServiceStatus', ['service' => 'chat', 'status' => null, 'reason' => 'kembali normal']);
 check('game maintenance', admin('own', 'setGameStatus', ['slug' => 'limbo', 'status' => 'maintenance', 'reason' => 'cek payout'])['ok']);
 cool();
-expect_error('game maintenance tidak bisa dimainkan', call('POST', 'game/limbo', ['bet' => 10, 'target' => 2], 'p1'), 'play.errors.gameOff');
+expect_error('game maintenance tidak bisa dimainkan', call('POST', 'game/limbo', ['bet' => 10, 'target' => 2], 'p1'), 'play.errors.gameMaintenance');
 admin('own', 'setGameStatus', ['slug' => 'limbo', 'status' => 'live', 'reason' => 'cek selesai']);
 check('batas taruhan game', admin('own', 'setGameMaxBet', ['slug' => 'dice', 'maxBet' => 50, 'reason' => 'batasi risiko'])['ok']);
 expect_error('taruhan di atas batas game', call('POST', 'game/dice', ['bet' => 60, 'target' => 50, 'over' => true], 'p1'), 'play.errors.maxBet');

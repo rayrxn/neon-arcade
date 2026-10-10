@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import clsx from 'clsx'
 import { Link } from 'react-router-dom'
 import { FlaskConical, MicOff, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -260,12 +261,13 @@ export function CodesAdmin() {
 // ───────────────────────────── Announcements ─────────────────────────────
 
 const toLocal = (ts) => (ts ? new Date(ts - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '')
+const ANN_TARGET_LABEL = { all: '@ALL', here: '@HERE', vip: '@VIP', vvip: '@VVIP', members: '@VIP+VVIP', tester: '@TESTER', moderator: '@MODERATOR', staff: '@STAFF' }
 
 export function AnnouncementsAdmin() {
   const { t } = useT()
   const me = useCurrentUser()
   const list = useAdminStore((s) => s.announcements)
-  const empty = { title: '', message: '', type: 'info', startAt: '', endAt: '', active: true }
+  const empty = { title: '', message: '', type: 'info', startAt: '', endAt: '', active: true, target: 'all', priority: 'normal', sound: true }
   const [form, setForm] = useState(empty)
   const [confirm, setConfirm] = useState(false)
   const live = new Set(activeAnnouncements(list).map((a) => a.id))
@@ -277,6 +279,9 @@ export function AnnouncementsAdmin() {
           <Table rows={list} empty={t('admin.noAnnouncements')} columns={[
             { key: 't', label: t('admin.cols.title'), render: (a) => <span className="font-semibold text-white">{a.title}</span> },
             { key: 'y', label: t('admin.cols.type'), render: (a) => <Badge tone={{ info: 'cyan', event: 'purple', update: 'green', maintenance: 'gold' }[a.type]}>{t(`admin.annTypes.${a.type}`)}</Badge> },
+            { key: 'g', label: t('admin.ann.target'), render: (a) => <span className="font-mono text-xs text-neon-cyan">{ANN_TARGET_LABEL[a.target ?? 'all']}</span> },
+            { key: 'p', label: t('admin.ann.priority'), render: (a) => <Badge tone={{ low: 'slate', normal: 'cyan', high: 'gold', urgent: 'red' }[a.priority ?? 'normal']}>{t(`admin.ann.priorities.${a.priority ?? 'normal'}`)}</Badge> },
+            { key: 'd', label: t('admin.ann.delivered'), render: (a) => <span className="text-xs text-slate-500">{a.deliveredAt ? formatDateTime(a.deliveredAt) : '—'}</span> },
             { key: 'w', label: t('admin.window'), render: (a) => <span className="text-xs">{formatDateTime(a.startAt)} → {a.endAt ? formatDateTime(a.endAt) : '∞'}</span> },
             { key: 's', label: t('admin.cols.status'), render: (a) => <Badge tone={live.has(a.id) ? 'green' : 'slate'}>{live.has(a.id) ? t('admin.live') : a.active ? t('admin.scheduled') : t('admin.inactive')}</Badge> },
             { key: 'e', label: '', align: 'right', render: (a) => <Button size="sm" variant="ghost" onClick={() => setForm({ ...a, startAt: toLocal(a.startAt), endAt: toLocal(a.endAt) })}>{t('admin.edit')}</Button> },
@@ -284,7 +289,19 @@ export function AnnouncementsAdmin() {
         </Card>
         <Card title={form.id ? t('admin.editAnnouncement') : t('admin.newAnnouncement')} bodyClassName="space-y-3 p-4">
           <FormField label={t('admin.cols.title')}><input id="a-title" value={form.title} onChange={set('title')} maxLength={80} className={inputCls} /></FormField>
-          <FormField label={t('admin.cols.message')}><textarea id="a-msg" value={form.message} onChange={set('message')} rows={3} maxLength={400} className="input-shell w-full resize-none px-3 py-2 text-sm text-white outline-none" /></FormField>
+          <FormField label={t('admin.cols.message')} hint={`${form.message.length}/1000`}><textarea id="a-msg" value={form.message} onChange={set('message')} rows={4} maxLength={1000} className="input-shell w-full resize-none px-3 py-2 text-sm text-white outline-none" /></FormField>
+          <FormField label={t('admin.ann.target')}>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(ANN_TARGET_LABEL).map(([k, label]) => <button key={k} type="button" onClick={() => setForm({ ...form, target: k })} className={clsx('rounded-lg px-2.5 py-1 font-mono text-xs font-bold ring-1 ring-inset transition', form.target === k ? 'bg-neon-cyan/15 text-neon-cyan ring-neon-cyan/40' : 'text-slate-400 ring-white/10 hover:text-white')}>{label}</button>)}
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">{t(`admin.ann.targets.${form.target}`)}</p>
+          </FormField>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label={t('admin.ann.priority')}>
+              <select id="a-pri" value={form.priority} onChange={set('priority')} className={inputCls}>{['low', 'normal', 'high', 'urgent'].map((x) => <option key={x} value={x}>{t(`admin.ann.priorities.${x}`)}</option>)}</select>
+            </FormField>
+            <label className="flex items-end gap-2 pb-2 text-sm text-slate-300"><input id="a-sound" type="checkbox" checked={form.sound} onChange={set('sound')} /> {t('admin.ann.sound')}</label>
+          </div>
           <FormField label={t('admin.cols.type')}>
             <select id="a-type" value={form.type} onChange={set('type')} className={inputCls}>{['info', 'event', 'update', 'maintenance'].map((x) => <option key={x} value={x}>{t(`admin.annTypes.${x}`)}</option>)}</select>
           </FormField>
@@ -293,6 +310,19 @@ export function AnnouncementsAdmin() {
             <FormField label={t('admin.end')}><input id="a-end" type="datetime-local" value={form.endAt} onChange={set('endAt')} className={inputCls} /></FormField>
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-300"><input id="a-active" type="checkbox" checked={form.active} onChange={set('active')} /> {t('admin.active')}</label>
+          {form.id && form.deliveredAt && <label className="flex items-center gap-2 text-sm text-slate-300"><input id="a-resend" type="checkbox" checked={!!form.resend} onChange={set('resend')} /> {t('admin.ann.resend')}</label>}
+          {(form.title || form.message) && (
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('admin.ann.preview')}</p>
+              <div className={clsx('flex items-start gap-3 rounded-xl px-4 py-3 ring-1 ring-inset', { info: 'bg-neon-cyan/[0.08] ring-neon-cyan/25 text-neon-cyan', event: 'bg-neon-purple/[0.08] ring-neon-purple/30 text-neon-purple', update: 'bg-neon-green/[0.08] ring-neon-green/25 text-neon-green', maintenance: 'bg-neon-gold/[0.08] ring-neon-gold/30 text-neon-gold' }[form.type], form.priority === 'urgent' && 'ring-2')}>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold">{form.title || '—'}</p>
+                  <p className="mt-0.5 whitespace-pre-line break-words text-sm text-slate-300">{form.message}</p>
+                  <p className="mt-1 font-mono text-[10px] text-slate-500">{ANN_TARGET_LABEL[form.target]} · {t(`admin.ann.priorities.${form.priority}`)}{form.startAt ? ` · ${formatDateTime(new Date(form.startAt).getTime())}` : ''}</p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
             {form.id && <Button variant="ghost" onClick={() => setForm(empty)}>{t('common.cancel')}</Button>}
             <Button className="flex-1" disabled={form.title.length < 3 || form.message.length < 3} onClick={() => setConfirm(true)}>{form.id ? t('common.save') : t('admin.publish')}</Button>
