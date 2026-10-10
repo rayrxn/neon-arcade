@@ -15,6 +15,13 @@ export default {
     status: 'Status', permanent: 'Permanent ban', temporary: 'Temporary ban', until: 'Ends', never: 'Never', issued: 'Issued', by: 'Issued by', staff: 'Staff',
     reason: 'Reason', noReason: 'No reason given.', appeal: 'Think this is a mistake? Contact the Neon Arcade team from another account or the community channel.', logout: 'Log out',
   },
+  console: {
+    title: 'Owner Console', lock: 'Lock', back: 'Back to site', unlock: 'Unlock', input: 'Console command',
+    keyPrompt: 'Console key', welcome: 'Console unlocked. Type `help` for commands, Tab to complete, ↑/↓ for history. Session ends after 30 minutes idle.',
+    note: 'This is not a user role. The key is set on the server and every command is recorded.',
+    disabled: 'The console is turned off. Create a key on the server, then add the printed line to ~/neon-config.php:',
+    errors: { disabled: 'The console is turned off on this server.', badKey: 'Wrong console key.', expired: 'The console session ended. Unlock it again.', tooMany: 'Too many wrong keys. Try again in {minutes} minutes.', invalid: 'Invalid command.' },
+  },
   missions: { status: { none: 'Not claimed' } },
   auth: {
     errors: {

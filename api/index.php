@@ -16,6 +16,7 @@ require __DIR__ . '/lib/platform3.php';
 require __DIR__ . '/lib/mail.php';
 require __DIR__ . '/lib/account.php';
 require __DIR__ . '/lib/v2core.php';
+require __DIR__ . '/lib/console.php';
 
 /** Jalankan aksi yang mengubah progres user dalam satu transaksi, lalu kirim snapshot state. */
 function with_user(callable $fn, bool $lightWhenOpen = false): array
@@ -43,6 +44,8 @@ function route(string $method, string $path): array
     }
     if ($method === 'GET' && $path === 'me') return api_me();
     if ($method === 'GET' && $path === 'captcha') return captcha_challenge();
+    if ($method === 'GET' && $path === 'console/state') return console_api($path);
+    if ($method === 'POST' && str_starts_with($path, 'console/')) return console_api($path);
     if ($method === 'GET' && $path === 'features') return features_view(current_user(false));
     if ($method === 'GET' && $path === 'sync') {
         $u = current_user();

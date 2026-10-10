@@ -15,6 +15,13 @@ export default {
     status: 'Status', permanent: 'Blokir permanen', temporary: 'Blokir sementara', until: 'Berakhir', never: 'Tidak pernah', issued: 'Diberikan', by: 'Oleh', staff: 'Staf',
     reason: 'Alasan', noReason: 'Tidak ada alasan.', appeal: 'Merasa ini salah? Hubungi tim Neon Arcade lewat akun lain atau channel komunitas.', logout: 'Keluar',
   },
+  console: {
+    title: 'Owner Console', lock: 'Kunci', back: 'Kembali ke situs', unlock: 'Buka', input: 'Perintah console',
+    keyPrompt: 'Kunci console', welcome: 'Console terbuka. Ketik `help` untuk daftar perintah, Tab untuk melengkapi, ↑/↓ untuk riwayat. Sesi berakhir setelah 30 menit diam.',
+    note: 'Ini bukan role user. Kunci diatur di server dan setiap perintah dicatat.',
+    disabled: 'Console dimatikan. Buat kunci di server, lalu tambahkan baris yang dicetak ke ~/neon-config.php:',
+    errors: { disabled: 'Console dimatikan di server ini.', badKey: 'Kunci console salah.', expired: 'Sesi console berakhir. Buka lagi.', tooMany: 'Terlalu banyak kunci salah. Coba lagi dalam {minutes} menit.', invalid: 'Perintah tidak valid.' },
+  },
   missions: { status: { none: 'Belum diklaim' } },
   auth: {
     errors: {

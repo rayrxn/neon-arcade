@@ -29,6 +29,7 @@ import { SystemAdmin } from '@/admin/pages/System'
 import AdminLayout from '@/admin/AdminLayout'
 import { ChatModerationAdmin, EconomyAdmin, EmotesAdmin, LoyaltyAdmin, MembershipsAdmin, MissionsAdmin, PlayerRolesAdmin, ShopAdmin } from '@/admin/pages/Platform'
 import AdminDashboard from '@/admin/pages/Dashboard'
+import SystemConsolePage from '@/pages/SystemConsolePage'
 import { FeaturesAdmin, MonitoringAdmin, QaCenter } from '@/admin/pages/Core'
 import { UserDetail, UserList } from '@/admin/pages/Users'
 import { AntiCheat, GamesAdmin, Sessions, Wallets } from '@/admin/pages/Operations'
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/status" element={<StatusPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/system-console" element={<SystemConsolePage />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
