@@ -1,6 +1,7 @@
 /** Fase 13 — master update v2.0. */
 export default {
   play: {
+    crash: { eventRound: 'ronde event (diatur staf)' },
     tarot: { risk: 'Risiko', risks: { low: 'Rendah', medium: 'Sedang', high: 'Tinggi' }, max: 'Maks', draw: 'Tarik 3 kartu', idle: 'Tiga kartu. Multiplier-nya dikalikan.', rule: 'Tiap kartu punya multiplier. Bayaranmu = ketiganya dikalikan.',
       cards: { tower: 'The Tower', death: 'Death', devil: 'The Devil', hanged: 'Hanged Man', moon: 'The Moon', hermit: 'The Hermit', fool: 'The Fool', temperance: 'Temperance', justice: 'Justice', hierophant: 'Hierophant', priestess: 'High Priestess', strength: 'Strength', emperor: 'The Emperor', empress: 'The Empress', lovers: 'The Lovers', chariot: 'The Chariot', magician: 'Magician', judgement: 'Judgement', wheel: 'Wheel of Fortune', star: 'The Star', sun: 'The Sun', world: 'The World' } },
     sweet: { win: 'Menang {mult}', noWin: 'Tidak menang di spin ini.', spin: 'Putar', tumble: 'Tumble', bombs: 'Bom', idle: '8 simbol sama atau lebih di mana saja = menang.', total: 'Menang {base} → {mult} dengan bom', rule: '8+ simbol sama di mana saja menang. Simbol menang pecah, yang baru jatuh. Bom mengalikan spin yang menang.' },
@@ -99,7 +100,7 @@ export default {
       modes: { config: 'Dari file config', pow: 'Cek bawaan', turnstile: 'Cloudflare Turnstile' },
     },
     serverOnly: 'Halaman ini hanya berjalan di server live.',
-    errors: { confirm: 'Ketik kata konfirmasi dengan tepat.', userNotFound: 'Tidak ada pemain dengan username itu.', captchaKeys: 'Turnstile butuh site key dan secret key.' },
+    errors: { confirm: 'Ketik kata konfirmasi dengan tepat.', crashRound: 'Pilih ronde setelah #{current} dan titik 1 sampai ×{max}.', userNotFound: 'Tidak ada pemain dengan username itu.', captchaKeys: 'Turnstile butuh site key dan secret key.' },
     nav: { features: 'Feature flag', monitoring: 'Monitoring', qa: 'QA center' },
     cols: { severity: 'Tingkat', bet: 'Taruhan' },
     confidence: 'Keyakinan', trigger: 'Alasan ditandai',
@@ -109,6 +110,8 @@ export default {
     flagStatus: { false_positive: 'Salah deteksi', escalated: 'Dieskalasi' },
     ac: { falsePositive: 'Salah deteksi', escalate: 'Eskalasi' },
     crash: {
+      edgeHint: '0 – 10 (persen). 1 = normal.',
+      sched: { remove: 'Hapus', title: 'Ronde event', desc: 'Atur di mana ronde Crash global berikutnya berhenti. Ronde sekarang: #{current}. Ronde ini ditandai sebagai event di riwayat.', round: 'Ronde #', point: 'Crash di ×', next: 'Ronde berikutnya', add: 'Atur ronde' },
       title: 'Kurva Crash', desc: 'Diatur hanya di server. Kurva dasar adil (1 − edge) / (1 − r); di atas ×100 nilai tail membuat multiplier besar makin langka; tidak ada yang bisa melewati batas maksimum.',
       presets: { standard: 'Standar', calm: 'Tenang', wild: 'Liar', custom: 'Kustom' }, current: 'Aktif',
       max: 'Maksimum ×', edge: 'House edge %', tail: 'Tail (0.5–1)', tailHint: '1 = kurva adil murni; lebih kecil = ×100+ makin langka', saveCustom: 'Simpan kustom', odds: 'Peluang ronde mencapai…',

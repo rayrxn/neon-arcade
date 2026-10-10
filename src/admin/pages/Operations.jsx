@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Ban, Check, Eye, Lock, Search as SearchIcon, ShieldAlert, ShieldX, Siren, SlidersHorizontal, Snowflake, XCircle } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -118,7 +118,12 @@ const fromLocalInput = (v) => (v ? new Date(v).getTime() : null)
 export function CrashCurveCard({ crash, me }) {
   const { t } = useT()
   const [f, setF] = useState({ maxMult: crash.maxMult, edge: crash.edge * 100, tail: crash.tail })
+  // Follow the server after a preset or save, so the fields always show what is active.
+  useEffect(() => setF({ maxMult: crash.maxMult, edge: +(crash.edge * 100).toFixed(2), tail: crash.tail }), [crash.maxMult, crash.edge, crash.tail])
   const [pending, setPending] = useState(null)
+  const [ev, setEv] = useState({ round: '', point: '' })
+  const [evPending, setEvPending] = useState(null)
+  const nextRound = (crash.currentRound ?? 0) + 1
   const pct = (p) => (p >= 0.01 ? `${(p * 100).toFixed(2)}%` : p > 0 ? `1 in ${formatCoins(Math.round(1 / p))}` : '—')
   return (
     <Card title={t('admin.crash.title')} bodyClassName="space-y-4 p-4">
@@ -131,7 +136,7 @@ export function CrashCurveCard({ crash, me }) {
       </div>
       <div className="grid gap-3 sm:grid-cols-4">
         <FormField label={t('admin.crash.max')}><input id="cr-max" inputMode="numeric" value={f.maxMult} onChange={(e) => setF({ ...f, maxMult: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} /></FormField>
-        <FormField label={t('admin.crash.edge')}><input id="cr-edge" inputMode="decimal" value={f.edge} onChange={(e) => setF({ ...f, edge: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} /></FormField>
+        <FormField label={t('admin.crash.edge')}><input id="cr-edge" inputMode="decimal" title={t('admin.crash.edgeHint')} value={f.edge} onChange={(e) => setF({ ...f, edge: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} /></FormField>
         <FormField label={t('admin.crash.tail')} hint={t('admin.crash.tailHint')}><input id="cr-tail" inputMode="decimal" value={f.tail} onChange={(e) => setF({ ...f, tail: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} /></FormField>
         <div className="flex items-end"><Button className="w-full" onClick={() => setPending({ preset: 'custom', maxMult: Number(f.maxMult), edge: Number(f.edge) / 100, tail: Number(f.tail) })}>{t('admin.crash.saveCustom')}</Button></div>
       </div>
@@ -143,6 +148,38 @@ export function CrashCurveCard({ crash, me }) {
           ))}
         </div>
       </div>
+      {can(me.role, 'economy.manage') && (
+        <div className="space-y-3 border-t hairline pt-4">
+          <div>
+            <p className="text-sm font-semibold text-white">{t('admin.crash.sched.title')}</p>
+            <p className="text-xs text-slate-500">{t('admin.crash.sched.desc', { current: formatCoins(crash.currentRound ?? 0) })}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <FormField label={t('admin.crash.sched.round')}>
+              <input inputMode="numeric" placeholder={String(nextRound)} value={ev.round} onChange={(e) => setEv({ ...ev, round: e.target.value.replace(/\D/g, '') })} className={inputCls} />
+            </FormField>
+            <FormField label={`${t('admin.crash.sched.point')} (1 – ${formatCoins(crash.maxMult)})`}>
+              <input inputMode="decimal" placeholder="1000" value={ev.point} onChange={(e) => setEv({ ...ev, point: e.target.value.replace(/[^\d.]/g, '') })} className={inputCls} />
+            </FormField>
+            <div className="flex items-end"><Button variant="ghost" className="w-full" onClick={() => setEv({ ...ev, round: String(nextRound) })}>{t('admin.crash.sched.next')}</Button></div>
+            <div className="flex items-end"><Button className="w-full" disabled={!ev.round || !ev.point} onClick={() => setEvPending({ name: 'scheduleCrash', args: { round: Number(ev.round), point: Number(ev.point) } })}>{t('admin.crash.sched.add')}</Button></div>
+          </div>
+          {crash.scheduled?.length > 0 && (
+            <ul className="space-y-1.5">
+              {crash.scheduled.map((s) => (
+                <li key={s.round} className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 text-xs">
+                  <span className="font-mono text-slate-200">#{formatCoins(s.round)} → ×{formatCoins(s.point)}</span>
+                  <Button size="sm" variant="ghost" onClick={() => setEvPending({ name: 'unscheduleCrash', args: { round: s.round } })}>{t('admin.crash.sched.remove')}</Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {evPending && (
+        <ReasonDialog open onClose={() => setEvPending(null)} adminName={me.username} tone="primary" title={t('admin.crash.sched.title')}
+          onConfirm={(r) => adminCall(evPending.name, { ...evPending.args, reason: r }).then((v) => (setEv({ round: '', point: '' }), v))} />
+      )}
       {pending && (
         <ReasonDialog open onClose={() => setPending(null)} adminName={me.username} tone="primary" title={`${t('admin.crash.title')} → ${t(`admin.crash.presets.${pending.preset}`)}`}
           onConfirm={(r) => adminCall('setCrashConfig', { ...pending, reason: r })} />

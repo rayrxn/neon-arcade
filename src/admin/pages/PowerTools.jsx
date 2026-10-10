@@ -33,7 +33,7 @@ export function LuckCard({ luck, me }) {
       <div className="grid gap-3 sm:grid-cols-5">
         <FormField label={t('admin.luck.mult')}>{field('mult')}</FormField>
         <FormField label={t('admin.luck.minutes')}>{field('minutes', 'numeric')}</FormField>
-        <FormField label={t('admin.luck.player')} hint={t('admin.luck.playerHint')}>{field('username', 'text')}</FormField>
+        <FormField label={t('admin.luck.player')}><input value={f.username} placeholder={t('admin.luck.playerHint')} onChange={(e) => setF({ ...f, username: e.target.value })} className={inputCls} /></FormField>
         <FormField label={t('admin.luck.label')}>{field('label', 'text')}</FormField>
         <div className="flex items-end">
           <Button className="w-full" onClick={() => setPending({ name: 'setLuck', args: { mult: Number(f.mult), minutes: Number(f.minutes), username: f.username.trim() || undefined, label: f.label.trim() || undefined } })}>{t('admin.luck.start')}</Button>

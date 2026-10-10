@@ -1,6 +1,7 @@
 /** Phase 13 — v2.0 master update. */
 export default {
   play: {
+    crash: { eventRound: 'event round (set by staff)' },
     tarot: { risk: 'Risk', risks: { low: 'Low', medium: 'Medium', high: 'High' }, max: 'Max', draw: 'Draw 3 cards', idle: 'Three cards. Their multipliers multiply.', rule: 'Each card carries a multiplier. Your payout is all three multiplied together.',
       cards: { tower: 'The Tower', death: 'Death', devil: 'The Devil', hanged: 'Hanged Man', moon: 'The Moon', hermit: 'The Hermit', fool: 'The Fool', temperance: 'Temperance', justice: 'Justice', hierophant: 'Hierophant', priestess: 'High Priestess', strength: 'Strength', emperor: 'The Emperor', empress: 'The Empress', lovers: 'The Lovers', chariot: 'The Chariot', magician: 'Magician', judgement: 'Judgement', wheel: 'Wheel of Fortune', star: 'The Star', sun: 'The Sun', world: 'The World' } },
     sweet: { win: 'Win {mult}', noWin: 'No win this spin.', spin: 'Spin', tumble: 'Tumble', bombs: 'Bombs', idle: '8 or more of a kind anywhere pays.', total: 'Win {base} → {mult} with bombs', rule: '8+ of the same symbol anywhere wins. Winners pop and new ones fall in. Bombs multiply a winning spin.' },
@@ -99,7 +100,7 @@ export default {
       modes: { config: 'From config file', pow: 'Built-in check', turnstile: 'Cloudflare Turnstile' },
     },
     serverOnly: 'This page works on the live server only.',
-    errors: { confirm: 'Type the confirmation word exactly.', userNotFound: 'No player with that username.', captchaKeys: 'Turnstile needs both the site key and the secret key.' },
+    errors: { confirm: 'Type the confirmation word exactly.', crashRound: 'Pick a round after #{current} and a point from 1 to ×{max}.', userNotFound: 'No player with that username.', captchaKeys: 'Turnstile needs both the site key and the secret key.' },
     nav: { features: 'Feature flags', monitoring: 'Monitoring', qa: 'QA center' },
     cols: { severity: 'Severity', bet: 'Bet' },
     confidence: 'Confidence', trigger: 'Why it was flagged',
@@ -109,6 +110,8 @@ export default {
     flagStatus: { false_positive: 'False positive', escalated: 'Escalated' },
     ac: { falsePositive: 'False positive', escalate: 'Escalate' },
     crash: {
+      edgeHint: '0 – 10 (percent). 1 = normal.',
+      sched: { remove: 'Remove', title: 'Event rounds', desc: 'Set where a future global Crash round ends. Current round: #{current}. These rounds are marked as events in the history.', round: 'Round #', point: 'Crash at ×', next: 'Next round', add: 'Set round' },
       title: 'Crash curve', desc: 'Set by the server only. Base curve is fair (1 − edge) / (1 − r); above ×100 the tail makes huge multipliers rarer; nothing can go past the maximum.',
       presets: { standard: 'Standard', calm: 'Calm', wild: 'Wild', custom: 'Custom' }, current: 'Active',
       max: 'Maximum ×', edge: 'House edge %', tail: 'Tail (0.5–1)', tailHint: '1 = pure fair curve; lower = ×100+ rarer', saveCustom: 'Save custom', odds: 'Chance a round reaches…',

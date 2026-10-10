@@ -213,7 +213,7 @@ export default function CrashGlobal({ game }) {
         <div className="flex items-center gap-1.5 overflow-x-auto border-b hairline px-3 py-2 scrollbar-none">
           {history.length === 0 && <span className="text-xs text-slate-500">{t('play.noRounds')}</span>}
           {history.slice(0, 16).map((h) => (
-            <span key={h.id} title={`#${h.id}`} className={clsx('shrink-0 rounded-md px-2 py-0.5 font-mono text-[11px] font-bold', h.point >= 10 ? 'bg-neon-gold/15 text-neon-gold' : h.point >= 2 ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-red/10 text-neon-red')}>{fmtMult(h.point)}</span>
+            <span key={h.id} title={h.event ? `#${h.id} · ${t('play.crash.eventRound')}` : `#${h.id}`} className={clsx('shrink-0 rounded-md px-2 py-0.5 font-mono text-[11px] font-bold', h.event && 'ring-1 ring-inset ring-neon-purple/60', h.point >= 10 ? 'bg-neon-gold/15 text-neon-gold' : h.point >= 2 ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-red/10 text-neon-red')}>{fmtMult(h.point)}</span>
           ))}
         </div>
         <div className="relative h-[300px] sm:h-[380px]">

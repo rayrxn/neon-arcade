@@ -330,7 +330,10 @@ function crash_view(): array
     $c = crash_cfg();
     $odds = [];
     foreach ([2, 10, 100, 1000, 10000] as $x) $odds[(string) $x] = $x > $c['maxMult'] ? 0 : round(crash_odds($x, $c), 8);
-    return $c + ['presets' => CRASH_PRESETS, 'odds' => $odds];
+    $sched = kv_get('crash_sched')['rounds'] ?? [];
+    ksort($sched);
+    $cur = (int) qv('SELECT COALESCE(max(id), 0) FROM crash_rounds');
+    return $c + ['presets' => CRASH_PRESETS, 'odds' => $odds, 'currentRound' => $cur, 'scheduled' => array_map(fn($k, $v) => ['round' => (int) $k, 'point' => (float) $v], array_keys($sched), $sched)];
 }
 
 // ───────────────────────────── QA center ─────────────────────────────
@@ -618,6 +621,8 @@ function admin_v3_action(array $me, string $name, array $a)
             audit_log($me, 'qa.run', null, 'qa', null, null, $r['summary'], '—');
             return $r;
         }
+        case 'scheduleCrash':
+        case 'unscheduleCrash':
         case 'resetAnnouncements':
         case 'setLuck':
         case 'clearLuck':
@@ -796,6 +801,31 @@ function admin_v4_action(array $me, string $name, array $a): ?array
             kv_set('luck', $s);
             audit_log($me, 'luck.clear', $a['userId'] ?? null, $a['userId'] ?? 'global', null, null, null, $r);
             return luck_admin_view();
+        }
+        case 'scheduleCrash': {
+            // Fix the crash point of a future global round (Owner only). Max 50 queued, only rounds not created yet.
+            require_user_perm($me, 'economy.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $round = (int) ($a['round'] ?? 0);
+            $point = round((float) ($a['point'] ?? 0), 2);
+            $cur = (int) qv('SELECT COALESCE(max(id), 0) FROM crash_rounds');
+            if ($round <= $cur || $round > $cur + 1000000 || $point < 1 || $point > crash_cfg()['maxMult']) fail('admin.errors.crashRound', ['current' => $cur, 'max' => crash_cfg()['maxMult']]);
+            $s = kv_get('crash_sched');
+            $s['rounds'] = $s['rounds'] ?? [];
+            if (count($s['rounds']) >= 50 && !isset($s['rounds'][(string) $round])) fail('admin.errors.invalid');
+            $s['rounds'][(string) $round] = $point;
+            kv_set('crash_sched', $s);
+            audit_log($me, 'crash.schedule', null, "round $round", (string) $round, null, ['point' => $point], $r);
+            return crash_view();
+        }
+        case 'unscheduleCrash': {
+            require_user_perm($me, 'economy.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $s = kv_get('crash_sched');
+            unset($s['rounds'][(string) (int) ($a['round'] ?? 0)]);
+            kv_set('crash_sched', $s);
+            audit_log($me, 'crash.unschedule', null, 'round ' . (int) ($a['round'] ?? 0), null, null, null, $r);
+            return crash_view();
         }
         case 'setCaptcha': {
             require_user_perm($me, 'system.manage');

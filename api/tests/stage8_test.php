@@ -299,6 +299,21 @@ $GLOBALS['NEON_KV_DIRTY']['captcha'] = true;
 check('back to the config file setting', kv_get('captcha')['mode'] === null);
 check('reset ends every announcement', admin('own', 'resetAnnouncements', ['reason' => 'clean'])['ok'] && (int) qv('SELECT count(*) FROM announcements WHERE active') === 0);
 
+echo "Crash event rounds\n";
+$cur = (int) qv('SELECT COALESCE(max(id), 0) FROM crash_rounds');
+expect_error('cannot set a round that already exists', admin('own', 'scheduleCrash', ['round' => max(1, $cur), 'point' => 50, 'reason' => 'x']), 'admin.errors.crashRound');
+expect_error('admins (not Owner) cannot rig rounds', admin('adm', 'scheduleCrash', ['round' => $cur + 1, 'point' => 50, 'reason' => 'x']), 'admin.errors.forbidden');
+expect_error('point above the curve maximum refused', admin('own', 'scheduleCrash', ['round' => $cur + 1, 'point' => 999999, 'reason' => 'x']), 'admin.errors.crashRound');
+$GLOBALS['NEON_KV_DIRTY']['crash_sched'] = true;
+$r = admin('own', 'scheduleCrash', ['round' => $cur + 1, 'point' => 777.77, 'reason' => 'event']);
+check('Owner schedules round N+1 at ×777.77', $r['ok'] && $r['data']['result']['scheduled'][0]['round'] === $cur + 1, $r);
+q('UPDATE crash_rounds SET crash_at = now() - interval \'1 hour\', start_at = now() - interval \'1 hour\'');
+$GLOBALS['NEON_KV_DIRTY']['crash_sched'] = true;
+$nr = tx(fn() => crash_current(now_ms()));
+check('that round crashes exactly there and is marked as an event', (int) $nr['id'] === $cur + 1 && (float) $nr['point'] == 777.77 && ($nr['forced'] === true || $nr['forced'] === 't'), $nr);
+$GLOBALS['NEON_KV_DIRTY']['crash_sched'] = true;
+check('the schedule entry is used up', empty(kv_get('crash_sched')['rounds'][(string) ($cur + 1)]));
+
 echo "Owner console\n";
 $_SERVER['REMOTE_ADDR'] = '10.9.8.7';
 $con = fn(string $path, array $body = []) => call('POST', $path, $body);
