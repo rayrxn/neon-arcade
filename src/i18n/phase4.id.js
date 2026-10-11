@@ -158,7 +158,8 @@ export default {
     case: {
       open: 'Buka',
       drops: 'Isi case',
-      names: { starter: 'Starter Case', neon: 'Neon Case', elite: 'Elite Case' },
+      names: { pocket: 'Pocket Case', starter: 'Starter Case', neon: 'Neon Case', jackpot: 'Jackpot Case', elite: 'Elite Case', mythic: 'Mythic Case' },
+      jackpotNote: 'Risiko tinggi: kebanyakan item kecil, tapi item teratas bernilai ×50.',
       tiers: { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary', secret: 'Secret' },
     },
     battle: {
@@ -167,6 +168,10 @@ export default {
       start: 'Mulai battle',
       rules: 'Kamu dan bot membuka case yang sama. Total nilai tertinggi ambil semua item. Seri = taruhan kembali.',
       idle: 'Pilih case dan jumlah ronde, lalu mulai battle.',
+      mode: 'Mode',
+      classic: 'Klasik',
+      crazy: 'Crazy',
+      crazyRules: 'Mode Crazy: total TERENDAH yang ambil semua. Seri = taruhan kembali.',
     },
   },
 }

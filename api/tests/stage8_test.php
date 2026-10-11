@@ -483,5 +483,19 @@ $hh = array_values(array_filter($st['data']['history'], fn($h) => $h['id'] === $
 check('seed revealed after the race, matches the hash and the result', $hh && hash('sha256', $hh['seed']) === $hh['hash'] && horse_draw($hh['seed'], $rid)['finish'][0] === $hh['winner'], $hh);
 expect_error('bets closed while racing', (function () use ($rid) { q("UPDATE horse_rounds SET start_at = now() - interval '1 second', end_at = now() + interval '10 seconds' WHERE id = (SELECT max(id) FROM horse_rounds)"); return call('POST', 'game/horse-bet', ['bet' => 100, 'horse' => 0], 'v'); })(), 'play.horse.closed');
 
+echo "Cases T13\n";
+$e = 0; foreach (JACKPOT_TIERS as $t) { $pool = JACKPOT_ITEMS[$t['id']]; $e += $t['weight'] / 100 * array_sum(array_column($pool, 'mult')) / count($pool); }
+check('jackpot drop table EV between 0.94 and 0.95, weights sum to 100', $e > 0.94 && $e < 0.95 && abs(array_sum(array_column(JACKPOT_TIERS, 'weight')) - 100) < 1e-9, ['ev' => $e]);
+setbal($A, 1000000, 100);
+cool(); $r = call('POST', 'game/case-open', ['caseId' => 'mythic'], 'a');
+$names = array_column(array_merge(...array_values(JACKPOT_ITEMS)), 'name');
+check('Mythic case costs 10,000 and drops a jackpot item', $r['ok'] && in_array($r['data']['result']['item']['name'], $names, true) && (float) $r['data']['result']['session']['bet'] === 10000.0, $r);
+cool(); $r = call('POST', 'game/case-open', ['caseId' => 'pocket'], 'a');
+check('Pocket case drops a standard item', $r['ok'] && !in_array($r['data']['result']['item']['name'], $names, true), $r);
+cool(); $r = call('POST', 'game/case-battle', ['caseId' => 'starter', 'rounds' => 5, 'mode' => 'crazy'], 'a');
+$res = $r['ok'] ? $r['data']['result'] : [];
+check('Crazy battle: 5 rounds, lowest total wins', $r['ok'] && count($res['player']) === 5 && $res['mode'] === 'crazy' && ($res['playerTotal'] == $res['botTotal'] || ($res['session']['result'] === 'win') === ($res['playerTotal'] < $res['botTotal'])), $r);
+expect_error('battle mode must be classic or crazy', call('POST', 'game/case-battle', ['caseId' => 'starter', 'rounds' => 2, 'mode' => 'x'], 'a'), 'play.errors.invalid');
+
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

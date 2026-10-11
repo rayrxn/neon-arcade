@@ -93,6 +93,94 @@ const ART = {
       <circle cx="32" cy="14" r="2.5" fill={c} stroke="none" />
     </>
   ),
+  'Scrap Chip': (c) => (
+    <>
+      <path d="M18 18 H46 V46 H18 Z" fill={`${c}22`} stroke={c} transform="rotate(8 32 32)" />
+      <path d="M24 12 V18 M32 12 V18 M40 12 V18 M24 46 V52 M40 46 V52 M12 26 H18 M12 38 H18 M46 30 H52" stroke={c} />
+      <path d="M26 28 L34 36 L30 40" stroke={c} opacity="0.6" />
+    </>
+  ),
+  'Bent Coin': (c) => (
+    <>
+      <path d="M14 30 C14 18 24 12 34 14 C46 16 52 26 48 36 C44 48 30 52 20 44 C16 41 14 36 14 30 Z" fill={`${c}22`} stroke={c} />
+      <path d="M26 24 C30 30 30 36 26 42" stroke={c} opacity="0.6" />
+    </>
+  ),
+  'Old Ticket': (c) => (
+    <>
+      <path d="M10 20 H54 V28 C50 28 50 36 54 36 V44 H10 V36 C14 36 14 28 10 28 Z" fill={`${c}22`} stroke={c} />
+      <path d="M38 20 V44" stroke={c} strokeDasharray="3 3" />
+      <path d="M18 30 H30 M18 36 H26" stroke={c} />
+    </>
+  ),
+  'Lucky Dice': (c) => (
+    <>
+      <rect x="14" y="14" width="36" height="36" rx="8" fill={`${c}22`} stroke={c} transform="rotate(-10 32 32)" />
+      {[[24, 24], [40, 24], [32, 32], [24, 40], [40, 40]].map(([x, y]) => <circle key={`${x}${y}`} cx={x} cy={y} r="2.6" fill={c} stroke="none" />)}
+    </>
+  ),
+  'Neon Fuse': (c) => (
+    <>
+      <rect x="22" y="12" width="20" height="40" rx="6" fill={`${c}22`} stroke={c} />
+      <path d="M22 20 H42 M22 44 H42" stroke={c} />
+      <path d="M34 24 L28 33 H36 L30 41" stroke={c} />
+    </>
+  ),
+  'Silver Chip': (c) => (
+    <>
+      <circle cx="32" cy="32" r="20" fill={`${c}22`} stroke={c} />
+      <circle cx="32" cy="32" r="12" stroke={c} strokeDasharray="4 3" />
+      <path d="M32 12 V18 M32 46 V52 M12 32 H18 M46 32 H52" stroke={c} />
+    </>
+  ),
+  'Hologram': (c) => (
+    <>
+      <path d="M18 50 H46 L40 44 H24 Z" fill={`${c}33`} stroke={c} />
+      <path d="M24 44 L32 14 L40 44" stroke={c} opacity="0.4" />
+      <path d="M32 16 L42 22 L42 34 L32 40 L22 34 L22 22 Z" fill={`${c}22`} stroke={c} />
+      <path d="M22 22 L32 28 L42 22 M32 28 V40" stroke={c} opacity="0.7" />
+    </>
+  ),
+  'Laser Visor': (c) => (
+    <>
+      <path d="M8 30 C8 22 18 18 32 18 C46 18 56 22 56 30 C56 38 46 42 32 42 C18 42 8 38 8 30 Z" fill={`${c}22`} stroke={c} />
+      <path d="M14 30 H50" stroke={c} strokeWidth="3.4" />
+      <path d="M50 30 H60" stroke={c} opacity="0.5" />
+    </>
+  ),
+  'Turbo Core': (c) => (
+    <>
+      <circle cx="32" cy="32" r="18" fill={`${c}22`} stroke={c} />
+      {[0, 60, 120, 180, 240, 300].map((r) => <path key={r} d="M32 32 L32 16 C38 18 40 22 38 26" stroke={c} transform={`rotate(${r} 32 32)`} />)}
+      <circle cx="32" cy="32" r="4" fill={c} stroke="none" />
+    </>
+  ),
+  'Diamond Joystick': (c) => (
+    <>
+      <path d="M12 46 H52 L48 54 H16 Z" fill={`${c}33`} stroke={c} />
+      <path d="M32 46 V28" stroke={c} />
+      <path d="M24 16 H40 L44 21 L32 32 L20 21 Z" fill={`${c}55`} stroke={c} />
+      <path d="M20 21 H44" stroke={c} opacity="0.6" />
+    </>
+  ),
+  'Plasma Throne': (c) => (
+    <>
+      <path d="M20 10 H44 V34 H20 Z" fill={`${c}22`} stroke={c} />
+      <path d="M14 34 H50 V42 H14 Z" fill={`${c}33`} stroke={c} />
+      <path d="M18 42 V54 M46 42 V54 M14 26 V34 M50 26 V34" stroke={c} />
+      <path d="M32 14 L28 22 H36 L32 30" stroke={c} />
+    </>
+  ),
+  'Golden Arcade': (c) => (
+    <>
+      <path d="M18 8 H46 L44 20 V54 H20 V20 Z" fill={`${c}22`} stroke={c} />
+      <rect x="24" y="20" width="16" height="12" rx="2" fill={`${c}55`} stroke={c} />
+      <path d="M22 38 H42" stroke={c} />
+      <circle cx="28" cy="44" r="2.5" fill={c} stroke="none" />
+      <circle cx="36" cy="44" r="2.5" fill={c} stroke="none" />
+      <path d="M10 14 L14 10 M54 14 L50 10 M8 26 H12 M56 26 H52" stroke={c} opacity="0.7" />
+    </>
+  ),
 }
 
 export default function ItemArt({ name, color, size = 56, className }) {

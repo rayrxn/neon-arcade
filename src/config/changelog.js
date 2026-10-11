@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.5",
+    "date": "2026-10-11",
+    "emoji": "📦",
+    "colors": ["#ff4d8d", "#ffc83d", "#34d399"],
+    "title": { "en": "More cases, crazier battles", "id": "Case baru, battle lebih gila" },
+    "tagline": { "en": "Six cases from 25 to 10,000 AC, plus a Crazy battle mode.", "id": "Enam case dari 25 sampai 10.000 AC, plus mode battle Crazy." },
+    "items": [
+      { "tag": "new", "en": "New cases: Pocket (25 AC), Jackpot (1,000 AC) and Mythic (10,000 AC). Jackpot and Mythic are high risk with a ×50 top item.", "id": "Case baru: Pocket (25 AC), Jackpot (1.000 AC), dan Mythic (10.000 AC). Jackpot dan Mythic berisiko tinggi dengan item teratas ×50." },
+      { "tag": "new", "en": "Case Battle: up to 5 cases per battle and a Crazy mode where the lowest total wins.", "id": "Case Battle: sampai 5 case per battle dan mode Crazy, yang totalnya terendah menang." },
+      { "tag": "improve", "en": "12 new item drawings for the jackpot drop table.", "id": "12 gambar item baru untuk tabel drop jackpot." }
+    ]
+  },
+  {
     "version": "2.9.4",
     "date": "2026-10-11",
     "emoji": "🌌",

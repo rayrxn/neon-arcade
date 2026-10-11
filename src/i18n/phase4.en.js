@@ -158,7 +158,8 @@ export default {
     case: {
       open: 'Open',
       drops: 'Case contents',
-      names: { starter: 'Starter Case', neon: 'Neon Case', elite: 'Elite Case' },
+      names: { pocket: 'Pocket Case', starter: 'Starter Case', neon: 'Neon Case', jackpot: 'Jackpot Case', elite: 'Elite Case', mythic: 'Mythic Case' },
+      jackpotNote: 'High risk: mostly small drops, but the top item is worth ×50.',
       tiers: { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary', secret: 'Secret' },
     },
     battle: {
@@ -167,6 +168,10 @@ export default {
       start: 'Start battle',
       rules: 'You and the bot open the same cases. Highest total takes everything. Tie = bet returned.',
       idle: 'Pick a case and how many, then start the battle.',
+      mode: 'Mode',
+      classic: 'Classic',
+      crazy: 'Crazy',
+      crazyRules: 'Crazy mode: the LOWEST total takes everything. Tie = bet returned.',
     },
   },
 }

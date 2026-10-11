@@ -192,9 +192,9 @@ const useWalletStoreBalance = (c) => {
 }
 
 /** Tombol pilihan kecil (risk, sisi koin, dll.). */
-export function Choice({ options, value, onChange, disabled }) {
+export function Choice({ options, value, onChange, disabled, cols }) {
   return (
-    <div className="grid gap-1.5 rounded-xl bg-ink-950/60 p-1 ring-1 ring-inset ring-white/[0.07]" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+    <div className="grid gap-1.5 rounded-xl bg-ink-950/60 p-1 ring-1 ring-inset ring-white/[0.07]" style={{ gridTemplateColumns: `repeat(${cols ?? options.length}, minmax(0, 1fr))` }}>
       {options.map((o) => (
         <button
           key={o.value}

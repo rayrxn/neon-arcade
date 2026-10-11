@@ -137,8 +137,8 @@ function begin(game, bet, floatCount, extra = {}) {
  * tidak mungkin terjadi lewat aturan game → sesi ditandai INVALID, tidak dibayar, dan flag kritis.
  */
 const MAX_MULTIPLIER = {
-  dice: 49.5, limbo: 1_000_000, coinflip: 1.98, plinko: 1000, roulette: 36, 'case-opening': 20,
-  'case-battle': 40, crash: 1_000_000_000, mines: 6_000_000, blackjack: 2.5,
+  dice: 49.5, limbo: 1_000_000, coinflip: 1.98, plinko: 1000, roulette: 36, 'case-opening': 50,
+  'case-battle': 100, crash: 1_000_000_000, mines: 6_000_000, blackjack: 2.5,
 }
 const STATUS_OF = { win: 'WON', loss: 'LOST', push: 'DRAW' }
 
@@ -376,10 +376,14 @@ export function playRoulette({ bets }) {
 // ───────────────────────────── Cases ─────────────────────────────
 
 export const CASES = [
-  { id: 'starter', price: 100, tone: 'cyan' },
-  { id: 'neon', price: 500, tone: 'purple' },
-  { id: 'elite', price: 2_500, tone: 'gold' },
+  { id: 'pocket', price: 25, tone: 'green', profile: 'standard' },
+  { id: 'starter', price: 100, tone: 'cyan', profile: 'standard' },
+  { id: 'neon', price: 500, tone: 'purple', profile: 'standard' },
+  { id: 'jackpot', price: 1_000, tone: 'pink', profile: 'jackpot' },
+  { id: 'elite', price: 2_500, tone: 'gold', profile: 'standard' },
+  { id: 'mythic', price: 10_000, tone: 'red', profile: 'jackpot' },
 ]
+export const BATTLE_ROUNDS = [1, 2, 3, 4, 5]
 
 /** Item per tier: mult = nilai item × harga case. EV total 0,975. */
 export const CASE_ITEMS = {
@@ -397,16 +401,36 @@ export const TIERS = [
   { id: 'secret', weight: 1, color: '#ff4d8d' },
 ]
 
-function drawItem(f1, f2, price) {
-  const tier = pickWeighted(f1, TIERS)
-  const pool = CASE_ITEMS[tier.id]
+/** High-volatility table for Jackpot and Mythic cases (EV ≈ 0,946). */
+export const JACKPOT_ITEMS = {
+  common: [{ name: 'Scrap Chip', mult: 0.1 }, { name: 'Bent Coin', mult: 0.15 }, { name: 'Old Ticket', mult: 0.2 }],
+  rare: [{ name: 'Lucky Dice', mult: 0.4 }, { name: 'Neon Fuse', mult: 0.5 }, { name: 'Silver Chip', mult: 0.6 }],
+  epic: [{ name: 'Hologram', mult: 1.2 }, { name: 'Laser Visor', mult: 1.6 }, { name: 'Turbo Core', mult: 2 }],
+  legendary: [{ name: 'Diamond Joystick', mult: 6 }, { name: 'Plasma Throne', mult: 10 }],
+  secret: [{ name: 'Golden Arcade', mult: 50 }],
+}
+export const JACKPOT_TIERS = [
+  { id: 'common', weight: 62.4, color: '#9aa4b8' },
+  { id: 'rare', weight: 24, color: '#3b9bff' },
+  { id: 'epic', weight: 9.5, color: '#a35bff' },
+  { id: 'legendary', weight: 3.5, color: '#ffc83d' },
+  { id: 'secret', weight: 0.6, color: '#ff4d8d' },
+]
+/** Drop table of a case: { tiers, items }. */
+export function caseTable(profile) {
+  return profile === 'jackpot' ? { tiers: JACKPOT_TIERS, items: JACKPOT_ITEMS } : { tiers: TIERS, items: CASE_ITEMS }
+}
+
+function drawItem(f1, f2, price, profile = 'standard') {
+  const { tiers, items } = caseTable(profile)
+  const tier = pickWeighted(f1, tiers)
+  const pool = items[tier.id]
   const item = pool[Math.min(pool.length - 1, Math.floor(f2 * pool.length))]
   return { tier: tier.id, color: tier.color, name: item.name, value: round2(item.mult * price) }
 }
-
 /** Item acak untuk strip animasi (bukan hasil — hasil tetap dari server). */
-export function decoyItems(count, price) {
-  return Array.from({ length: count }, () => drawItem(Math.random(), Math.random(), price))
+export function decoyItems(count, price, profile = 'standard') {
+  return Array.from({ length: count }, () => drawItem(Math.random(), Math.random(), price, profile))
 }
 
 export function openCase({ caseId }) {
@@ -414,40 +438,41 @@ export function openCase({ caseId }) {
   const def = CASES.find((c) => c.id === caseId)
   if (!def) throw new AppError('play.errors.invalid')
   const round = begin('case-opening', def.price, 2)
-  const f = forced(round, 2, (x) => drawItem(x[0], x[1], def.price).value > def.price)
-  const item = drawItem(f[0], f[1], def.price)
+  const f = forced(round, 2, (x) => drawItem(x[0], x[1], def.price, def.profile).value > def.price)
+  const item = drawItem(f[0], f[1], def.price, def.profile)
   const multiplier = item.value / def.price
   return { item, ...finish(round, { multiplier, result: classify(multiplier), detail: { case: caseId, item: item.name, tier: item.tier } }) }
 }
 
 /** Case Battle vs bot: masing-masing buka `rounds` case. Pemenang ambil semua; seri = dibagi. */
-export function playCaseBattle({ caseId, rounds }) {
-  if (SERVER_MODE) return remoteStart('case-battle', { caseId, rounds })
+export function playCaseBattle({ caseId, rounds, mode = 'classic' }) {
+  if (SERVER_MODE) return remoteStart('case-battle', { caseId, rounds, mode })
   const def = CASES.find((c) => c.id === caseId)
-  if (!def || ![1, 2, 3].includes(rounds)) throw new AppError('play.errors.invalid')
+  if (!def || !BATTLE_ROUNDS.includes(rounds) || !['classic', 'crazy'].includes(mode)) throw new AppError('play.errors.invalid')
+  const crazy = mode === 'crazy'
   const round = begin('case-battle', def.price * rounds, rounds * 4)
   const totals = (fl) => {
     let a = 0
     let b = 0
     for (let i = 0; i < rounds; i++) {
-      a += drawItem(fl[i * 4], fl[i * 4 + 1], def.price).value
-      b += drawItem(fl[i * 4 + 2], fl[i * 4 + 3], def.price).value
+      a += drawItem(fl[i * 4], fl[i * 4 + 1], def.price, def.profile).value
+      b += drawItem(fl[i * 4 + 2], fl[i * 4 + 3], def.price, def.profile).value
     }
-    return a > b
+    return crazy ? a < b : a > b
   }
   const f = forced(round, rounds * 4, totals)
   const player = []
   const bot = []
   for (let i = 0; i < rounds; i++) {
-    player.push(drawItem(f[i * 4], f[i * 4 + 1], def.price))
-    bot.push(drawItem(f[i * 4 + 2], f[i * 4 + 3], def.price))
+    player.push(drawItem(f[i * 4], f[i * 4 + 1], def.price, def.profile))
+    bot.push(drawItem(f[i * 4 + 2], f[i * 4 + 3], def.price, def.profile))
   }
   const sum = (items) => round2(items.reduce((s, it) => s + it.value, 0))
   const pt = sum(player)
   const bt = sum(bot)
-  const result = pt > bt ? 'win' : pt === bt ? 'push' : 'loss'
-  const multiplier = result === 'win' ? (pt + bt) / round.bet : 0
-  return { player, bot, playerTotal: pt, botTotal: bt, ...finish(round, { multiplier, result, detail: { case: caseId, rounds, pt, bt } }) }
+  const result = pt === bt ? 'push' : (crazy ? pt < bt : pt > bt) ? 'win' : 'loss'
+  const multiplier = result === 'win' ? (pt + bt) / round.bet : result === 'push' ? 1 : 0
+  return { player, bot, playerTotal: pt, botTotal: bt, mode, ...finish(round, { multiplier, result, detail: { case: caseId, rounds, mode, pt, bt } }) }
 }
 
 // ───────────────────────────── Crash ─────────────────────────────

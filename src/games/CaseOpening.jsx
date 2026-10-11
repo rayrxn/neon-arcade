@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import { GameShell, Stage, playOutcome, useRunner } from '@/components/play/GameKit'
 import ItemArt, { CaseArt } from '@/components/play/ItemArt'
-import { CASES, CASE_ITEMS, TIERS, decoyItems, openCase } from '@/services/games'
+import { CASES, caseTable, decoyItems, openCase } from '@/services/games'
 import { play } from '@/services/sound'
 import { formatCoins } from '@/utils/format'
 import { useT } from '@/i18n'
@@ -15,8 +15,7 @@ const GAP = 10
 const STEP = CARD_W + GAP
 const WIN_INDEX = 46
 const STRIP_LEN = 54
-const TONE_HEX = { cyan: '#22e1ff', purple: '#a35bff', gold: '#ffc83d' }
-const TIER_ORDER = TIERS.map((t) => t.id)
+export const TONE_HEX = { green: '#34d399', cyan: '#22e1ff', purple: '#a35bff', pink: '#ff4d8d', gold: '#ffc83d', red: '#ff5a4d' }
 
 /** Kartu item di reel / battle. */
 export function ItemCard({ item, highlight, dim, className, size = 'md' }) {
@@ -41,11 +40,14 @@ export function ItemCard({ item, highlight, dim, className, size = 'md' }) {
 }
 
 /** Tabel peluang (dipakai juga oleh Case Battle). */
-export function DropTable({ price }) {
+export function DropTable({ price, profile }) {
   const { t } = useT()
+  const { tiers, items } = caseTable(profile)
+  const mults = Object.values(items).flat().map((it) => it.mult)
   return (
     <ul className="space-y-1.5 text-xs">
-      {TIERS.map((tier) => (
+      {profile === 'jackpot' && <li className="rounded-lg bg-neon-pink/10 px-2 py-1.5 text-[11px] font-semibold text-pink-200">{t('play.case.jackpotNote')}</li>}
+      {tiers.map((tier) => (
         <li key={tier.id} className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2 font-semibold text-slate-300">
             <span className="h-2 w-2 rounded-full" style={{ background: tier.color }} /> {t(`play.case.tiers.${tier.id}`)}
@@ -53,7 +55,7 @@ export function DropTable({ price }) {
           <span className="num font-mono text-slate-500">{tier.weight}%</span>
         </li>
       ))}
-      <li className="pt-1 text-[11px] text-slate-500">{t('play.case.range', { min: formatCoins(0.15 * price), max: formatCoins(20 * price) })}</li>
+      <li className="pt-1 text-[11px] text-slate-500">{t('play.case.range', { min: formatCoins(Math.min(...mults) * price), max: formatCoins(Math.max(...mults) * price) })}</li>
     </ul>
   )
 }
@@ -61,9 +63,10 @@ export function DropTable({ price }) {
 /** Preview isi case: semua item, peluang per item, dan nilainya. */
 function CasePreview({ def, onClose }) {
   const { t } = useT()
-  const items = TIER_ORDER.flatMap((tierId) => {
-    const tier = TIERS.find((x) => x.id === tierId)
-    const pool = CASE_ITEMS[tierId]
+  const { tiers, items: table } = caseTable(def.profile)
+  const items = tiers.flatMap((tier) => {
+    const tierId = tier.id
+    const pool = table[tierId]
     return pool.map((it) => ({ ...it, tier: tierId, color: tier.color, value: it.mult * def.price, chance: tier.weight / pool.length }))
   }).reverse()
   return (
@@ -93,7 +96,7 @@ export default function CaseOpening({ game }) {
   const { run } = useRunner()
   const [caseId, setCaseId] = useState('neon')
   const def = CASES.find((c) => c.id === caseId)
-  const [strip, setStrip] = useState(() => decoyItems(STRIP_LEN, def.price))
+  const [strip, setStrip] = useState(() => decoyItems(STRIP_LEN, def.price, def.profile))
   const [phase, setPhase] = useState('idle') // idle | spinning | revealed
   const [outcome, setOutcome] = useState(null)
   const [preview, setPreview] = useState(false)
@@ -117,7 +120,8 @@ export default function CaseOpening({ game }) {
   const selectCase = (id) => {
     if (phase === 'spinning') return
     setCaseId(id)
-    setStrip(decoyItems(STRIP_LEN, CASES.find((c) => c.id === id).price))
+    const next = CASES.find((c) => c.id === id)
+    setStrip(decoyItems(STRIP_LEN, next.price, next.profile))
     setPhase('idle')
     setOutcome(null)
     reel.set({ x: -(8 * STEP) + width / 2 - CARD_W / 2 })
@@ -126,10 +130,10 @@ export default function CaseOpening({ game }) {
   const open = async () => {
     const res = await run(() => openCase({ caseId }))
     if (!res) return
-    const items = decoyItems(STRIP_LEN, def.price)
+    const items = decoyItems(STRIP_LEN, def.price, def.profile)
     items[WIN_INDEX] = res.item
     // Near-miss realistis: tetangga kartu menang sesekali tier tinggi.
-    if (Math.random() < 0.5) items[WIN_INDEX + 1] = decoyItems(1, def.price * 4)[0]
+    if (Math.random() < 0.5) items[WIN_INDEX + 1] = decoyItems(1, def.price * 4, def.profile)[0]
     setStrip(items)
     setOutcome(null)
     setPreview(false)
@@ -163,22 +167,23 @@ export default function CaseOpening({ game }) {
 
   const controls = (
     <>
-      <div className="grid gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {CASES.map((c) => (
           <button
             key={c.id}
             disabled={phase === 'spinning'}
             onClick={() => selectCase(c.id)}
             className={clsx(
-              'group flex items-center gap-3 rounded-xl p-2 text-left ring-1 ring-inset transition disabled:opacity-60',
+              'group relative flex flex-col items-center gap-1 rounded-xl p-2 text-center ring-1 ring-inset transition disabled:opacity-60',
               caseId === c.id ? 'bg-white/[0.05]' : 'ring-white/[0.07] hover:bg-white/[0.03]',
             )}
             style={caseId === c.id ? { '--tw-ring-color': `${TONE_HEX[c.tone]}80` } : undefined}
           >
-            <span className="grid h-12 w-14 shrink-0 place-items-center rounded-lg bg-ink-950/60">
-              <CaseArt tone={TONE_HEX[c.tone]} size={44} />
+            {c.profile === 'jackpot' && <span className="absolute right-1.5 top-1.5 rounded bg-neon-pink/20 px-1 text-[9px] font-black uppercase tracking-wider text-pink-200">×50</span>}
+            <span className="grid h-11 w-14 shrink-0 place-items-center rounded-lg bg-ink-950/60 transition group-hover:-translate-y-0.5">
+              <CaseArt tone={TONE_HEX[c.tone]} size={42} />
             </span>
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0 w-full">
               <span className="block truncate text-sm font-bold text-white">{t(`play.case.names.${c.id}`)}</span>
               <span className="num font-mono text-xs text-slate-400">{formatCoins(c.price)} AC</span>
             </span>
@@ -199,7 +204,7 @@ export default function CaseOpening({ game }) {
       </div>
       <div>
         <p className="label-caps mb-2">{t('play.case.drops')}</p>
-        <DropTable price={def.price} />
+        <DropTable price={def.price} profile={def.profile} />
       </div>
     </>
   )
@@ -211,7 +216,7 @@ export default function CaseOpening({ game }) {
         <CaseArt tone={TONE_HEX[def.tone]} size={52} />
         <div className="min-w-0 flex-1">
           <p className="font-display text-base font-bold text-white">{t(`play.case.names.${def.id}`)}</p>
-          <p className="text-xs text-slate-500">{t('play.case.subtitle', { count: Object.values(CASE_ITEMS).flat().length })}</p>
+          <p className="text-xs text-slate-500">{t('play.case.subtitle', { count: Object.values(caseTable(def.profile).items).flat().length })}</p>
         </div>
         <span className="num rounded-lg bg-white/[0.05] px-2.5 py-1 font-mono text-sm font-bold text-neon-gold">{formatCoins(def.price)} AC</span>
       </div>

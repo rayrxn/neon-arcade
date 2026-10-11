@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import { Choice, Field, GameShell, Stage, playOutcome, useRunner } from '@/components/play/GameKit'
 import { ItemCard } from './CaseOpening'
-import { CASES, playCaseBattle } from '@/services/games'
+import { BATTLE_ROUNDS, CASES, playCaseBattle } from '@/services/games'
 import { play } from '@/services/sound'
 import { formatCoins } from '@/utils/format'
 import { useT } from '@/i18n'
@@ -31,6 +31,7 @@ export default function CaseBattle({ game }) {
   const { run } = useRunner()
   const [caseId, setCaseId] = useState('starter')
   const [rounds, setRounds] = useState(2)
+  const [mode, setMode] = useState('classic')
   const [battle, setBattle] = useState(null)
   const [shown, setShown] = useState(0)
   const def = CASES.find((c) => c.id === caseId)
@@ -51,7 +52,7 @@ export default function CaseBattle({ game }) {
   }, [finished, battle])
 
   const start = async () => {
-    const res = await run(() => playCaseBattle({ caseId, rounds }))
+    const res = await run(() => playCaseBattle({ caseId, rounds, mode }))
     if (!res) return
     setShown(0)
     setBattle(res)
@@ -60,15 +61,18 @@ export default function CaseBattle({ game }) {
   const controls = (
     <>
       <Field label={t('play.battle.case')}>
-        <Choice value={caseId} onChange={setCaseId} disabled={battle && !finished} options={CASES.map((c) => ({ value: c.id, label: t(`play.case.names.${c.id}`) }))} />
+        <Choice cols={3} value={caseId} onChange={setCaseId} disabled={battle && !finished} options={CASES.map((c) => ({ value: c.id, label: t(`play.case.names.${c.id}`).replace(/ Case$/, '') }))} />
       </Field>
       <Field label={t('play.battle.rounds')}>
-        <Choice value={rounds} onChange={setRounds} disabled={battle && !finished} options={[1, 2, 3].map((r) => ({ value: r, label: `${r}×` }))} />
+        <Choice value={rounds} onChange={setRounds} disabled={battle && !finished} options={BATTLE_ROUNDS.map((r) => ({ value: r, label: `${r}×` }))} />
+      </Field>
+      <Field label={t('play.battle.mode')}>
+        <Choice value={mode} onChange={setMode} disabled={battle && !finished} options={[{ value: 'classic', label: t('play.battle.classic') }, { value: 'crazy', label: t('play.battle.crazy') }]} />
       </Field>
       <Button size="lg" className="w-full" onClick={start} disabled={battle && !finished}>
         {t('play.battle.start')} · {formatCoins(def.price * rounds)} AC
       </Button>
-      <p className="text-xs leading-relaxed text-slate-500">{t('play.battle.rules')}</p>
+      <p className="text-xs leading-relaxed text-slate-500">{t(mode === 'crazy' ? 'play.battle.crazyRules' : 'play.battle.rules')}</p>
     </>
   )
 
