@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="build" content="9db5eee">
+<meta name="build" content="f12a226">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "9db5eee", "at": "2026-10-11T12:29:05Z", "version": "3.0.0"};</script>
+<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "f12a226", "at": "2026-10-11T13:37:06Z", "version": "3.0.0"};</script>
 <title>Neon Arcade</title>
 <meta name="theme-color" content="#06070c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6841,6 +6841,7 @@ exports.default = [
             { "tag": "new", "en": "Global Chat and live feeds are busier with house players. Their mini profile says they are house players.", "id": "Global Chat dan live feed lebih ramai dengan pemain house. Mini profil mereka menandai sebagai pemain house." },
             { "tag": "new", "en": "Settings: change your sign-in email while it is not verified yet.", "id": "Pengaturan: ganti email login selama belum diverifikasi." },
             { "tag": "new", "en": "One email can hold up to 3 accounts. Password reset lets you pick which account.", "id": "Satu email bisa dipakai sampai 3 akun. Reset password bisa pilih akunnya." },
+            { "tag": "improve", "en": "New Neon Arcade logo: an Arcade Chip ring around the arcade A.", "id": "Logo Neon Arcade baru: cincin Arcade Chip mengelilingi huruf A arcade." },
             { "tag": "fix", "en": "Snake: the lose sound plays together with the result. The NEON/ARCADE logo no longer overlaps.", "id": "Snake: suara kalah sekarang bersamaan dengan hasil. Logo NEON/ARCADE tidak lagi bertumpuk." }
         ]
     },
@@ -13782,7 +13783,7 @@ const react_1 = require("react");
 const clsx_1 = __importDefault(require("clsx"));
 function Logo({ compact = false, className }) {
     const gid = `logo-${(0, react_1.useId)().replace(/:/g, '')}`;
-    return ((0, jsx_runtime_1.jsxs)("span", { className: (0, clsx_1.default)('inline-flex items-center gap-2', className), children: [(0, jsx_runtime_1.jsxs)("svg", { viewBox: "0 0 32 32", className: "h-8 w-8 shrink-0", "aria-hidden": true, children: [(0, jsx_runtime_1.jsx)("defs", { children: (0, jsx_runtime_1.jsxs)("linearGradient", { id: gid, x1: "0", y1: "0", x2: "1", y2: "1", children: [(0, jsx_runtime_1.jsx)("stop", { offset: "0", stopColor: "#22e1ff" }), (0, jsx_runtime_1.jsx)("stop", { offset: "1", stopColor: "#a35bff" })] }) }), (0, jsx_runtime_1.jsx)("rect", { x: "1", y: "1", width: "30", height: "30", rx: "9", fill: "#0b0e18", stroke: `url(#${gid})`, strokeWidth: "1.5" }), (0, jsx_runtime_1.jsx)("path", { d: "M9.5 22 16 9.5 22.5 22", fill: "none", stroke: `url(#${gid})`, strokeWidth: "2.6", strokeLinecap: "round", strokeLinejoin: "round" }), (0, jsx_runtime_1.jsx)("circle", { cx: "16", cy: "18.6", r: "2.3", fill: "#ffc83d" })] }), !compact && ((0, jsx_runtime_1.jsxs)("span", { className: "flex items-center whitespace-nowrap font-display text-[13.5px] font-extrabold leading-none tracking-tight text-white", children: ["NEON", (0, jsx_runtime_1.jsx)("span", { className: "mx-[2px] inline-block text-neon-cyan", children: "/" }), "ARCADE"] }))] }));
+    return ((0, jsx_runtime_1.jsxs)("span", { className: (0, clsx_1.default)('inline-flex items-center gap-2', className), children: [(0, jsx_runtime_1.jsxs)("svg", { viewBox: "0 0 32 32", className: "h-8 w-8 shrink-0", "aria-hidden": true, children: [(0, jsx_runtime_1.jsx)("defs", { children: (0, jsx_runtime_1.jsxs)("linearGradient", { id: gid, x1: "0", y1: "0", x2: "1", y2: "1", children: [(0, jsx_runtime_1.jsx)("stop", { offset: "0", stopColor: "#22e1ff" }), (0, jsx_runtime_1.jsx)("stop", { offset: "1", stopColor: "#7c5cff" })] }) }), (0, jsx_runtime_1.jsx)("circle", { cx: "16", cy: "16", r: "15", fill: "#0a0d18" }), (0, jsx_runtime_1.jsx)("circle", { cx: "16", cy: "16", r: "13.2", fill: "none", stroke: `url(#${gid})`, strokeWidth: "2.6", strokeDasharray: "7.37 3", transform: "rotate(-128.5 16 16)" }), (0, jsx_runtime_1.jsx)("circle", { cx: "16", cy: "16", r: "9.4", fill: "none", stroke: "#22e1ff", strokeOpacity: "0.22", strokeWidth: "0.8" }), (0, jsx_runtime_1.jsx)("path", { d: "M10.6 21.6 16 10.2 21.4 21.6", fill: "none", stroke: "#f4f1ea", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round" }), (0, jsx_runtime_1.jsx)("circle", { cx: "16", cy: "18", r: "2.1", fill: "#ffc83d" })] }), !compact && ((0, jsx_runtime_1.jsxs)("span", { className: "flex items-center whitespace-nowrap font-display text-[13.5px] font-extrabold leading-none tracking-tight text-white", children: ["NEON", (0, jsx_runtime_1.jsx)("span", { className: "mx-[2px] inline-block text-neon-cyan", children: "/" }), "ARCADE"] }))] }));
 }
 
 } };
