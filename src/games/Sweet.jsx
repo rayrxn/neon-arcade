@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
+import { spring } from '@/lib/motion'
 import Button from '@/components/ui/Button'
 import { BetInput, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
 import { playSweet } from '@/services/games'
@@ -99,7 +100,7 @@ export default function Sweet({ game }) {
                     initial={{ y: -90 - r * 18, opacity: 0 }}
                     animate={{ y: 0, opacity: 1, scale: popping && win ? 1.25 : 1, rotate: popping && win ? 12 : 0 }}
                     exit={{ scale: 0, opacity: 0, rotate: 30, transition: { duration: 0.18 } }}
-                    transition={{ type: 'spring', stiffness: 520, damping: 30, mass: 0.7, delay: spin ? r * 0.025 + c * 0.015 : 0 }}
+                    transition={spring(0.6, 0.35, spin ? (4 - r) * 0.06 + c * 0.015 : 0)}
                     className={clsx('relative grid aspect-square place-items-center rounded-lg text-xl sm:text-2xl', win ? 'bg-neon-gold/25 ring-2 ring-inset ring-neon-gold na-glow' : 'bg-white/[0.05]')}
                     style={win ? { '--glow': '250 204 21' } : undefined}
                   >

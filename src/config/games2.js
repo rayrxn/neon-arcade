@@ -4,7 +4,7 @@ export const KENO_PAY = {"1": [0.0, 3.76], "2": [0.0, 1.81, 4.17], "3": [0.0, 0.
 
 export const LADDER = {
   tower: { steps: 9, modes: { easy: { cols: 4, one: 'bomb' }, medium: { cols: 3, one: 'bomb' }, hard: { cols: 2, one: 'safe' }, expert: { cols: 3, one: 'safe' } } },
-  cross: { steps: 20, modes: { easy: { p: 0.9 }, medium: { p: 0.8 }, hard: { p: 0.7 }, daredevil: { p: 0.55 } } },
+  cross: { steps: 20, rtp: 0.94, modes: { easy: { p: 0.84 }, medium: { p: 0.7 }, hard: { p: 0.56 }, daredevil: { p: 0.4 } } },
   pump: { steps: 25, modes: { easy: { p: 0.96 }, medium: { p: 0.9 }, hard: { p: 0.8 }, expert: { p: 0.65 } } },
 }
 
@@ -14,7 +14,7 @@ export function ladderP(game, mode) {
   return m.one === 'bomb' ? (m.cols - 1) / m.cols : 1 / m.cols
 }
 
-export const ladderMult = (game, mode, k) => (k <= 0 ? 1 : Math.floor((0.96 / ladderP(game, mode) ** k) * 100) / 100)
+export const ladderMult = (game, mode, k) => (k <= 0 ? 1 : Math.min(1_000_000, Math.floor(((LADDER[game].rtp ?? 0.96) / ladderP(game, mode) ** k) * 100) / 100))
 
 export const TAROT_CARDS = ["tower", "death", "devil", "hanged", "moon", "hermit", "fool", "temperance", "justice", "hierophant", "priestess", "strength", "emperor", "empress", "lovers", "chariot", "magician", "judgement", "wheel", "star", "sun", "world"]
 export const TAROT_PAY = {"low": [0.26, 0.45, 0.54, 0.63, 0.72, 0.72, 0.81, 0.81, 0.9, 0.9, 0.9, 0.9, 0.98, 0.98, 1.07, 1.07, 1.16, 1.26, 1.35, 1.44, 1.62, 1.97], "medium": [0.0, 0.14, 0.29, 0.36, 0.43, 0.51, 0.58, 0.66, 0.73, 0.73, 0.73, 0.88, 0.88, 0.94, 1.09, 1.17, 1.31, 1.46, 1.61, 1.83, 2.19, 2.92], "high": [0.0, 0.0, 0.0, 0.0, 0.0, 0.11, 0.17, 0.29, 0.29, 0.47, 0.59, 0.59, 0.71, 0.88, 0.88, 1.17, 1.47, 1.77, 2.06, 2.36, 2.94, 4.72]}

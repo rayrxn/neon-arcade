@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
+import { motion } from 'framer-motion'
 import Button from '@/components/ui/Button'
 import { BetInput, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
 import { playLimbo } from '@/services/games'
@@ -63,9 +64,13 @@ export default function Limbo({ game }) {
   const stage = (
     <Stage className="grid min-h-[300px] place-items-center p-6">
       <div className="text-center">
-        <p className={clsx('num font-mono text-6xl font-bold sm:text-8xl', !outcome ? 'text-slate-600' : !settled ? 'text-white' : outcome.session.result === 'win' ? 'text-neon-green' : 'text-neon-red')}>
+        <motion.p key={settled ? `s-${outcome?.session.id}` : 'run'} initial={settled ? { scale: 1.25 } : false} animate={{ scale: 1 }} transition={{ type: 'spring', duration: 0.55, bounce: 0.45 }}
+          className={clsx('num font-mono text-6xl font-bold sm:text-8xl', !outcome ? 'text-slate-600' : !settled ? 'text-white' : outcome.session.result === 'win' ? 'text-neon-green drop-shadow-[0_0_24px_rgba(34,197,94,0.55)]' : 'text-neon-red')}>
           {fmtMult(outcome ? shown : 1)}
-        </p>
+        </motion.p>
+        <div className="mx-auto mt-5 h-1.5 w-64 overflow-hidden rounded-full bg-white/[0.06]">
+          <motion.div className={clsx('h-full rounded-full', settled && outcome?.session.result !== 'win' ? 'bg-neon-red' : 'bg-neon-green')} animate={{ width: `${Math.min(100, (Math.log(Math.max(1, outcome ? shown : 1)) / Math.log(Math.max(1.01, t2))) * 100)}%` }} transition={{ duration: 0.1 }} />
+        </div>
         <p className="mt-4 text-sm text-slate-500">
           {t('play.limbo.target')} <b className="text-slate-300">{fmtMult(t2)}</b> · {t('play.winPays', { amount: formatCoins(Math.floor(bet * t2)) })}
         </p>

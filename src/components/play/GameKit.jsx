@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import StageFx from './StageFx'
+import { winPop } from '@/lib/motion'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Award, CheckCircle2, ShieldCheck, Sparkles, Target, Trophy } from 'lucide-react'
@@ -241,7 +243,7 @@ export function ResultCard({ outcome, game }) {
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className={clsx('font-display text-lg font-bold', tone)}>{t(`play.result.${session.result}`)}</p>
+          <motion.p {...(session.result === 'win' ? winPop : {})} className={clsx('origin-left font-display text-lg font-bold', tone)}>{t(`play.result.${session.result}`)}</motion.p>
           <p className="mt-0.5 text-xs text-slate-500">
             {t('play.round')} #{session.nonce} · {fmtMult(session.multiplier)}
           </p>
@@ -325,6 +327,28 @@ function GameStats({ slug }) {
   )
 }
 
+/** "How to play" popover: three short lines per game (play.howto.<slug>). */
+function HowTo({ slug }) {
+  const { t } = useT()
+  const [open, setOpen] = useState(false)
+  const lines = t(`play.howto.${slug}`)
+  if (!lines || lines === `play.howto.${slug}`) return null
+  return (
+    <div className="relative">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="grid h-9 w-9 place-items-center rounded-xl text-sm font-black text-slate-300 ring-1 ring-inset ring-white/10 hover:text-white focus-ring">?</button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity: 0, y: -6, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.96 }} transition={{ type: 'spring', duration: 0.3, bounce: 0.25 }}
+            className="glass absolute right-0 top-11 z-40 w-72 space-y-2 rounded-xl p-4 text-sm text-slate-300 shadow-2xl">
+            <p className="font-display text-sm font-bold text-white">{t('play.howtoTitle')}</p>
+            <ol className="list-decimal space-y-1.5 pl-4">{lines.split('|').map((l) => <li key={l}>{l.trim()}</li>)}</ol>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 /** Kerangka halaman game: header, panel kontrol, panggung, hasil, statistik. */
 export function GameShell({ game, controls, stage, outcome }) {
   const { t } = useT()
@@ -344,12 +368,13 @@ export function GameShell({ game, controls, stage, outcome }) {
         <span className="hidden items-center gap-1.5 text-xs text-slate-500 sm:flex">
           <ShieldCheck className="h-3.5 w-3.5 text-neon-green" /> {t('play.fair')} · nonce {nonce}
         </span>
+        <HowTo slug={game.slug} />
         <FavoriteButton slug={game.slug} showCount />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="glass order-2 h-fit min-w-0 space-y-4 rounded-2xl p-4 lg:order-1">{controls}</aside>
-        <div className="order-1 min-w-0 lg:order-2">{stage}</div>
+        <div className="order-1 min-w-0 lg:order-2"><StageFx outcome={outcome}>{stage}</StageFx></div>
       </div>
 
       <AnimatePresence mode="wait">{outcome && <ResultCard outcome={outcome} game={game.name} />}</AnimatePresence>

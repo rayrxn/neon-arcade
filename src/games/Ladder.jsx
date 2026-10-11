@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bird, Bomb, Car, Gem } from 'lucide-react'
 import clsx from 'clsx'
+import { spring } from '@/lib/motion'
 import Button from '@/components/ui/Button'
 import { BetInput, Choice, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
 import { ladderCashout, ladderStart, ladderStep, openRound } from '@/services/games'
@@ -136,7 +137,7 @@ function TowerBoard({ cfg, mode, live, end, onPick }) {
                       className="na-3d absolute inset-0"
                       initial={false}
                       animate={{ rotateX: show ? 180 : 0 }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 22, delay: known && !chosen ? 0.04 * (row + c) : 0 }}
+                      transition={spring(0.55, 0.3, known && !chosen ? 0.04 * (row + c) : 0)}
                     >
                       <span className={clsx('na-back absolute inset-0 rounded-lg ring-1 ring-inset', isActive ? 'bg-gradient-to-b from-violet-500/30 to-violet-700/20 ring-violet-300/40' : 'bg-white/[0.05] ring-white/[0.07]')} />
                       <span

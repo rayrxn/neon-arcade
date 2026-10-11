@@ -59,7 +59,7 @@ const LADDER = [
         'easy' => ['cols' => 4, 'one' => 'bomb'], 'medium' => ['cols' => 3, 'one' => 'bomb'],
         'hard' => ['cols' => 2, 'one' => 'safe'], 'expert' => ['cols' => 3, 'one' => 'safe'],
     ]],
-    'cross' => ['steps' => 20, 'modes' => ['easy' => ['p' => 0.9], 'medium' => ['p' => 0.8], 'hard' => ['p' => 0.7], 'daredevil' => ['p' => 0.55]]],
+    'cross' => ['steps' => 20, 'rtp' => 0.94, 'modes' => ['easy' => ['p' => 0.84], 'medium' => ['p' => 0.7], 'hard' => ['p' => 0.56], 'daredevil' => ['p' => 0.4]]],
     'pump' => ['steps' => 25, 'modes' => ['easy' => ['p' => 0.96], 'medium' => ['p' => 0.9], 'hard' => ['p' => 0.8], 'expert' => ['p' => 0.65]]],
 ];
 
@@ -72,7 +72,8 @@ function ladder_p(string $game, string $mode): float
 
 function ladder_mult(string $game, string $mode, int $k): float
 {
-    return $k <= 0 ? 1.0 : floor(LADDER_RTP / (ladder_p($game, $mode) ** $k) * 100) / 100;
+    // Capped at the game's maximum (games table / MAX_MULTIPLIER) so a settlement is never refused.
+    return $k <= 0 ? 1.0 : min((float) MAX_MULTIPLIER[$game], floor((LADDER[$game]['rtp'] ?? LADDER_RTP) / (ladder_p($game, $mode) ** $k) * 100) / 100);
 }
 
 /** Tower row layout from its float: the column holding the single bomb / safe tile. */

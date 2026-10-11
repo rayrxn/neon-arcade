@@ -1,6 +1,20 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.8.0",
+    "date": "2026-10-11",
+    "emoji": "🎬",
+    "colors": ["#facc15", "#22d3ee", "#f472b6"],
+    "title": { "en": "Every game feels alive", "id": "Semua game lebih hidup" },
+    "tagline": { "en": "New win and loss effects everywhere, plus How to play in every game.", "id": "Efek menang dan kalah baru di semua game, plus Cara main di tiap game." },
+    "items": [
+      { "tag": "new", "en": "Win in any game: coins burst and your multiplier pops up. Lose: the board shakes.", "id": "Menang di game apa pun: koin berhamburan dan multiplier muncul. Kalah: papan bergetar." },
+      { "tag": "new", "en": "Tap ? next to any game title for a 3-step How to play.", "id": "Ketuk ? di samping judul game untuk Cara main 3 langkah." },
+      { "tag": "improve", "en": "Smoother springs in Tower, Sweet and Limbo.", "id": "Gerakan lebih halus di Tower, Sweet, dan Limbo." },
+      { "tag": "improve", "en": "Cross the Road is harder: cars come more often.", "id": "Cross the Road lebih sulit: mobil lebih sering datang." }
+    ]
+  },
+  {
     "version": "2.7.0",
     "date": "2026-10-11",
     "emoji": "♟️",
