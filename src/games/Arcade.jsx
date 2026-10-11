@@ -9,6 +9,7 @@ import { SERVER_MODE } from '@/config/runtime'
 import { play as sfx } from '@/services/sound'
 import { winPop, lossShake } from '@/lib/motion'
 import { useT } from '@/i18n'
+import { toast } from '@/store/useUiStore'
 
 /** Skill arcades: played in the browser, score checked by the server, pays capped XP only. */
 export default function Arcade({ game }) {
@@ -20,6 +21,7 @@ export default function Arcade({ game }) {
   const [result, setResult] = useState(null)
   const run = useRef(null)
   const [round, setRound] = useState(0)
+  const [stake, setStake] = useState(0)
 
   const loadBoard = useCallback(() => {
     if (SERVER_MODE) api(`arcade/board?game=${slug}`).then(setBoard).catch(() => {})
@@ -32,10 +34,12 @@ export default function Arcade({ game }) {
     run.current = null
     if (SERVER_MODE) {
       try {
-        const { result: r, apply } = await act('arcade/start', { game: slug })
+        const { result: r, apply } = await act('arcade/start', { game: slug, stake })
         apply()
         run.current = r.runId
-      } catch { /* offline: play for fun */ }
+      } catch (err) {
+        if (stake > 0) { toast({ tone: 'error', title: t(err?.code ?? 'errors.generic', err?.vars) }); return }
+      }
     }
     sfx('start')
     setRound((n) => n + 1)
@@ -61,6 +65,27 @@ export default function Arcade({ game }) {
   const Game = GAMES[slug]
   const controls = (
     <>
+      <div>
+        <p className="mb-1.5 text-[11px] font-semibold text-slate-500">{t('play.arcade.stake')}</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[0, 100, 500, 1000, 5000, 10000].map((v) => (
+            <button key={v} type="button" disabled={phase === 'playing'} onClick={() => setStake(v)}
+              className={clsx('rounded-lg py-1.5 font-mono text-xs font-bold ring-1 ring-inset transition disabled:opacity-50', stake === v ? 'bg-neon-gold/15 text-neon-gold ring-neon-gold/40' : 'bg-white/[0.04] text-slate-300 ring-white/[0.08] hover:bg-white/[0.08]')}>
+              {v === 0 ? t('play.arcade.free') : `${v >= 1000 ? `${v / 1000}K` : v}`}
+            </button>
+          ))}
+        </div>
+        {stake > 0 && board?.tiers && (
+          <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
+            {board.tiers.map(([need, mult]) => (
+              <div key={need} className="rounded-md bg-white/[0.03] py-1 ring-1 ring-inset ring-white/[0.06]">
+                <p className="text-[10px] text-slate-500">{t('play.arcade.reach', { n: need })}</p>
+                <p className="num font-mono text-xs font-bold text-neon-green">{mult}× · {Math.floor(stake * mult)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       <Button size="lg" className="w-full" onClick={start} disabled={phase === 'playing'}><Play className="mr-1.5 h-4 w-4" />{phase === 'over' ? t('play.arcade.again') : t('play.arcade.start')}</Button>
       <dl className="grid grid-cols-2 gap-2 text-center">
         <div className="rounded-xl bg-white/[0.03] py-2 ring-1 ring-inset ring-white/[0.06]">
@@ -106,6 +131,11 @@ export default function Arcade({ game }) {
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{t('play.arcade.gameOver')}</p>
                 <p className="num font-display text-5xl font-black text-white">{result?.score ?? score}</p>
                 {result && <p className="num font-mono text-sm font-bold text-neon-cyan">+{result.xp} XP</p>}
+                {result?.stake > 0 && (
+                  <p className={clsx('num font-mono text-base font-black', result.payout > 0 ? 'text-neon-green' : 'text-neon-red')}>
+                    {result.payout > 0 ? `+${result.payout - result.stake} AC` : `−${result.stake} AC`}
+                  </p>
+                )}
                 {result?.valid === false && <p className="text-xs text-neon-red">{t('play.arcade.invalid')}</p>}
                 <Button className="mt-3" onClick={start}>{t('play.arcade.again')}</Button>
               </motion.div>

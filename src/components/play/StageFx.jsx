@@ -22,7 +22,7 @@ export default function StageFx({ outcome, children }) {
   }, [id])
   const coins = fx?.kind === 'win' ? Math.min(24, 10 + Math.floor(Math.log2(Math.max(1, fx.mult)) * 3)) : 0
   return (
-    <motion.div className="relative" key={fx?.kind === 'loss' ? `l-${fx.id}` : 'stage'} animate={fx?.kind === 'loss' ? lossShake.animate : undefined} transition={lossShake.transition}>
+    <motion.div className="relative" animate={fx?.kind === 'loss' ? lossShake.animate : { x: 0 }} transition={fx?.kind === 'loss' ? lossShake.transition : { duration: 0 }}>
       {children}
       <AnimatePresence>
         {fx?.kind === 'win' && (

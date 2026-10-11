@@ -90,7 +90,7 @@ export default function Ladder({ game }) {
 
   const stage = (
     <Stage className="p-4 sm:p-6">
-      <div key={end?.lost ? `lost-${end.step}` : 'play'} className={clsx(end?.lost && 'na-shake')}>
+      <div>
         {slug === 'tower' && <TowerBoard cfg={cfg} mode={m} live={live} end={end} onPick={advance} />}
         {slug === 'cross' && <RoadBoard cfg={cfg} mode={m} live={live} end={end} />}
         {slug === 'pump' && <Balloon mode={m} step={step} live={live} end={end} pumps={pumps} />}

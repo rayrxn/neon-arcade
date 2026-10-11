@@ -367,6 +367,12 @@ $_GET['game'] = 'snake';
 $b = call('GET', 'arcade/board', [], 'a');
 check('board lists today\'s best and XP left', $b['ok'] && $b['data']['best'] === 12 && $b['data']['xpLeft'] === 300 - 24 && $b['data']['top'][0]['score'] === 12, $b);
 unset($_GET['game']);
+setbal($A, 50000, 5);
+$st = call('POST', 'arcade/start', ['game' => 'layer', 'stake' => 1000], 'a');
+q("UPDATE arcade_runs SET started_at = now() - interval '15 seconds' WHERE id = ?", [$st['data']['result']['runId']]);
+$f = call('POST', 'arcade/finish', ['runId' => $st['data']['result']['runId'], 'score' => 21], 'a');
+check('staked layer: 21 layers hits the ×1.8 tier (1,000 → 1,800 AC)', $f['ok'] && $f['data']['result']['payout'] == 1800 && bal('a') == 50800, [$f['data']['result'] ?? $f, bal('a')]);
+expect_error('stake above 10,000 AC refused', call('POST', 'arcade/start', ['game' => 'snake', 'stake' => 20000], 'a'), 'play.arcade.stakeMax');
 expect_error('unknown arcade game', call('POST', 'arcade/start', ['game' => 'pong'], 'a'), 'play.errors.invalid');
 
 echo "Owner console\n";

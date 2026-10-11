@@ -1,6 +1,18 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.2",
+    "date": "2026-10-11",
+    "emoji": "🎯",
+    "colors": ["#22c55e", "#facc15", "#ef4444"],
+    "title": { "en": "Arcade stakes", "id": "Taruhan arkade" },
+    "tagline": { "en": "Put AC on Snake, Moles, Slice and Layer.", "id": "Pasang AC di Snake, Moles, Slice, dan Layer." },
+    "items": [
+      { "tag": "new", "en": "Arcade games accept a stake up to 10,000 AC. Reach a score tier to win up to ×2.5.", "id": "Game arkade bisa pakai taruhan sampai 10.000 AC. Capai target skor untuk menang sampai ×2,5." },
+      { "tag": "fix", "en": "Cross the Road: the crash no longer plays twice.", "id": "Cross the Road: tabrakan tidak lagi terulang dua kali." }
+    ]
+  },
+  {
     "version": "2.9.1",
     "date": "2026-10-11",
     "emoji": "🍬",
