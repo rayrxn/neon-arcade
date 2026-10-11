@@ -1309,3 +1309,24 @@ html[data-perf='ultra'] .lc-face:not(.lc-face--sm):hover { transform: perspectiv
 @keyframes adeco-bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
 .adeco-bob { animation: adeco-bob 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .adeco-spin, .adeco-spin-rev, .adeco-flicker, .adeco-twinkle, .adeco-bob { animation: none } }
+
+/* ───────── R 1.1.1 sign-in page ───────── */
+.auth-stage {
+  background:
+    radial-gradient(60% 55% at 72% 45%, rgba(34, 225, 255, 0.08), transparent 70%),
+    radial-gradient(45% 45% at 20% 85%, rgba(124, 92, 255, 0.08), transparent 70%),
+    radial-gradient(rgba(236, 232, 223, 0.09) 1px, transparent 1.2px) 0 0 / 34px 34px;
+}
+.auth-headline { font-family: var(--font-display, 'Unbounded'), system-ui, sans-serif; font-weight: 800; font-size: clamp(2.8rem, 5vw, 4.6rem); line-height: 1.02; letter-spacing: -0.035em; }
+.auth-headline--sm { font-size: 1.6rem; line-height: 1.15; }
+.auth-card {
+  background: linear-gradient(180deg, rgba(16, 19, 33, 0.92), rgba(10, 12, 22, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 80px -30px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(34, 225, 255, 0.04);
+  backdrop-filter: blur(18px);
+}
+.brand-ring { transform-origin: 16px 16px; animation: brand-spin 28s linear infinite; }
+.brand-orbit { transform-origin: 16px 16px; animation: brand-spin 60s linear infinite reverse; }
+@keyframes brand-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .brand-ring, .brand-orbit { animation: none; } }
+:root[data-appearance='light'] .auth-card { background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(246, 247, 255, 0.95)); box-shadow: inset 0 0 0 1px rgba(16, 19, 33, 0.08), 0 30px 80px -30px rgba(16, 19, 33, 0.25); }
+:root[data-appearance='light'] .auth-stage { background: radial-gradient(60% 55% at 72% 45%, rgba(34, 225, 255, 0.12), transparent 70%), radial-gradient(rgba(16, 19, 33, 0.08) 1px, transparent 1.2px) 0 0 / 34px 34px; }

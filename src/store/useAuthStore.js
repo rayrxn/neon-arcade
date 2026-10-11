@@ -87,17 +87,29 @@ export const useAuthStore = create(
         return user
       },
 
+      /** Server payload of a completed sign-in → session in the browser. */
+      finishLogin: (res) => {
+        const user = applyPayload(res)
+        sync() // shared data (release flag, chat…) right away, not on the next timer
+        try {
+          localStorage.setItem('neon-arcade:login', String(Date.now()))
+        } catch {
+          // diabaikan
+        }
+        emit('USER_LOGIN', { userId: user.id })
+        return user
+      },
+
+      /** Second step: the code from the email or the authenticator app. */
+      verifyTwoFactor: async (ticket, code) => get().finishLogin(await api('auth/2fa', { ticket, code: String(code).replace(/\D/g, '') })),
+      resendTwoFactor: (ticket) => api('auth/2fa/resend', { ticket }),
+
       login: async ({ email, password }) => {
         if (SERVER_MODE) {
-          const user = applyPayload(await api('auth/login', { email: normalizeEmail(email), password }))
-          sync() // shared data (release flag, chat…) right away, not on the next timer
-          try {
-            localStorage.setItem('neon-arcade:login', String(Date.now()))
-          } catch {
-            // diabaikan
-          }
-          emit('USER_LOGIN', { userId: user.id })
-          return user
+          const res = await api('auth/login', { email: normalizeEmail(email), password })
+          // Two-step sign-in: the password was right, a code is needed (email or authenticator).
+          if (res?.twofa) return { twofa: res.twofa }
+          return get().finishLogin(res)
         }
         await wait(NETWORK_LATENCY)
         // Boleh masuk pakai username juga.

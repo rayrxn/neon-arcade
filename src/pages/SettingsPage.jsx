@@ -18,6 +18,7 @@ import { changeEmail, sendVerificationEmail } from '@/services/account'
 import { lowSpecDevice, usePotato } from '@/components/runtime/PerformanceController'
 import { SERVER_MODE } from '@/config/runtime'
 import { PlayerName } from '@/components/ui/Identity'
+import TwoFactorCard from '@/components/settings/TwoFactorCard'
 import { setNameAffix } from '@/services/platform2'
 import { useT } from '@/i18n'
 
@@ -421,6 +422,7 @@ export default function SettingsPage() {
 
         <Section id="security" title={t('settings.security.title')} description={t('settings.security.description')}>
           <ChangePassword />
+          {SERVER_MODE && <TwoFactorCard />}
           <div className="mt-6 space-y-3 border-t hairline pt-5">
             <p className="text-xs text-slate-500">{t('settings.security.lastLogin', { date: user?.lastLoginAt ? formatDateTime(user.lastLoginAt) : '—' })}</p>
             <div className="flex flex-wrap gap-2">

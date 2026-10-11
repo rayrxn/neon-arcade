@@ -23,4 +23,5 @@ NEON_CONFIG="$CFG" php api/tests/stage4_test.php
 NEON_CONFIG="$CFG" php api/tests/stage7_test.php
 NEON_CONFIG="$CFG" php api/tests/stage8_test.php
 NEON_CONFIG="$CFG" NEON_MAIL_LOG="$(mktemp)" php api/tests/stage6_test.php
+NEON_CONFIG="$CFG" NEON_MAIL_LOG="$(mktemp)" php api/tests/stage9_test.php
 rm -f "$CFG"

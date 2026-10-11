@@ -40,7 +40,7 @@ const lang = () => usePrefsStore.getState().language
 let authGen = 0
 const BANNED_CODES = new Set(['errors.bannedPermanent', 'errors.bannedUntil'])
 const ACCOUNT_BLOCK_CODES = new Set(['errors.accountFrozen'])
-const AUTH_PATHS = new Set(['auth/login', 'auth/register', 'auth/logout', 'auth/forgot', 'auth/reset/check', 'auth/reset', 'auth/verify'])
+const AUTH_PATHS = new Set(['auth/login', 'auth/register', 'auth/logout', 'auth/forgot', 'auth/reset/check', 'auth/reset', 'auth/verify', 'auth/2fa', 'auth/2fa/resend'])
 export const LOGOUT_KEY = 'neon-arcade:logout'
 const CAPTCHA_PATHS = new Set(['auth/login', 'auth/register', 'auth/forgot'])
 
@@ -85,7 +85,7 @@ export async function api(path, body, { method } = {}) {
   // Only a dead session (401) or a blocked account signs the player out. Other 403s (feature off,
   // staff permission, CSRF) are normal errors and must never kick anyone.
   if (res.status === 401 || (res.status === 403 && ACCOUNT_BLOCK_CODES.has(code))) {
-    if (useAuthStore.getState().session && path !== 'auth/login') {
+    if (useAuthStore.getState().session && path !== 'auth/login' && !path.startsWith('auth/2fa')) {
       clearSession()
       if (res.status === 403 && code !== 'errors.generic') {
         toast({ tone: 'error', title: translate(lang(), code, { ...vars, until: vars.until ? new Date(vars.until).toLocaleString() : '' }) })

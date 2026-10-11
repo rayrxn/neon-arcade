@@ -10,7 +10,7 @@
 declare(strict_types=1);
 if (isset($_SERVER['REQUEST_METHOD']) || isset($_SERVER['HTTP_HOST'])) exit(1);
 $api = dirname(__DIR__) . '/api/lib';
-foreach (['core', 'rng', 'progression', 'state', 'auth', 'games', 'platform', 'admin', 'platform2', 'admin2', 'platform3', 'mail', 'account', 'v2core', 'console'] as $f) require "$api/$f.php";
+foreach (['core', 'rng', 'progression', 'state', 'auth', 'games', 'platform', 'admin', 'platform2', 'admin2', 'platform3', 'mail', 'account', 'v2core', 'security', 'console', 'console2'] as $f) require "$api/$f.php";
 
 $args = array_slice($argv ?? [], 1);
 $ask = function (string $prompt, bool $hidden = false): string {

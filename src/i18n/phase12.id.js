@@ -1,5 +1,22 @@
 /** Fase 12 — update log, versi situs, tukar ke Rupiah (prank). */
 export default {
+  auth: { stage: { live: 'Live', bonus: '10.000 AC + 1 AG saat daftar', playing: 'Sedang dimainkan', footer: 'Hanya uang mainan', loginEyebrow: 'Selamat datang kembali', registerEyebrow: 'Baru di sini' } },
+  notifications: { securityEvents: { twofaOn: { title: 'Login dua langkah aktif', body: 'Akun kamu sekarang meminta kode setelah password. Perangkat lain sudah dikeluarkan.' }, twofaOff: { title: 'Login dua langkah dimatikan', body: 'Akun kamu tidak lagi meminta kode. Bukan kamu? Ganti password dan hubungi Support.' }, strictOn: { title: 'Sesi ketat aktif', body: 'Sesi sekarang berakhir setelah 3 jam dan setiap login butuh authenticator.' }, strictOff: { title: 'Sesi ketat dimatikan', body: 'Sesi kembali berlaku 7 hari.' } } },
+  security2fa: {
+    title: 'Login dua langkah', off: 'Mati', methodTotp: 'Aplikasi authenticator', methodEmail: 'Kode email', recommended: 'Disarankan',
+    offHint: 'Tambahkan langkah kedua saat login: setelah password, masukkan kode 6 digit dari HP atau email kamu.',
+    onHint: 'Aktif sejak {date}. Setiap login meminta kode setelah password.',
+    totpHint: 'Google Authenticator, Microsoft Authenticator, 1Password… Bisa tanpa internet.', emailHint: 'Kami kirim kode 6 digit ke email setiap kali login. Email harus sudah diverifikasi.',
+    step1: 'Buka aplikasi authenticator lalu scan QR ini.', step2: 'Atau ketik kunci di bawah secara manual (berbasis waktu, 6 digit).', manual: 'Kunci setup:', step3: 'Masukkan kode 6 digit dari aplikasi, lalu password kamu.',
+    emailSent: 'Kami mengirim kode 6 digit ke {email}. Berlaku 10 menit.', disableTotp: 'Masukkan kode dari aplikasi authenticator dan password untuk mematikan login dua langkah.',
+    confirmOn: 'Aktifkan', confirmOff: 'Matikan', confirm: 'Konfirmasi', turnOff: 'Matikan', enabled: 'Login dua langkah aktif', disabled: 'Login dua langkah dimatikan',
+    sessionDays: 'Kamu otomatis keluar {n} hari setelah login.', sessionHours: 'Mode ketat: kamu otomatis keluar {n} jam setelah login.',
+    strictTitle: 'Sesi ketat (Owner / Admin)', strictHint: 'Sesi berakhir setelah 3 jam dan setiap login meminta kode authenticator. Matikan di sini dengan kode, atau minta lewat console.',
+    strictConfirmOn: 'Masukkan kode dari aplikasi authenticator untuk mengaktifkan sesi ketat.', strictConfirmOff: 'Masukkan kode dari aplikasi authenticator untuk mematikan sesi ketat.',
+    strictOn: 'Sesi ketat aktif: sesi 3 jam', strictOff: 'Sesi ketat dimatikan',
+    login: { title: 'Login dua langkah', totp: 'Buka aplikasi authenticator dan masukkan kode 6 digit untuk Neon Arcade.', email: 'Kami mengirim kode 6 digit ke {email}.', strict: 'Sesi ketat: akun ini wajib memakai authenticator.', verify: 'Verifikasi', resend: 'Kirim kode baru', resendIn: 'Kode baru dalam {seconds} dtk', back: 'Pakai akun lain', sent: 'Kode baru terkirim' },
+  },
+  security: { errors: { badCode: 'Kodenya salah. Cek kode terbaru lalu coba lagi.', expired: 'Langkah login ini sudah kedaluwarsa. Login lagi.', tooMany: 'Terlalu banyak kode salah. Login lagi.', badMethod: 'Pilihan itu tidak tersedia.', alreadyOn: 'Login dua langkah sudah aktif.', verifyEmailFirst: 'Verifikasi email dulu (Pengaturan → Akun).', needTotp: 'Sesi ketat membutuhkan aplikasi authenticator sebagai metode login dua langkah.', strictRole: 'Sesi ketat hanya untuk Owner dan Admin.' } },
   updates: {
     title: 'Update log', older: 'Update sebelumnya', ok: 'Mantap!', reload: 'Muat ulang untuk update', live: 'Baru',
     released: 'rilis {time}',

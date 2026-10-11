@@ -1,6 +1,22 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "3.1.1",
+    "date": "2026-10-13",
+    "emoji": "🔐",
+    "colors": ["#22d3ee", "#34d399", "#facc15"],
+    "title": { "en": "Safer sign-in, stronger console", "id": "Login lebih aman, console lebih kuat" },
+    "tagline": { "en": "A brand-new sign-in page, two-step sign-in and an Owner Console that does everything.", "id": "Halaman login baru, login dua langkah, dan Owner Console yang bisa semuanya." },
+    "items": [
+      { "tag": "new", "en": "A completely new sign-in page with a live arcade stage and a cleaner form.", "id": "Halaman login yang benar-benar baru dengan panggung arcade live dan form lebih rapi." },
+      { "tag": "new", "en": "Two-step sign-in in Settings → Security: an authenticator app (Google Authenticator and others) or a code by email.", "id": "Login dua langkah di Pengaturan → Keamanan: aplikasi authenticator (Google Authenticator dan lainnya) atau kode lewat email." },
+      { "tag": "improve", "en": "Sessions now end after 7 days. Sign in again to keep playing.", "id": "Sesi sekarang berakhir setelah 7 hari. Login lagi untuk lanjut bermain." },
+      { "tag": "new", "en": "Owners and Admins can turn on strict sessions: 3 hours, with the authenticator on every sign-in. It can be turned off in Settings or from the console.", "id": "Owner dan Admin bisa menyalakan sesi ketat: 3 jam, dengan authenticator di setiap login. Bisa dimatikan di Pengaturan atau lewat console." },
+      { "tag": "new", "en": "Owner Console redesign: every Admin panel action as a guided form, plus server tools the panel does not have.", "id": "Desain ulang Owner Console: semua aksi Admin panel sebagai form terpandu, ditambah alat server yang tidak ada di panel." },
+      { "tag": "improve", "en": "Console help in plain words, search, examples, autocomplete and a confirmation step for risky actions.", "id": "Bantuan console dengan bahasa sederhana, pencarian, contoh, autocomplete, dan konfirmasi untuk aksi berisiko." }
+    ]
+  },
+  {
     "version": "3.0.0",
     "date": "2026-10-12",
     "emoji": "🚀",

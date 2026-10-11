@@ -1,5 +1,22 @@
 /** Phase 12 — update log, site version, Rupiah exchange (prank). */
 export default {
+  auth: { stage: { live: 'Live', bonus: '10,000 AC + 1 AG when you sign up', playing: 'Now playing', footer: 'Play money only', loginEyebrow: 'Welcome back', registerEyebrow: 'New here' } },
+  notifications: { securityEvents: { twofaOn: { title: 'Two-step sign-in is on', body: 'Your account now asks for a code after the password. Other devices were signed out.' }, twofaOff: { title: 'Two-step sign-in is off', body: 'Your account no longer asks for a code. Not you? Change your password and contact Support.' }, strictOn: { title: 'Strict sessions on', body: 'Sessions now end after 3 hours and every sign-in needs your authenticator.' }, strictOff: { title: 'Strict sessions off', body: 'Sessions last 7 days again.' } } },
+  security2fa: {
+    title: 'Two-step sign-in', off: 'Off', methodTotp: 'Authenticator app', methodEmail: 'Email code', recommended: 'Recommended',
+    offHint: 'Add a second step to sign-in: after your password, enter a 6-digit code from your phone or email.',
+    onHint: 'On since {date}. Every sign-in asks for a code after your password.',
+    totpHint: 'Google Authenticator, Microsoft Authenticator, 1Password… Works offline.', emailHint: 'We email a 6-digit code each time you sign in. Needs a verified email.',
+    step1: 'Open your authenticator app and scan this QR code.', step2: 'Or type the key below by hand (time-based, 6 digits).', manual: 'Setup key:', step3: 'Enter the 6-digit code the app shows, then your password.',
+    emailSent: 'We sent a 6-digit code to {email}. It works for 10 minutes.', disableTotp: 'Enter a code from your authenticator app and your password to turn two-step sign-in off.',
+    confirmOn: 'Turn on', confirmOff: 'Turn off', confirm: 'Confirm', turnOff: 'Turn off', enabled: 'Two-step sign-in is on', disabled: 'Two-step sign-in is off',
+    sessionDays: 'You are signed out automatically {n} days after signing in.', sessionHours: 'Strict mode: you are signed out {n} hours after signing in.',
+    strictTitle: 'Strict sessions (Owner / Admin)', strictHint: 'Sessions end after 3 hours and every sign-in asks for your authenticator code. Turn it off here with a code, or ask the console.',
+    strictConfirmOn: 'Enter a code from your authenticator app to turn strict sessions on.', strictConfirmOff: 'Enter a code from your authenticator app to turn strict sessions off.',
+    strictOn: 'Strict sessions on: 3-hour sessions', strictOff: 'Strict sessions off',
+    login: { title: 'Two-step sign-in', totp: 'Open your authenticator app and enter the 6-digit code for Neon Arcade.', email: 'We sent a 6-digit code to {email}.', strict: 'Strict session: the authenticator is required for this account.', verify: 'Verify', resend: 'Send a new code', resendIn: 'New code in {seconds}s', back: 'Use another account', sent: 'New code sent' },
+  },
+  security: { errors: { badCode: 'That code is not right. Check the newest code and try again.', expired: 'This sign-in step expired. Sign in again.', tooMany: 'Too many wrong codes. Sign in again.', badMethod: 'That option is not available.', alreadyOn: 'Two-step sign-in is already on.', verifyEmailFirst: 'Verify your email first (Settings → Account).', needTotp: 'Strict sessions need the authenticator app as your two-step method.', strictRole: 'Strict sessions are for Owners and Admins.' } },
   updates: {
     title: 'Update log', older: 'Earlier updates', ok: 'Nice!', reload: 'Reload to update', live: 'New',
     released: 'released {time}',

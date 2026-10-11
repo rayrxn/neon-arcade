@@ -19,3 +19,16 @@ export async function verifyEmail(token) {
   if (me && me.username === res.username) applyUser({ ...me, emailVerified: true })
   return res
 }
+
+/** R 1.1.1 security settings: two-step sign-in and strict sessions. Each returns { security } on success. */
+const applySecurity = (r) => {
+  const { session, users } = useAuthStore.getState()
+  const me = session ? users[session.email] : null
+  if (me && r?.security) applyUser({ ...me, security: r.security })
+  return r
+}
+export const startTwoFactor = (method) => api('security/2fa/setup', { method, lang: lang() })
+export const enableTwoFactor = (method, code, password) => api('security/2fa/enable', { method, code, password }).then(applySecurity)
+export const sendSecurityCode = () => api('security/2fa/send', { lang: lang() })
+export const disableTwoFactor = (code, password) => api('security/2fa/disable', { code, password }).then(applySecurity)
+export const setStrictSessions = (on, code) => api('security/strict', { on, code }).then(applySecurity)
