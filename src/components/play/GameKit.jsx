@@ -169,7 +169,7 @@ export function BetInput({ value, onChange, disabled, label, acOnly = false }) {
           {[
             ['½', () => set(value / 2)],
             ['2×', () => set(value * 2)],
-            ['Max', () => set(maxBet)], // Max = the Loyalty Card bet limit (not the whole balance)
+            ['Max', () => set(Math.min(maxBet, Math.floor(useWalletStoreBalance(currency)) || 0))], // Max = the smaller of the Loyalty Card bet limit and the balance
           ].map(([lbl, fn]) => (
             <button key={lbl} type="button" disabled={disabled} onClick={fn} className="h-8 min-w-[2.25rem] rounded-lg bg-white/[0.06] px-2.5 text-xs font-bold text-slate-300 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-40">
               {lbl}

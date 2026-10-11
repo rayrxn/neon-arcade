@@ -14,6 +14,7 @@ export default [
       { "tag": "new", "en": "Owner/Admin: strict 3-hour sessions with a code on every sign-in.", "id": "Owner/Admin: sesi ketat 3 jam dengan kode setiap login." },
       { "tag": "new", "en": "Owner Console: every Admin action, with guided forms and help.", "id": "Owner Console: semua aksi Admin, dengan form terpandu dan bantuan." },
       { "tag": "improve", "en": "Release trailer plays once after 3+ hours away.", "id": "Trailer rilis diputar sekali setelah 3+ jam tidak online." },
+      { "tag": "fix", "en": "MAX bet uses your balance when it is below your Loyalty Card limit.", "id": "Bet MAX memakai saldomu jika saldo lebih kecil dari batas Loyalty Card." },
       { "tag": "fix", "en": "Wallet no longer runs off the screen on phones.", "id": "Wallet tidak lagi melebar keluar layar di HP." }
     ]
   },
