@@ -102,6 +102,7 @@ function route(string $method, string $path): array
         case 'auth/reset/check': return api_reset_check();
         case 'auth/reset': return api_reset_password();
         case 'auth/verify/send': return api_verify_send();
+        case 'auth/email': return api_email_change();
         case 'auth/verify': return api_verify_email();
         case 'profile': return api_profile();
 
