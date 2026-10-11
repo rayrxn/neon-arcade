@@ -91,8 +91,10 @@ final class ConsoleError extends RuntimeException {}
 /** Split a command line into words; "quoted text" stays together. */
 function console_words(string $line): array
 {
-    preg_match_all('/"([^"]*)"|(\S+)/u', $line, $m, PREG_SET_ORDER);
-    return array_map(fn($x) => ($x[1] ?? '') !== '' ? $x[1] : ($x[2] ?? ''), $m);
+    // A word may contain a quoted part anywhere: reason="two words" stays one word (quotes removed).
+    // Single quotes keep double quotes inside, for JSON: patch='{"displayName":"Ray"}'.
+    preg_match_all('/(?:[^\s"\']+|"[^"]*"|\'[^\']*\')+/u', $line, $m);
+    return array_map(fn($w) => preg_replace_callback('/"([^"]*)"|\'([^\']*)\'/u', fn($q) => $q[1] !== '' ? $q[1] : ($q[2] ?? ''), $w), $m[0]);
 }
 
 function console_table(array $rows, array $cols): string
@@ -111,13 +113,7 @@ function console_commands(): array
     $me = console_actor();
     $reasonOf = fn(array $a, int $from) => trim(implode(' ', array_slice($a, $from))) ?: '—';
     return [
-        'help' => ['help [command]', 'List commands or show one command.', false, function (array $a) {
-            $cmds = console_commands();
-            if (isset($a[0], $cmds[$a[0]])) return $cmds[$a[0]][0] . "\n  " . $cmds[$a[0]][1] . ($cmds[$a[0]][2] ? "\n  (asks for confirmation)" : '');
-            $out = [];
-            foreach ($cmds as $c) $out[] = str_pad($c[0], 44) . ' ' . $c[1] . ($c[2] ? ' [confirm]' : '');
-            return implode("\n", $out);
-        }],
+        'help' => ['help [command]', 'List commands or show one command.', false, fn(array $a) => console_help($a)],
         'status' => ['status', 'Server, database, maintenance and player counts.', false, function () {
             $s = q1('SELECT * FROM system_settings WHERE id = 1');
             $c = q1("SELECT count(*) AS users, count(*) FILTER (WHERE last_seen_at > now() - interval '75 seconds') AS online, count(*) FILTER (WHERE status = 'banned') AS banned FROM users");
@@ -299,7 +295,7 @@ function console_commands(): array
             $n = q('UPDATE console_sessions SET revoked_at = now() WHERE revoked_at IS NULL')->rowCount();
             return "$n console sessions revoked";
         }],
-    ];
+    ] + console_extra_commands();
 }
 
 /** Run one command line. Destructive commands need `confirm` equal to the command line. */
@@ -317,6 +313,7 @@ function console_exec(string $line, ?string $confirm = null): array
         return ['ok' => false, 'output' => "unknown command: $name — type `help`"];
     }
     [$usage, , $destructive, $fn] = $cmds[$name];
+    if ($name === 'do' && isset($words[0])) $destructive = (bool) (console_action_catalog()[$words[0]][4] ?? false);
     if ($destructive && $confirm !== $line) {
         console_audit($s['short'], $line, true, 'confirmation requested');
         return ['ok' => true, 'confirm' => true, 'output' => "This changes live data: `$line`\nType the command again exactly to confirm."];
@@ -338,7 +335,7 @@ function console_api(string $path): array
 {
     if ($path === 'console/state') {
         $s = console_session();
-        return ['enabled' => !empty(console_cfg()['key_hash']), 'unlocked' => (bool) $s, 'commands' => array_keys(console_commands())];
+        return ['enabled' => !empty(console_cfg()['key_hash']), 'unlocked' => (bool) $s, 'commands' => array_keys(console_commands())] + ($s ? ['catalog' => console_catalog()] : []);
     }
     if ($path === 'console/unlock') return console_unlock((string) arg('key', ''));  // autocommit: failed attempts must persist
     if ($path === 'console/lock') return tx(fn() => console_lock());

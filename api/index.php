@@ -19,7 +19,9 @@ require __DIR__ . '/lib/platform3.php';
 require __DIR__ . '/lib/mail.php';
 require __DIR__ . '/lib/account.php';
 require __DIR__ . '/lib/v2core.php';
+require __DIR__ . '/lib/security.php';
 require __DIR__ . '/lib/console.php';
+require __DIR__ . '/lib/console2.php';
 
 /** Jalankan aksi yang mengubah progres user dalam satu transaksi, lalu kirim snapshot state. */
 function with_user(callable $fn, bool $lightWhenOpen = false): array
@@ -102,6 +104,13 @@ function route(string $method, string $path): array
         case 'auth/reset/check': return api_reset_check();
         case 'auth/reset': return api_reset_password();
         case 'auth/verify/send': return api_verify_send();
+        case 'auth/2fa': return api_login_2fa();
+        case 'auth/2fa/resend': return api_login_2fa_resend();
+        case 'security/2fa/setup': return api_2fa_setup();
+        case 'security/2fa/enable': return api_2fa_enable();
+        case 'security/2fa/send': return api_2fa_send();
+        case 'security/2fa/disable': return api_2fa_disable();
+        case 'security/strict': return api_strict_session();
         case 'auth/email': return api_email_change();
         case 'auth/verify': return api_verify_email();
         case 'profile': return api_profile();
