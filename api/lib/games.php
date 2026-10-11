@@ -87,6 +87,7 @@ function check_bet($bet): int
 }
 
 /** Jeda minimal antar ronde per game (= lama animasi di layar), supaya tombol tidak bisa di-spam. */
+const PLINKO_MAX_BALLS = 16;
 const GAME_COOLDOWN_MS = ['dice' => 650, 'limbo' => 750, 'coinflip' => 1250, 'roulette' => 3200, 'case-opening' => 1500, 'case-battle' => 2500, 'plinko' => 250];
 
 function check_cooldown(Ctx $c, string $game): void
@@ -311,16 +312,27 @@ function play_coinflip(Ctx $c, array $a): array
     return ['outcome' => $outcome, 'side' => $side] + finish($c, $round, $win ? 1.98 : 0, $win ? 'win' : 'loss', ['side' => $side, 'outcome' => $outcome]);
 }
 
+/** Plinko: 1–16 balls dropped together as ONE round (bet = per-ball bet × balls); multiplier = average of the balls. */
 function play_plinko(Ctx $c, array $a): array
 {
     $risk = $a['risk'] ?? '';
     $table = PLINKO_TABLES[$risk] ?? null;
-    if (!$table) fail('play.errors.invalid');
-    $round = begin($c, 'plinko', $a['bet'] ?? null, PLINKO_ROWS);
-    $res = plinko_path(forced($round, PLINKO_ROWS, fn($f) => $table[plinko_path($f, PLINKO_ROWS)['bin']] > 1), PLINKO_ROWS);
-    $m = $table[$res['bin']];
-    return ['path' => $res['path'], 'bin' => $res['bin'], 'risk' => $risk, 'multiplier' => $m]
-        + finish($c, $round, $m, classify($m), ['bin' => $res['bin'], 'risk' => $risk]);
+    $n = $a['balls'] ?? 1;
+    if (!$table || !is_int($n) || $n < 1 || $n > PLINKO_MAX_BALLS) fail('play.errors.invalid');
+    $per = check_bet($a['bet'] ?? null);
+    $drop = function (array $f) use ($n, $table) {
+        $out = [];
+        for ($i = 0; $i < $n; $i++) {
+            $res = plinko_path(array_slice($f, $i * PLINKO_ROWS, PLINKO_ROWS), PLINKO_ROWS);
+            $out[] = ['path' => $res['path'], 'bin' => $res['bin'], 'multiplier' => $table[$res['bin']]];
+        }
+        return $out;
+    };
+    $round = begin($c, 'plinko', $per * $n, PLINKO_ROWS * $n);
+    $balls = $drop(forced($round, PLINKO_ROWS * $n, fn($f) => array_sum(array_column($drop($f), 'multiplier')) > $n));
+    $m = round(array_sum(array_column($balls, 'multiplier')) / $n, 6);
+    return ['balls' => $balls, 'path' => $balls[0]['path'], 'bin' => $balls[0]['bin'], 'risk' => $risk, 'multiplier' => $m]
+        + finish($c, $round, $m, classify($m), $n === 1 ? ['bin' => $balls[0]['bin'], 'risk' => $risk] : ['bins' => array_column($balls, 'bin'), 'balls' => $n, 'risk' => $risk]);
 }
 
 function roulette_hit(array $b, int $n): bool
