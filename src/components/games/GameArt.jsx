@@ -80,6 +80,13 @@ const ART = {
       <path d="M102 44.5l2.5-2.5" {...S} strokeWidth="1.5" />
     </>
   ),
+  chess: () => (
+    <>
+      {[0, 1, 2, 3].map((r) => [0, 1, 2, 3].map((c) => (r + c) % 2 ? <rect key={`${r}${c}`} x={56 + c * 12} y={26 + r * 12} width="12" height="12" {...soft(0.18)} /> : null))}
+      <rect x="56" y="26" width="48" height="48" rx="3" {...S} strokeOpacity="0.5" />
+      <path d="M74 66h12l-2-12 4-6-4-4 2-5h-4l-2 3-2-3h-4l2 5-4 4 4 6z" {...S} {...soft(0.5)} />
+    </>
+  ),
   horse: () => (
     <>
       {[0, 1, 2].map((r) => <path key={r} d={`M44 ${32 + r * 16}H116`} {...S} strokeOpacity="0.25" />)}

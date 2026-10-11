@@ -75,7 +75,7 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 
 ## G. Games
 - [ ] Case opening + battle expansion
-- [ ] Chess PvP (+ Normal / Medium / Hard practice engine)
+- [x] Chess PvP (+ Normal / Medium / Hard practice engine; perft-checked rules in PHP + JS, migration 020)
 - [ ] Racing PvP
 - [x] Horse Racing (shared rounds, migration 018)
 - [x] Keno, Tower, Cross the Road, Pump (server-settled, RTP-checked in stage8)

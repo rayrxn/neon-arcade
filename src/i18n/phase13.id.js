@@ -1,6 +1,13 @@
 /** Fase 13 — master update v2.0. */
 export default {
   play: {
+    chess: { mode: 'Mode', pvp: 'Lawan pemain', bot: 'Latihan', level: 'Level bot', levels: { normal: 'Normal', medium: 'Sedang', hard: 'Sulit' }, color: 'Warnamu', white: 'Putih', black: 'Hitam',
+      start: 'Mulai', restart: 'Game baru', practiceNote: 'Latihan gratis dan tidak membayar apa pun.', botName: 'Bot', you: 'Kamu', stake: 'Taruhan (0 = persahabatan)', time: 'Waktu per pemain',
+      create: 'Buat pertandingan', join: 'Gabung', cancel: 'Batalkan', resign: 'Menyerah', back: 'Kembali ke lobi', openGames: 'Pertandingan terbuka', noGames: 'Belum ada pertandingan. Buat satu dan tunggu lawan.',
+      waiting: 'Menunggu…', waitingFor: 'Menunggu lawan bergabung…', friendly: 'Persahabatan', pot: 'Pot {amount} {cur}', youWin: 'Kamu menang!', youLose: 'Kamu kalah', draw: 'Seri · {reason}',
+      reasons: { checkmate: 'skakmat', resign: 'menyerah', timeout: 'waktu habis', stalemate: 'stalemate', insufficient: 'bidak tidak cukup', fifty: 'aturan 50 langkah', length: 'batas langkah' },
+      rule: 'Kedua pemain memasang taruhan. Warna diundi acak. Pemenang ambil pot dikurangi {rake}%. Seri = taruhan kembali.',
+      busy: 'Selesaikan atau batalkan pertandinganmu dulu.', notOpen: 'Pertandingan ini sudah tidak terbuka.', notYourTurn: 'Bukan giliranmu.', illegal: 'Langkah itu tidak boleh.' },
     horse: { pick: 'Pilih kuda', choose: 'Pilih kudanya', bet: 'Pasang di {horse}', closed: 'Taruhan ditutup', yourBet: 'Taruhanmu: {amount} {cur} di {horse}', startsIn: 'Balapan mulai {s} dtk', racing: 'Mereka berlari!', winner: '{horse} menang', nextIn: 'balapan berikut {s} dtk', already: 'Kamu sudah pasang di balapan ini.', rule: 'Satu balapan untuk semua. Odds dari seed ronde; pemenang dibayar sesuai odds-nya. Taruhan ditutup saat gerbang dibuka.' },
     crash: { eventRound: 'ronde event (diatur staf)' },
     tarot: { risk: 'Risiko', risks: { low: 'Rendah', medium: 'Sedang', high: 'Tinggi' }, max: 'Maks', draw: 'Tarik 3 kartu', idle: 'Tiga kartu. Multiplier-nya dikalikan.', rule: 'Tiap kartu punya multiplier. Bayaranmu = ketiganya dikalikan.',
@@ -53,7 +60,7 @@ export default {
   chat: { mod: { ban: '{user} di-ban oleh {by} ({duration})', unban: '{user} di-unban oleh {by}', kick: '{user} di-kick oleh {by}', mute: '{user} di-mute oleh {by} ({duration})', unmute: '{user} bisa chat lagi', forever: 'permanen', gacor: '🔥 Jam Gacor ×{mult} aktif {minutes} menit!' } },
   gacor: { global: 'Jam Gacor ×{mult} sedang aktif', personal: 'Boost hoki ×{mult} kamu aktif', hint: 'menang dapat bonus' },
   games: {
-    list: { horse: 'Balap kuda. Tebak pemenang, dibayar sesuai odds.', tarot: 'Tiga kartu, dikalikan.', sweet: 'Permen berjatuhan, bom sampai ×100.', keno: 'Pilih sampai 10 angka, 10 bola jatuh.', tower: 'Naik lantai demi lantai, hindari bom.', cross: 'Lajur demi lajur. Cash out sebelum mobil datang.', pump: 'Pompa balonnya. Berhenti sebelum meletus.' },
+    list: { chess: 'Catur real-time. Lawan pemain dengan taruhan atau latihan lawan bot.', horse: 'Balap kuda. Tebak pemenang, dibayar sesuai odds.', tarot: 'Tiga kartu, dikalikan.', sweet: 'Permen berjatuhan, bom sampai ×100.', keno: 'Pilih sampai 10 angka, 10 bola jatuh.', tower: 'Naik lantai demi lantai, hindari bom.', cross: 'Lajur demi lajur. Cash out sebelum mobil datang.', pump: 'Pompa balonnya. Berhenti sebelum meletus.' },
     categories: { slots: 'Slot' },
   },
   openRound: { text: 'Ada ronde {game} yang belum selesai.', resume: 'Lanjutkan' },

@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.7.0",
+    "date": "2026-10-11",
+    "emoji": "♟️",
+    "colors": ["#22d3ee", "#e2e8f0", "#64748b"],
+    "title": { "en": "Chess", "id": "Catur" },
+    "tagline": { "en": "Play people for a stake, or practise against the bot.", "id": "Lawan pemain dengan taruhan, atau latihan lawan bot." },
+    "items": [
+      { "tag": "new", "en": "Chess PvP with 3, 5 or 10 minute clocks. Stake AC or AG, or play a friendly. Winner takes the pot minus 5%.", "id": "Catur PvP dengan waktu 3, 5, atau 10 menit. Pasang AC atau AG, atau main persahabatan. Pemenang ambil pot dikurangi 5%." },
+      { "tag": "new", "en": "Practice against a bot on Normal, Medium or Hard.", "id": "Latihan lawan bot level Normal, Sedang, atau Sulit." },
+      { "tag": "improve", "en": "Every move is checked by the server, so no illegal moves and no cheating the clock.", "id": "Setiap langkah dicek server, jadi tidak ada langkah ilegal atau curang waktu." }
+    ]
+  },
+  {
     "version": "2.6.0",
     "date": "2026-10-11",
     "emoji": "✨",

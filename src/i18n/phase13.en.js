@@ -1,6 +1,13 @@
 /** Phase 13 — v2.0 master update. */
 export default {
   play: {
+    chess: { mode: 'Mode', pvp: 'Play people', bot: 'Practice', level: 'Bot level', levels: { normal: 'Normal', medium: 'Medium', hard: 'Hard' }, color: 'Your colour', white: 'White', black: 'Black',
+      start: 'Start game', restart: 'New game', practiceNote: 'Practice games are free and pay nothing.', botName: 'Bot', you: 'You', stake: 'Stake (0 = friendly)', time: 'Time per side',
+      create: 'Create match', join: 'Join', cancel: 'Cancel match', resign: 'Resign', back: 'Back to lobby', openGames: 'Open matches', noGames: 'No open matches. Create one and wait for an opponent.',
+      waiting: 'Waiting…', waitingFor: 'Waiting for an opponent to join…', friendly: 'Friendly', pot: 'Pot {amount} {cur}', youWin: 'You win!', youLose: 'You lose', draw: 'Draw · {reason}',
+      reasons: { checkmate: 'checkmate', resign: 'resignation', timeout: 'on time', stalemate: 'stalemate', insufficient: 'not enough material', fifty: '50-move rule', length: 'move limit' },
+      rule: 'Both players put in the stake. Colours are drawn at random. The winner takes the pot minus {rake}%. A draw returns both stakes.',
+      busy: 'Finish or cancel your current match first.', notOpen: 'This match is no longer open.', notYourTurn: 'It is not your turn.', illegal: 'That move is not allowed.' },
     horse: { pick: 'Pick a horse', choose: 'Choose a horse', bet: 'Bet on {horse}', closed: 'Bets closed', yourBet: 'Your bet: {amount} {cur} on {horse}', startsIn: 'Race starts in {s}s', racing: 'They are off!', winner: '{horse} wins', nextIn: 'next race in {s}s', already: 'You already have a bet in this race.', rule: 'One race for everyone. Odds come from the round seed; the winner pays its odds. Bets close when the gates open.' },
     crash: { eventRound: 'event round (set by staff)' },
     tarot: { risk: 'Risk', risks: { low: 'Low', medium: 'Medium', high: 'High' }, max: 'Max', draw: 'Draw 3 cards', idle: 'Three cards. Their multipliers multiply.', rule: 'Each card carries a multiplier. Your payout is all three multiplied together.',
@@ -53,7 +60,7 @@ export default {
   chat: { mod: { ban: '{user} was banned by {by} ({duration})', unban: '{user} was unbanned by {by}', kick: '{user} was kicked by {by}', mute: '{user} was muted by {by} ({duration})', unmute: '{user} can chat again', forever: 'permanent', gacor: '🔥 Jam Gacor ×{mult} is live for {minutes} minutes!' } },
   gacor: { global: 'Jam Gacor ×{mult} is live', personal: 'Your luck boost ×{mult} is on', hint: 'wins pay extra' },
   games: {
-    list: { horse: 'Race horses. Pick the winner, get paid its odds.', tarot: 'Three cards, multiplied together.', sweet: 'Tumbling candy, bombs up to ×100.', keno: 'Pick up to 10 numbers, 10 balls drop.', tower: 'Climb floor by floor, avoid the bomb.', cross: 'Lane by lane. Cash out before the car comes.', pump: 'Pump the balloon. Stop before it pops.' },
+    list: { chess: 'Real-time chess. Play people for a stake or practise against the bot.', horse: 'Race horses. Pick the winner, get paid its odds.', tarot: 'Three cards, multiplied together.', sweet: 'Tumbling candy, bombs up to ×100.', keno: 'Pick up to 10 numbers, 10 balls drop.', tower: 'Climb floor by floor, avoid the bomb.', cross: 'Lane by lane. Cash out before the car comes.', pump: 'Pump the balloon. Stop before it pops.' },
     categories: { slots: 'Slots' },
   },
   openRound: { text: 'You have an unfinished {game} round.', resume: 'Resume' },

@@ -44,7 +44,7 @@ function require_feature(?array $u, string $key): void
 const FEATURE_ROUTES = [
     'chat/send' => 'chat', 'transfer' => 'transfers', 'shop/buy' => 'shop', 'shop/use' => 'shop', 'convert' => 'exchange',
     'pass/buy' => 'pass', 'pass/claim' => 'pass', 'game/case-open' => 'cases', 'game/case-battle' => 'battles',
-    'game/crash-start' => 'crash', 'game/crash-bet' => 'crash', 'game/horse-bet' => 'horse',
+    'game/crash-start' => 'crash', 'game/crash-bet' => 'crash', 'game/horse-bet' => 'horse', 'chess/create' => 'chess', 'chess/join' => 'chess',
 ];
 
 function route_feature_guard(string $path): void

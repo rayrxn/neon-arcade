@@ -9,6 +9,7 @@ require __DIR__ . '/lib/state.php';
 require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/games.php';
 require __DIR__ . '/lib/games2.php';
+require __DIR__ . '/lib/chess.php';
 require __DIR__ . '/lib/platform.php';
 require __DIR__ . '/lib/admin.php';
 require __DIR__ . '/lib/platform2.php';
@@ -63,6 +64,14 @@ function route(string $method, string $path): array
     if ($method === 'GET' && $path === 'pulse') {
         $u = current_user(false);
         return pulse_view($u);
+    }
+    if ($method === 'GET' && $path === 'chess/lobby') {
+        $u = current_user(false);
+        return chess_lobby($u);
+    }
+    if ($method === 'GET' && $path === 'chess/state') {
+        $u = current_user(false);
+        return chess_state($u, (string) ($_GET['id'] ?? ''));
     }
     if ($method === 'GET' && $path === 'horse/state') {
         $u = current_user(false);
@@ -216,6 +225,15 @@ function route(string $method, string $path): array
             return ['result' => tx(fn() => admin_action($u, $name, $args))];
         }
 
+        case 'chess/create':
+        case 'chess/join':
+        case 'chess/cancel':
+        case 'chess/move':
+        case 'chess/resign': {
+            $u = current_user();
+            if (!empty($u['wallet_frozen'])) fail('errors.walletFrozen');
+            return ['result' => tx(fn() => chess_action($u, substr($path, 6), body()))];
+        }
         case 'fairness/rotate':
             $u = current_user();
             return tx(function () use ($u) {

@@ -1,4 +1,4 @@
-import { Bird, Bomb, Candy, Flag, Castle, CircleDot, Coins, Dice5, Grid3x3, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy, Wand2, Wind } from 'lucide-react'
+import { Bird, Bomb, Candy, Crown, Flag, Castle, CircleDot, Coins, Dice5, Grid3x3, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy, Wand2, Wind } from 'lucide-react'
 
 /**
  * Registry game — satu-satunya tempat mendaftarkan mode baru.
@@ -37,6 +37,7 @@ export const GAMES = [
   { slug: 'tower', name: 'Tower', category: 'originals', icon: Castle, accent: 'cyan', load: () => import('@/games/Ladder.jsx') },
   { slug: 'cross', name: 'Cross the Road', category: 'originals', icon: Bird, accent: 'gold', load: () => import('@/games/Ladder.jsx') },
   { slug: 'pump', name: 'Pump', category: 'originals', icon: Wind, accent: 'pink', load: () => import('@/games/Ladder.jsx') },
+  { slug: 'chess', name: 'Chess', category: 'table', icon: Crown, accent: 'cyan', featured: true, load: () => import('@/games/Chess.jsx') },
   { slug: 'horse', name: 'Horse Racing', category: 'originals', icon: Flag, accent: 'green', featured: true, load: () => import('@/games/HorseRacing.jsx') },
   { slug: 'tarot', name: 'Tarot', category: 'originals', icon: Wand2, accent: 'purple', load: () => import('@/games/Tarot.jsx') },
   { slug: 'sweet', name: 'Sweet', category: 'slots', icon: Candy, accent: 'pink', featured: true, load: () => import('@/games/Sweet.jsx') },
