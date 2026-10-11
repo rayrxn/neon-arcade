@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="build" content="b3c0e22">
+<meta name="build" content="0a03f5e">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "b3c0e22", "at": "2026-10-11T16:48:33Z", "version": "3.1.1"};</script>
+<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "0a03f5e", "at": "2026-10-11T16:54:55Z", "version": "3.1.1"};</script>
 <title>Neon Arcade</title>
 <meta name="theme-color" content="#06070c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6950,7 +6950,7 @@ exports.default = [
             { "tag": "improve", "en": "Sessions now end after 7 days. Sign in again to keep playing.", "id": "Sesi sekarang berakhir setelah 7 hari. Login lagi untuk lanjut bermain." },
             { "tag": "new", "en": "Owners and Admins can turn on strict sessions: 3 hours, with a two-step code on every sign-in (authenticator app or verified email). It can be turned off in Settings or from the console.", "id": "Owner dan Admin bisa menyalakan sesi ketat: 3 jam, dengan kode dua langkah di setiap login (aplikasi authenticator atau email terverifikasi). Bisa dimatikan di Pengaturan atau lewat console." },
             { "tag": "new", "en": "Owner Console redesign: every Admin panel action as a guided form, plus server tools the panel does not have.", "id": "Desain ulang Owner Console: semua aksi Admin panel sebagai form terpandu, ditambah alat server yang tidak ada di panel." },
-            { "tag": "improve", "en": "The release trailer plays as a cutscene whenever you come back after 3 hours or more away.", "id": "Trailer rilis diputar sebagai cutscene setiap kamu kembali setelah 3 jam atau lebih tidak membuka situs." },
+            { "tag": "improve", "en": "The release trailer plays once as a cutscene when you come back after 3 hours or more away.", "id": "Trailer rilis diputar sekali sebagai cutscene saat kamu kembali setelah 3 jam atau lebih tidak membuka situs." },
             { "tag": "improve", "en": "Console help in plain words, search, examples, autocomplete and a confirmation step for risky actions.", "id": "Bantuan console dengan bahasa sederhana, pencarian, contoh, autocomplete, dan konfirmasi untuk aksi berisiko." }
         ]
     },
@@ -17478,7 +17478,7 @@ exports.useTrailer = (0, zustand_1.create)((set) => ({ on: false, play: () => se
 /**
  * Shows the update log once per new version (after a reload), and watches version.json while the tab is open:
  * when the server publishes a new build, the log for it pops up with a reload button.
- * The 1.0.0 release (staff in DEV TEST, everyone once published) first plays the trailer; it plays again after 3 hours away.
+ * The 1.0.0 release (staff in DEV TEST, everyone once published) first plays the trailer; once per player, on their first visit after 3+ hours away.
  */
 function UpdateLog() {
     const show = (0, exports.useUpdateLog)((s) => s.show);
@@ -17501,7 +17501,7 @@ function UpdateLog() {
         show(latest, 'current', build_1.BUILD.at);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [latest?.version, visible, me?.id, synced]);
-    // Cutscene: anyone away for 3+ hours (or back on a tab hidden that long) sees the trailer again.
+    // Cutscene: a player who has not seen the trailer and was away 3+ hours (or back on a tab hidden that long) sees it once.
     // Activity is stamped every minute while the tab is visible, and when it is hidden or closed.
     (0, react_1.useEffect)(() => {
         if (!synced || !visible || !me?.id || !latest || !(0, release_1.isRelease)(latest.version))
@@ -17521,7 +17521,7 @@ function UpdateLog() {
                     (0, ReleaseTrailer_1.touchActive)(uid);
                 return;
             }
-            if (hiddenAt && Date.now() - hiddenAt > ReleaseTrailer_1.AWAY_MS)
+            if (hiddenAt && Date.now() - hiddenAt > ReleaseTrailer_1.AWAY_MS && !(0, ReleaseTrailer_1.trailerSeen)(uid))
                 exports.useTrailer.getState().play();
             else
                 stamp();
@@ -17574,7 +17574,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.touchActive = exports.trailerDue = exports.AWAY_MS = exports.TRAILER_SRC = void 0;
+exports.touchActive = exports.trailerDue = exports.awayLong = exports.trailerSeen = exports.AWAY_MS = exports.TRAILER_SRC = void 0;
 exports.default = ReleaseTrailer;
 const jsx_runtime_1 = require("react/jsx-runtime");
 const react_1 = require("react");
@@ -17584,29 +17584,34 @@ const lucide_react_1 = require("lucide-react");
 const i18n_1 = require("@/i18n");
 exports.TRAILER_SRC = '/neon-arcade-1.0.0-reel.mp4';
 const HOLD_MS = 3000;
-/** The trailer plays as a cutscene for anyone who has not been on the site for 3 hours. */
-exports.AWAY_MS = 3 * 60 * 60 * 1000;
-const key = (uid) => `neon-arcade:last-active:${uid}`;
-const lastActive = (uid) => {
-    try {
-        return Number(localStorage.getItem(key(uid))) || 0;
-    }
-    catch {
-        return 0;
-    }
-};
-const trailerDue = (uid) => Date.now() - lastActive(uid) > exports.AWAY_MS;
-exports.trailerDue = trailerDue;
-const touchActive = (uid) => {
-    try {
-        localStorage.setItem(key(uid), String(Date.now()));
-    }
-    catch { /* storage blocked: may replay next visit */ }
-};
-exports.touchActive = touchActive;
-const markSeen = exports.touchActive;
 /**
- * Full-screen 1.0.0 trailer, played as a cutscene when a player comes back after 3 hours away. To skip, hold Space (or press and hold
+ * Cutscene rule: the trailer plays once per player, the first time they arrive after 3+ hours away
+ * (a first visit counts as away). Players who stay active are not interrupted; it can always be replayed by hand.
+ */
+exports.AWAY_MS = 3 * 60 * 60 * 1000;
+const activeKey = (uid) => `neon-arcade:last-active:${uid}`;
+const seenKey = (uid) => `neon-arcade:trailer2-seen:${uid}`;
+const read = (k) => { try {
+    return localStorage.getItem(k);
+}
+catch {
+    return null;
+} };
+const write = (k, v) => { try {
+    localStorage.setItem(k, v);
+}
+catch { /* storage blocked: may replay next visit */ } };
+const trailerSeen = (uid) => read(seenKey(uid)) === '1';
+exports.trailerSeen = trailerSeen;
+const awayLong = (uid) => Date.now() - (Number(read(activeKey(uid))) || 0) > exports.AWAY_MS;
+exports.awayLong = awayLong;
+const trailerDue = (uid) => !(0, exports.trailerSeen)(uid) && (0, exports.awayLong)(uid);
+exports.trailerDue = trailerDue;
+const touchActive = (uid) => write(activeKey(uid), String(Date.now()));
+exports.touchActive = touchActive;
+const markSeen = (uid) => { write(seenKey(uid), '1'); (0, exports.touchActive)(uid); };
+/**
+ * Full-screen 1.0.0 trailer, played once as a cutscene when a player comes back after 3 hours away. To skip, hold Space (or press and hold
  * anywhere on the screen) for 3 seconds: a ring fills around a white Space keycap.
  */
 function ReleaseTrailer({ userId, onDone }) {
