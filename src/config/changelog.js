@@ -1,6 +1,20 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.12",
+    "date": "2026-10-11",
+    "emoji": "🐍",
+    "colors": ["#65a30d", "#ef4444", "#8b5cf6"],
+    "title": { "en": "Arcade, now with real bets", "id": "Arkade, sekarang taruhan sungguhan" },
+    "tagline": { "en": "Snake, Slice, Moles and Layer are rebuilt as bet games settled on the server.", "id": "Snake, Slice, Moles, dan Layer dibangun ulang jadi game taruhan yang dihitung di server." },
+    "items": [
+      { "tag": "new", "en": "Snake: roll two dice, the sum picks a tile around the board. Snakes end the round, other tiles multiply your win.", "id": "Snake: lempar dua dadu, jumlahnya memilih kotak di papan. Ular mengakhiri ronde, kotak lain mengalikan kemenangan." },
+      { "tag": "new", "en": "Slice and Moles: every fruit or hole shows its chance. Keep going to grow the multiplier, hit a bomb and it explodes.", "id": "Slice dan Moles: tiap buah atau lubang menampilkan peluangnya. Lanjut untuk menaikkan pengali, kena bom langsung meledak." },
+      { "tag": "new", "en": "Layer: a 3D tower. Each layer adds ×1.02 on Easy, but the tower can fall on any drop.", "id": "Layer: menara 3D. Tiap lapisan menambah ×1,02 di Mudah, tapi menara bisa runtuh kapan saja." },
+      { "tag": "fix", "en": "Cross the Road shows the right multipliers for each difficulty.", "id": "Cross the Road menampilkan pengali yang benar untuk tiap kesulitan." }
+    ]
+  },
+  {
     "version": "2.9.11",
     "date": "2026-10-11",
     "emoji": "🃏",

@@ -504,5 +504,20 @@ $avg = $r['ok'] ? array_sum(array_column($res['balls'], 'multiplier')) / 16 : 0;
 check('16 balls settle as one round: bet 160, payout = 10 × sum of ball multipliers', $r['ok'] && count($res['balls']) === 16 && (float) $res['session']['bet'] === 160.0 && abs((float) $res['session']['payout'] - round(160 * round($avg, 6), 2)) < 0.011, $r);
 cool(); expect_error('at most 16 balls', call('POST', 'game/plinko', ['bet' => 10, 'risk' => 'medium', 'balls' => 17], 'a'), 'play.errors.invalid');
 
+echo "Bet arcades v2.9.12\n";
+foreach (SNAKE_BOARD as $mode => $b) { $ev = 0; foreach ($b as $i => $v) $ev += (6 - abs($i + 2 - 7)) / 36 * $v; check("snake $mode: per-roll EV 0.95–0.961", $ev > 0.95 && $ev <= 0.961, ['ev' => $ev]); }
+setbal($A, 1000000, 100);
+cool(); $s0 = call('POST', 'game/snake-start', ['bet' => 100, 'mode' => 'medium'], 'a');
+check('snake starts with the medium board', $s0['ok'] && count($s0['data']['result']['board']) === 11 && $s0['data']['result']['multiplier'] == 1, $s0);
+$sid = $s0['data']['result']['id'] ?? null; $res = null;
+for ($i = 0; $i < 6; $i++) { $res = call('POST', 'game/snake-roll', ['id' => $sid], 'a'); if (!$res['ok'] || $res['data']['result']['done']) break; }
+$rr = $res['data']['result'] ?? [];
+check('snake roll: dice 1–6, tile = sum − 2, snake tile ends the round', $res['ok'] && $rr['dice'][0] >= 1 && $rr['dice'][1] <= 6 && $rr['tile'] === $rr['dice'][0] + $rr['dice'][1] - 2 && (!empty($rr['done']) === (SNAKE_BOARD['medium'][$rr['tile']] == 0)), $res);
+if (empty($rr['done'])) { $co = call('POST', 'game/snake-cashout', ['id' => $sid], 'a'); check('snake cash out pays bet × running multiplier', $co['ok'] && abs((float) $co['data']['result']['session']['payout'] - round(100 * floor($rr['multiplier'] * 100) / 100, 2)) < 0.011, $co); }
+cool(); $l = call('POST', 'game/layer-start', ['bet' => 100, 'mode' => 'easy'], 'a');
+check('layer easy: each layer ×1.02 (p 0.98)', $l['ok'] && abs(ladder_mult('layer', 'easy', 2) / ladder_mult('layer', 'easy', 1) - 1.02) < 0.011, $l);
+call('POST', 'game/layer-cashout', ['id' => $l['data']['result']['id'] ?? ''], 'a');
+foreach (['slice', 'moles'] as $g) { cool(); $x = call('POST', "game/$g-start", ['bet' => 100, 'mode' => 'medium'], 'a'); check("$g starts on the ladder engine", $x['ok'] && $x['data']['result']['steps'] === LADDER[$g]['steps'], $x); call('POST', "game/$g-cashout", ['id' => $x['data']['result']['id'] ?? ''], 'a'); }
+
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

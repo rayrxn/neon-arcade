@@ -8,9 +8,10 @@ import { BetInput, Choice, Field, GameShell, Stage, fmtMult, playOutcome, useRun
 import { ladderCashout, ladderStart, ladderStep, openRound } from '@/services/games'
 import { LADDER, ladderMult } from '@/config/games2'
 import { formatCoins } from '@/utils/format'
+import { LayerBoard, MolesBoard, SliceBoard } from './LadderArcade'
 import { useT } from '@/i18n'
 
-/** One engine, three games: Tower (pick a tile per floor), Cross the Road (lane by lane), Pump (inflate until it pops). */
+/** One engine: Tower, Cross the Road, Pump, Slice, Moles and Layer. */
 export default function Ladder({ game }) {
   const slug = game.slug
   const cfg = LADDER[slug]
@@ -94,6 +95,9 @@ export default function Ladder({ game }) {
         {slug === 'tower' && <TowerBoard cfg={cfg} mode={m} live={live} end={end} onPick={advance} />}
         {slug === 'cross' && <RoadBoard cfg={cfg} mode={m} live={live} end={end} />}
         {slug === 'pump' && <Balloon mode={m} step={step} live={live} end={end} pumps={pumps} />}
+        {slug === 'slice' && <SliceBoard mode={m} step={step} live={live} end={end} onGo={() => advance(null)} />}
+        {slug === 'moles' && <MolesBoard mode={m} step={step} live={live} end={end} onGo={() => advance(null)} />}
+        {slug === 'layer' && <LayerBoard mode={m} step={step} end={end} />}
       </div>
       <p className="mt-4 text-center text-xs text-slate-500">{live ? t(`play.ladder.hint.${slug}`) : end?.lost ? t('play.ladder.lost', { step: end.step + 1 }) : t('play.ladder.idle')}</p>
     </Stage>

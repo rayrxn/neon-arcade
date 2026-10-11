@@ -61,7 +61,78 @@ const LADDER = [
     ]],
     'cross' => ['steps' => 20, 'rtp' => 0.94, 'modes' => ['easy' => ['p' => 0.6], 'medium' => ['p' => 0.45], 'hard' => ['p' => 0.33], 'daredevil' => ['p' => 0.22]]],
     'pump' => ['steps' => 25, 'modes' => ['easy' => ['p' => 0.96], 'medium' => ['p' => 0.9], 'hard' => ['p' => 0.8], 'expert' => ['p' => 0.65]]],
+    // v2.9.12: former skill arcades, now bet games on the same engine. p = chance shown under each fruit / hole / layer.
+    'slice' => ['steps' => 20, 'rtp' => 0.95, 'modes' => ['easy' => ['p' => 0.8], 'medium' => ['p' => 0.6667], 'hard' => ['p' => 0.5], 'expert' => ['p' => 0.33]]],
+    'moles' => ['steps' => 15, 'rtp' => 0.95, 'modes' => ['easy' => ['p' => 0.75], 'medium' => ['p' => 0.6], 'hard' => ['p' => 0.45], 'expert' => ['p' => 0.3]]],
+    'layer' => ['steps' => 50, 'rtp' => 0.97, 'modes' => ['easy' => ['p' => 0.98], 'medium' => ['p' => 0.95], 'hard' => ['p' => 0.9], 'expert' => ['p' => 0.8]]],
 ];
+
+/** Snakes: roll two dice, the sum picks a tile (sum 2 = tile 1 … sum 12 = tile 11). Snake = 0 ends the round,
+ *  any other tile multiplies the running total. Per-roll EV ≈ 0.96 in every mode. */
+const SNAKE_BOARD = [
+    'easy' => [1.94, 1.26, 1.16, 1.06, 1.01, 0, 1.01, 1.06, 1.16, 1.26, 1.94],
+    'medium' => [4.0, 2.5, 1.35, 1.06, 0, 0, 0, 1.06, 1.35, 2.5, 4.0],
+    'hard' => [7.2, 2.88, 1.44, 0, 0, 0, 0, 0, 1.44, 2.88, 7.2],
+    'expert' => [8.64, 4.32, 0, 0, 0, 0, 0, 0, 0, 4.32, 8.64],
+];
+const SNAKE_ROLLS = 40;
+
+function snake_dice(array $f, int $k): array
+{
+    return [1 + min(5, (int) floor($f[$k * 2] * 6)), 1 + min(5, (int) floor($f[$k * 2 + 1] * 6))];
+}
+
+function snake_public(array $r): array
+{
+    return ['id' => $r['id'], 'game' => 'snake', 'mode' => $r['mode'], 'rolls' => $r['rolls'], 'bet' => $r['bet'], 'multiplier' => $r['mult'], 'board' => SNAKE_BOARD[$r['mode']]];
+}
+
+function snake_start(Ctx $c, array $a): array
+{
+    $mode = (string) ($a['mode'] ?? '');
+    if (!isset(SNAKE_BOARD[$mode])) fail('play.errors.invalid');
+    $round = begin($c, 'snake', $a['bet'] ?? null, SNAKE_ROLLS * 2, ['mode' => $mode, 'rolls' => [], 'mult' => 1.0]);
+    $round['lf'] = $round['floats'];
+    save_open($round);
+    return ['done' => false] + snake_public($round);
+}
+
+function snake_roll(Ctx $c, array $a): array
+{
+    $id = $a['id'] ?? null;
+    $r = load_open($c, 'snake', $id);
+    if (!$r) return stale_round($c, 'snake', $id);
+    $k = count($r['rolls']);
+    $board = SNAKE_BOARD[$r['mode']];
+    $tile = fn(array $x) => array_sum(snake_dice($x['lf'], $k)) - 2;
+    if (!empty($r['isTest']) && $r['control'] !== 'off') {
+        $want = $r['control'] === 'win';
+        for ($i = 0; $i < 200 && ($board[$tile($r)] > 0) !== $want; $i++) { $r['lf'][$k * 2] = rand_float(); $r['lf'][$k * 2 + 1] = rand_float(); }
+    }
+    $dice = snake_dice($r['lf'], $k);
+    $t = $dice[0] + $dice[1] - 2;
+    $r['rolls'][] = ['dice' => $dice, 'tile' => $t];
+    if ($board[$t] <= 0) {
+        return ['done' => true, 'lost' => true, 'dice' => $dice, 'tile' => $t, 'rolls' => $r['rolls'], 'board' => $board]
+            + finish($c, $r, 0, 'loss', ['mode' => $r['mode'], 'rolls' => count($r['rolls'])]);
+    }
+    $r['mult'] = min((float) MAX_MULTIPLIER['snake'], round($r['mult'] * $board[$t], 4));
+    if (count($r['rolls']) >= SNAKE_ROLLS) return snake_cashout($c, ['id' => $id], $r);
+    save_open($r);
+    return ['done' => false, 'dice' => $dice, 'tile' => $t] + snake_public($r);
+}
+
+function snake_cashout(Ctx $c, array $a, ?array $loaded = null): array
+{
+    $id = $a['id'] ?? null;
+    $r = $loaded ?? load_open($c, 'snake', $id);
+    if (!$r) return stale_round($c, 'snake', $id);
+    $board = SNAKE_BOARD[$r['mode']];
+    if (!$r['rolls']) return ['done' => true, 'lost' => false, 'rolls' => [], 'board' => $board] + finish($c, $r, 1, 'push', ['mode' => $r['mode'], 'rolls' => 0], 'CANCELLED');
+    $m = floor($r['mult'] * 100) / 100;
+    return ['done' => true, 'lost' => false, 'rolls' => $r['rolls'], 'multiplier' => $m, 'board' => $board]
+        + finish($c, $r, $m, classify($m), ['mode' => $r['mode'], 'rolls' => count($r['rolls'])]);
+}
 
 function ladder_p(string $game, string $mode): float
 {
@@ -172,6 +243,15 @@ function cross_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 
 function pump_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'pump'); }
 function pump_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'pump'); }
 function pump_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'pump'); }
+function slice_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'slice'); }
+function slice_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'slice'); }
+function slice_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'slice'); }
+function moles_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'moles'); }
+function moles_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'moles'); }
+function moles_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'moles'); }
+function layer_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'layer'); }
+function layer_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'layer'); }
+function layer_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'layer'); }
 
 // ───────────────────────────── Tarot ─────────────────────────────
 // Three cards are drawn (with replacement) from the 22 major arcana. Each card has a multiplier for the chosen
