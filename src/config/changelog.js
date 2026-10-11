@@ -1,6 +1,17 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.16",
+    "date": "2026-10-11",
+    "emoji": "🧪",
+    "colors": ["#22d3ee", "#22c55e", "#facc15"],
+    "title": { "en": "Release check", "id": "Cek sebelum rilis" },
+    "tagline": { "en": "A full test pass on phone and desktop before 1.0.0.", "id": "Uji menyeluruh di HP dan desktop sebelum 1.0.0." },
+    "items": [
+      { "tag": "fix", "en": "Small fixes found in the release test pass (Slice start text, sign-in check on older browsers).", "id": "Perbaikan kecil dari uji rilis (teks awal Slice, cek masuk di browser lama)." }
+    ]
+  },
+  {
     "version": "2.9.15",
     "date": "2026-10-11",
     "emoji": "🪙",

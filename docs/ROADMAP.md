@@ -2,7 +2,7 @@
 
 | ID | Task | Status | Prio | Depends | Done when / verify |
 |---|---|---|---|---|---|
-| T1 | Browser QA pass (server-mode suite + mobile/tablet/desktop, light/dark/potato screenshots) | planned | **blocker** | – | `tests/run-server-mode.sh` green; issues logged in BUGS.md |
+| T1 | Browser QA pass (server-mode suite + mobile/tablet/desktop, light/dark/potato screenshots) — v2.9.16: suite 59/60 green (staff seed login `neon_owner`/`admin` returns wrongCredentials in e2e, open), mobile screenshots OK | in progress | **blocker** | – | `tests/run-server-mode.sh` green; issues logged in BUGS.md |
 | T2 | Crash curve tests (BUG-005) | done | high | – | stage8 crash block passes |
 | T3 | Enforce feature flags in endpoints (BUG-006) | done | high | – | stage8 test: flag off → `errors.featureOff` per feature |
 | T4 | Mirror 1:1: save `cp_errordocument.shtml`, deploy.sh copies `public_html-extra/` (BUG-007) | done | medium | – | file list of host public_html == `hosting/public_html` |

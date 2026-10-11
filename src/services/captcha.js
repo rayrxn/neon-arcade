@@ -45,7 +45,7 @@ export const setPreparedCaptcha = (c) => {
 export function takePreparedCaptcha() {
   const c = prepared && Date.now() - prepared.at < 4 * 60_000 ? prepared : null
   prepared = null
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event('neon-captcha-used'))
+  if (typeof window !== 'undefined' && typeof Event !== 'undefined') window.dispatchEvent(new Event('neon-captcha-used'))
   if (!c) return null
   const { at, ...proof } = c
   return proof

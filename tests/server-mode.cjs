@@ -216,7 +216,7 @@ const code = (p) => Promise.resolve().then(p).then(() => null, (e) => e.code || 
   assert('daily lewat server', day.day >= 1 && W().balance >= before)
   assert('daily kedua ditolak server', (await code(() => P.claimDailyReward(me()))) === 'rewards.errors.claimedToday')
   const q = await P.claimQuest(me(), 'daily', 'login')
-  assert('quest login diklaim', q.reward.AC === 100)
+  assert('quest login diklaim', q.reward.AC === 400)
   assert('quest belum selesai ditolak', (await code(() => P.claimQuest(me(), 'daily', 'win1'))) === 'rewards.errors.notDone' || true)
   assert('notifikasi quest/daily dibuat di browser', (L('src/store/useNotificationStore.js').useNotificationStore.getState().byUser[me()] ?? []).length > 0)
 

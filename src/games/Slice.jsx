@@ -179,7 +179,7 @@ export default function Slice({ game }) {
             <Explosion size={280} />
           </div>
         )}
-        {!live && !lost && !cut && <p className="absolute inset-0 grid place-items-center text-sm font-semibold text-white/70">{t('play.ladder.idle')}</p>}
+        {!live && !lost && !cut && <p className="absolute inset-0 grid place-items-center px-8 text-center text-sm font-semibold text-white/80">{t('play.ladder.hint.slice')}</p>}
         {busy && <div className={clsx('absolute inset-0')} />}
       </div>
     </Stage>
