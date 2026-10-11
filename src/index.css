@@ -1271,3 +1271,12 @@ html[data-perf='ultra'] .lc-face:not(.lc-face--sm):hover { transform: perspectiv
 .na-dust { animation: na-dust .5s ease-out infinite }
 @media (prefers-reduced-motion: reduce) { .na-shake, .na-glow, .na-breathe, .na-drive, .na-gallop, .na-dust { animation: none } }
 .na-3d { transform-style: preserve-3d } .na-back { backface-visibility: hidden; -webkit-backface-visibility: hidden }
+/* Mines: stone block with speckles and a lit top edge. */
+.mines-rock {
+  background:
+    radial-gradient(circle at 22% 30%, rgb(255 255 255 / .07) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 62%, rgb(0 0 0 / .25) 0 2px, transparent 3px),
+    radial-gradient(circle at 58% 22%, rgb(0 0 0 / .2) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 34% 76%, rgb(255 255 255 / .05) 0 1.5px, transparent 2.5px),
+    linear-gradient(160deg, #6b5a49 0%, #4a3c30 55%, #33291f 100%);
+}

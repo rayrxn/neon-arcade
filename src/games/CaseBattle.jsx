@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Bot, Package, UserRound } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
@@ -86,7 +87,17 @@ export default function CaseBattle({ game }) {
           <Side title="Bot" icon={Bot} items={battle.bot} shown={shown} total={battle.botTotal} winner={result === 'loss'} />
         </div>
       ) : (
-        <div className="grid min-h-[260px] place-items-center text-center text-sm text-slate-500">{t('play.battle.idle')}</div>
+        <div className="relative grid min-h-[280px] grid-cols-[1fr_auto_1fr] items-center gap-3">
+          {[[UserRound, t('play.bj.you')], [Bot, 'Bot']].map(([Icon, name], k) => (
+            <div key={name} className={clsx('flex flex-col items-center gap-3 rounded-2xl bg-black/25 p-4 ring-1 ring-inset ring-white/[0.08]', k === 1 && 'col-start-3')}>
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-white/[0.06] ring-1 ring-white/10"><Icon className="h-6 w-6 text-slate-300" /></span>
+              <span className="text-sm font-bold text-white">{name}</span>
+              <div className="flex gap-1.5">{Array.from({ length: rounds }, (_, i) => <span key={i} className="grid h-14 w-10 place-items-center rounded-lg border-2 border-dashed border-amber-200/20"><Package className="h-4 w-4 text-amber-200/30" /></span>)}</div>
+            </div>
+          ))}
+          <motion.span className="col-start-2 row-start-1 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-600 font-display text-lg font-black text-ink-950 shadow-[0_0_30px_rgba(251,191,36,0.45)]" animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 1.6, repeat: Infinity }}>VS</motion.span>
+          <p className="col-span-3 text-center text-xs text-amber-100/60">{t('play.battle.idle')}</p>
+        </div>
       )}
     </Stage>
   )

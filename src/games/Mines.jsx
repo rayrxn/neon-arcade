@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Bomb, Gem } from 'lucide-react'
+import { Bomb } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import { BetInput, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
@@ -101,13 +101,22 @@ export default function Mines({ game }) {
               aria-label={`${t('play.mines.tile')} ${i + 1}`}
               className={clsx(
                 'grid aspect-square place-items-center rounded-xl transition-colors',
-                !shown && (round ? 'border-b-4 border-black/40 bg-gradient-to-b from-[#5b4a3a] to-[#3b2f25] hover:from-[#6e5a47] shadow-inner' : 'border-b-4 border-black/30 bg-gradient-to-b from-[#3f3429] to-[#2a221b]'),
+                !shown && 'mines-rock border-b-4 border-black/45 shadow-[inset_0_2px_0_rgba(255,255,255,0.12)]',
+                !shown && (round ? 'hover:-translate-y-0.5 hover:brightness-125 transition-[transform,filter]' : 'brightness-75'),
                 isGem && 'bg-gradient-to-b from-emerald-400/30 to-emerald-900/40 ring-1 ring-inset ring-emerald-300/60 shadow-[0_0_16px_rgba(52,211,153,0.4)]',
                 board && isMine && (board.hit === i ? 'bg-neon-red/30 ring-2 ring-inset ring-neon-red' : 'bg-neon-red/10'),
                 board && !isGem && !isMine && 'opacity-40',
               )}
             >
-              {isGem && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}><Gem className="h-6 w-6 text-neon-green sm:h-7 sm:w-7" /></motion.span>}
+              {isGem && (
+                <motion.svg viewBox="0 0 40 40" className="h-8 w-8 drop-shadow-[0_0_10px_rgba(52,211,153,0.8)] sm:h-10 sm:w-10" initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 420, damping: 14 }} aria-hidden>
+                  <path d="M20 3 L33 15 L20 37 L7 15 Z" fill="#34d399" />
+                  <path d="M20 3 L33 15 L20 18 Z" fill="#a7f3d0" />
+                  <path d="M20 3 L7 15 L20 18 Z" fill="#6ee7b7" />
+                  <path d="M7 15 L20 18 L20 37 Z" fill="#059669" />
+                  <path d="M17 8 L19 6 L18 12 Z" fill="#fff" opacity="0.8" />
+                </motion.svg>
+              )}
               {board && isMine && <Bomb className="h-6 w-6 text-neon-red sm:h-7 sm:w-7" />}
             </motion.button>
           )

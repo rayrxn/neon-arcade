@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.11",
+    "date": "2026-10-11",
+    "emoji": "🃏",
+    "colors": ["#16a34a", "#ef4444", "#fbbf24"],
+    "title": { "en": "Fresh tables", "id": "Meja baru" },
+    "tagline": { "en": "Blackjack, Dice, Mines and Case Battle get a new look.", "id": "Blackjack, Dice, Mines, dan Case Battle tampil baru." },
+    "items": [
+      { "tag": "improve", "en": "Blackjack: a real casino table with a wooden rail, printed lettering, card shoe, chip tray and card spots. Hands sit in the middle.", "id": "Blackjack: meja kasino sungguhan dengan pinggiran kayu, tulisan di meja, kotak kartu, wadah chip, dan tempat kartu. Kartu di tengah." },
+      { "tag": "improve", "en": "Dice: a red 3D die tumbles on every roll, the target has a visible handle and the result floats above the bar.", "id": "Dice: dadu merah 3D berputar tiap lemparan, target punya pegangan yang terlihat, dan hasil melayang di atas bar." },
+      { "tag": "improve", "en": "Mines: stone blocks and faceted emerald crystals. Case Battle: You vs Bot face-off before the battle starts.", "id": "Mines: balok batu dan kristal zamrud. Case Battle: tampilan Kamu vs Bot sebelum battle dimulai." }
+    ]
+  },
+  {
     "version": "2.9.10",
     "date": "2026-10-11",
     "emoji": "✅",
