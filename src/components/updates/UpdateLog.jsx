@@ -111,6 +111,8 @@ function UpdateLogModal() {
   const { mode, at } = open
   const entry = open.entry ?? list[0]
   const release = isRelease(entry.version)
+  // Only a milestone (x.0.0) gets the big modal with the whole journey; later releases use the compact log.
+  const milestone = release && /^\d+\.0\.0$/.test(entry.version)
   const [c1, c2, c3] = entry.colors ?? ['#22d3ee', '#a855f7', '#f472b6']
   const done = () => {
     writeSeen(entry.version)
@@ -119,7 +121,7 @@ function UpdateLogModal() {
   }
   const rest = list.filter((e) => e.version !== entry.version)
   return (
-    <Modal open onClose={done} title={release ? t('updates.releaseTitle') : t('updates.title')} size={release ? 'lg' : 'md'}>
+    <Modal open onClose={done} title={release ? t('updates.releaseTitle', { version: versionLabel(entry.version).replace(/\s*Release$/i, '') }) : t('updates.title')} size={milestone ? 'lg' : 'md'}>
       <div className="update-banner relative -mt-1 overflow-hidden rounded-2xl p-5" style={{ '--u1': c1, '--u2': c2, '--u3': c3 ?? c1 }}>
         <span className="update-banner__shine" aria-hidden="true" />
         <span className="update-banner__emoji" aria-hidden="true">{entry.emoji}</span>
@@ -135,7 +137,7 @@ function UpdateLogModal() {
 
       <div className="mt-5"><Items entry={entry} /></div>
 
-      {release && (
+      {milestone && (
         <div className="mt-6 border-t hairline pt-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="font-display text-sm font-bold text-white">{t('updates.journey', { n: list.length })}</p>
@@ -145,7 +147,7 @@ function UpdateLogModal() {
         </div>
       )}
 
-      {!release && rest.length > 0 && (
+      {!milestone && rest.length > 0 && (
         <div className="mt-5 border-t hairline pt-3">
           <button type="button" onClick={() => setOlder((v) => !v)} className="flex w-full items-center justify-between text-xs font-bold text-slate-400 hover:text-white" aria-expanded={older}>
             {t('updates.older')} <ChevronDown className={clsx('h-4 w-4 transition', older && 'rotate-180')} />

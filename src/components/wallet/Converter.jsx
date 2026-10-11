@@ -52,11 +52,11 @@ export default function Converter() {
 
   return (
     <Panel title={t('convert.title')} icon={ArrowRightLeft} className="scroll-mt-24" bodyClassName="p-4 sm:p-5">
-      <div id="convert" className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-end">
+      <div id="convert" className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-end">
         <div>
-          <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-xs font-semibold">
             <span className="text-slate-400">{t('convert.amount')}</span>
-            <span className="text-slate-500">{t('convert.yourBalance', { amount: formatCoins(ac) })}</span>
+            <span className="truncate text-slate-500">{t('convert.yourBalance', { amount: formatCoins(ac) })}</span>
           </div>
           <div className={clsx('input-shell flex items-center gap-2 pl-3 pr-1.5', problem && '!border-neon-red/60')}>
             <CurrencyIcon currency="AC" size={18} />

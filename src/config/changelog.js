@@ -6,15 +6,15 @@ export default [
     "emoji": "🔐",
     "colors": ["#22d3ee", "#34d399", "#facc15"],
     "title": { "en": "Safer sign-in, stronger console", "id": "Login lebih aman, console lebih kuat" },
-    "tagline": { "en": "A brand-new sign-in page, two-step sign-in and an Owner Console that does everything.", "id": "Halaman login baru, login dua langkah, dan Owner Console yang bisa semuanya." },
+    "tagline": { "en": "New sign-in, two-step codes and a full Owner Console.", "id": "Login baru, kode dua langkah, dan Owner Console lengkap." },
     "items": [
-      { "tag": "new", "en": "A completely new sign-in page with a live arcade stage and a cleaner form.", "id": "Halaman login yang benar-benar baru dengan panggung arcade live dan form lebih rapi." },
-      { "tag": "new", "en": "Two-step sign-in in Settings → Security: an authenticator app (Google Authenticator and others) or a code by email.", "id": "Login dua langkah di Pengaturan → Keamanan: aplikasi authenticator (Google Authenticator dan lainnya) atau kode lewat email." },
-      { "tag": "improve", "en": "Sessions now end after 7 days. Sign in again to keep playing.", "id": "Sesi sekarang berakhir setelah 7 hari. Login lagi untuk lanjut bermain." },
-      { "tag": "new", "en": "Owners and Admins can turn on strict sessions: 3 hours, with a two-step code on every sign-in (authenticator app or verified email). It can be turned off in Settings or from the console.", "id": "Owner dan Admin bisa menyalakan sesi ketat: 3 jam, dengan kode dua langkah di setiap login (aplikasi authenticator atau email terverifikasi). Bisa dimatikan di Pengaturan atau lewat console." },
-      { "tag": "new", "en": "Owner Console redesign: every Admin panel action as a guided form, plus server tools the panel does not have.", "id": "Desain ulang Owner Console: semua aksi Admin panel sebagai form terpandu, ditambah alat server yang tidak ada di panel." },
-      { "tag": "improve", "en": "The release trailer plays once as a cutscene when you come back after 3 hours or more away.", "id": "Trailer rilis diputar sekali sebagai cutscene saat kamu kembali setelah 3 jam atau lebih tidak membuka situs." },
-      { "tag": "improve", "en": "Console help in plain words, search, examples, autocomplete and a confirmation step for risky actions.", "id": "Bantuan console dengan bahasa sederhana, pencarian, contoh, autocomplete, dan konfirmasi untuk aksi berisiko." }
+      { "tag": "new", "en": "New sign-in page.", "id": "Halaman login baru." },
+      { "tag": "new", "en": "Two-step sign-in: authenticator app or email code.", "id": "Login dua langkah: aplikasi authenticator atau kode email." },
+      { "tag": "improve", "en": "Sessions end after 7 days.", "id": "Sesi berakhir setelah 7 hari." },
+      { "tag": "new", "en": "Owner/Admin: strict 3-hour sessions with a code on every sign-in.", "id": "Owner/Admin: sesi ketat 3 jam dengan kode setiap login." },
+      { "tag": "new", "en": "Owner Console: every Admin action, with guided forms and help.", "id": "Owner Console: semua aksi Admin, dengan form terpandu dan bantuan." },
+      { "tag": "improve", "en": "Release trailer plays once after 3+ hours away.", "id": "Trailer rilis diputar sekali setelah 3+ jam tidak online." },
+      { "tag": "fix", "en": "Wallet no longer runs off the screen on phones.", "id": "Wallet tidak lagi melebar keluar layar di HP." }
     ]
   },
   {
