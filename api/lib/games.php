@@ -5,8 +5,8 @@ declare(strict_types=1);
 
 const LIMITS = ['minBet' => 1];
 const MAX_MULTIPLIER = [
-    'dice' => 49.5, 'limbo' => 1000000, 'coinflip' => 1.98, 'plinko' => 1000, 'roulette' => 36, 'case-opening' => 20,
-    'case-battle' => 40, 'crash' => 1000000000, 'mines' => 6000000, 'blackjack' => 2.5,
+    'dice' => 49.5, 'limbo' => 1000000, 'coinflip' => 1.98, 'plinko' => 1000, 'roulette' => 36, 'case-opening' => 50,
+    'case-battle' => 100, 'crash' => 1000000000, 'mines' => 6000000, 'blackjack' => 2.5,
     'keno' => 1000, 'tarot' => 110, 'sweet' => 5000, 'horse' => 30, 'tower' => 1000000, 'cross' => 1000000, 'pump' => 1000000,
 ];
 const STATUS_OF = ['win' => 'WON', 'loss' => 'LOST', 'push' => 'DRAW'];
@@ -20,7 +20,10 @@ const PLINKO_TABLES = [
 const RED = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 const ROULETTE_PAYOUT = ['straight' => 36, 'red' => 2, 'black' => 2, 'odd' => 2, 'even' => 2, 'low' => 2, 'high' => 2, 'dozen' => 3];
 
-const CASES = ['starter' => 100, 'neon' => 500, 'elite' => 2500];
+const CASES = ['pocket' => 25, 'starter' => 100, 'neon' => 500, 'jackpot' => 1000, 'elite' => 2500, 'mythic' => 10000];
+/** Case with the high-volatility 'jackpot' drop table (EV ≈ 0.946); every other case uses the standard table (EV 0.975). */
+const CASE_PROFILE = ['jackpot' => 'jackpot', 'mythic' => 'jackpot'];
+const BATTLE_ROUNDS = [1, 2, 3, 4, 5];
 const CASE_ITEMS = [
     'common' => [['name' => 'Sticker Pack', 'mult' => 0.15], ['name' => 'Pixel Badge', 'mult' => 0.25], ['name' => 'Arcade Token', 'mult' => 0.35]],
     'rare' => [['name' => 'Neon Keycap', 'mult' => 0.5], ['name' => 'Glow Strap', 'mult' => 0.7], ['name' => 'Chrome Pin', 'mult' => 0.9]],
@@ -34,6 +37,20 @@ const TIERS = [
     ['id' => 'epic', 'weight' => 15, 'color' => '#a35bff'],
     ['id' => 'legendary', 'weight' => 4, 'color' => '#ffc83d'],
     ['id' => 'secret', 'weight' => 1, 'color' => '#ff4d8d'],
+];
+const JACKPOT_ITEMS = [
+    'common' => [['name' => 'Scrap Chip', 'mult' => 0.1], ['name' => 'Bent Coin', 'mult' => 0.15], ['name' => 'Old Ticket', 'mult' => 0.2]],
+    'rare' => [['name' => 'Lucky Dice', 'mult' => 0.4], ['name' => 'Neon Fuse', 'mult' => 0.5], ['name' => 'Silver Chip', 'mult' => 0.6]],
+    'epic' => [['name' => 'Hologram', 'mult' => 1.2], ['name' => 'Laser Visor', 'mult' => 1.6], ['name' => 'Turbo Core', 'mult' => 2]],
+    'legendary' => [['name' => 'Diamond Joystick', 'mult' => 6], ['name' => 'Plasma Throne', 'mult' => 10]],
+    'secret' => [['name' => 'Golden Arcade', 'mult' => 50]],
+];
+const JACKPOT_TIERS = [
+    ['id' => 'common', 'weight' => 62.4, 'color' => '#9aa4b8'],
+    ['id' => 'rare', 'weight' => 24, 'color' => '#3b9bff'],
+    ['id' => 'epic', 'weight' => 9.5, 'color' => '#a35bff'],
+    ['id' => 'legendary', 'weight' => 3.5, 'color' => '#ffc83d'],
+    ['id' => 'secret', 'weight' => 0.6, 'color' => '#ff4d8d'],
 ];
 
 const CRASH_K = 0.12;
@@ -353,10 +370,11 @@ function play_roulette(Ctx $c, array $a): array
 
 // ───────────────────────────── Cases ─────────────────────────────
 
-function draw_item(float $f1, float $f2, int $price): array
+function draw_item(float $f1, float $f2, int $price, string $profile = 'standard'): array
 {
-    $tier = pick_weighted($f1, TIERS);
-    $pool = CASE_ITEMS[$tier['id']];
+    $jp = $profile === 'jackpot';
+    $tier = pick_weighted($f1, $jp ? JACKPOT_TIERS : TIERS);
+    $pool = ($jp ? JACKPOT_ITEMS : CASE_ITEMS)[$tier['id']];
     $item = $pool[min(count($pool) - 1, (int) floor($f2 * count($pool)))];
     return ['tier' => $tier['id'], 'color' => $tier['color'], 'name' => $item['name'], 'value' => round2($item['mult'] * $price)];
 }
@@ -366,9 +384,10 @@ function open_case(Ctx $c, array $a): array
     $caseId = $a['caseId'] ?? '';
     $price = CASES[$caseId] ?? null;
     if (!$price) fail('play.errors.invalid');
+    $pr = CASE_PROFILE[$caseId] ?? 'standard';
     $round = begin($c, 'case-opening', $price, 2);
-    $f = forced($round, 2, fn($x) => draw_item($x[0], $x[1], $price)['value'] > $price);
-    $item = draw_item($f[0], $f[1], $price);
+    $f = forced($round, 2, fn($x) => draw_item($x[0], $x[1], $price, $pr)['value'] > $price);
+    $item = draw_item($f[0], $f[1], $price, $pr);
     $m = $item['value'] / $price;
     return ['item' => $item] + finish($c, $round, $m, classify($m), ['case' => $caseId, 'item' => $item['name'], 'tier' => $item['tier']]);
 }
@@ -378,29 +397,31 @@ function play_case_battle(Ctx $c, array $a): array
     $caseId = $a['caseId'] ?? '';
     $rounds = $a['rounds'] ?? null;
     $price = CASES[$caseId] ?? null;
-    if (!$price || !in_array($rounds, [1, 2, 3], true)) fail('play.errors.invalid');
+    $crazy = ($a['mode'] ?? 'classic') === 'crazy';
+    if (!$price || !in_array($rounds, BATTLE_ROUNDS, true) || !in_array($a['mode'] ?? 'classic', ['classic', 'crazy'], true)) fail('play.errors.invalid');
+    $pr = CASE_PROFILE[$caseId] ?? 'standard';
     $round = begin($c, 'case-battle', $price * $rounds, $rounds * 4);
-    $totals = function ($fl) use ($rounds, $price) {
+    $totals = function ($fl) use ($rounds, $price, $pr, $crazy) {
         $x = 0; $y = 0;
         for ($i = 0; $i < $rounds; $i++) {
-            $x += draw_item($fl[$i * 4], $fl[$i * 4 + 1], $price)['value'];
-            $y += draw_item($fl[$i * 4 + 2], $fl[$i * 4 + 3], $price)['value'];
+            $x += draw_item($fl[$i * 4], $fl[$i * 4 + 1], $price, $pr)['value'];
+            $y += draw_item($fl[$i * 4 + 2], $fl[$i * 4 + 3], $price, $pr)['value'];
         }
-        return $x > $y;
+        return $crazy ? $x < $y : $x > $y;
     };
     $f = forced($round, $rounds * 4, $totals);
     $player = []; $bot = [];
     for ($i = 0; $i < $rounds; $i++) {
-        $player[] = draw_item($f[$i * 4], $f[$i * 4 + 1], $price);
-        $bot[] = draw_item($f[$i * 4 + 2], $f[$i * 4 + 3], $price);
+        $player[] = draw_item($f[$i * 4], $f[$i * 4 + 1], $price, $pr);
+        $bot[] = draw_item($f[$i * 4 + 2], $f[$i * 4 + 3], $price, $pr);
     }
     $sum = fn($items) => round2(array_sum(array_column($items, 'value')));
     $pt = $sum($player);
     $bt = $sum($bot);
-    $result = $pt > $bt ? 'win' : ($pt == $bt ? 'push' : 'loss');
-    $m = $result === 'win' ? ($pt + $bt) / $round['bet'] : 0;
-    return ['player' => $player, 'bot' => $bot, 'playerTotal' => $pt, 'botTotal' => $bt]
-        + finish($c, $round, $m, $result, ['case' => $caseId, 'rounds' => $rounds, 'pt' => $pt, 'bt' => $bt]);
+    $result = $pt == $bt ? 'push' : (($crazy ? $pt < $bt : $pt > $bt) ? 'win' : 'loss');
+    $m = $result === 'win' ? ($pt + $bt) / $round['bet'] : ($result === 'push' ? 1 : 0);
+    return ['player' => $player, 'bot' => $bot, 'playerTotal' => $pt, 'botTotal' => $bt, 'mode' => $crazy ? 'crazy' : 'classic']
+        + finish($c, $round, $m, $result, ['case' => $caseId, 'rounds' => $rounds, 'mode' => $crazy ? 'crazy' : 'classic', 'pt' => $pt, 'bt' => $bt]);
 }
 
 // ───────────────────────────── Crash ─────────────────────────────
