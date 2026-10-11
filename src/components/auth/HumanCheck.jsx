@@ -61,8 +61,13 @@ export default function HumanCheck() {
   if (cfg.mode === 'turnstile') {
     return (
       <div className="mb-4">
-        <div ref={box} className="min-h-[65px]" />
-        {state === 'error' && <p className="mt-1 text-xs text-neon-red">{t('auth.human.error')}</p>}
+        <div ref={box} className={state === 'error' ? 'hidden' : 'min-h-[65px]'} />
+        {state === 'error' && (
+          <button type="button" onClick={load} className="flex w-full items-center gap-3 rounded-xl bg-neon-red/10 px-3.5 py-3 text-left text-sm ring-1 ring-inset ring-neon-red/40">
+            <ShieldCheck className="h-5 w-5 shrink-0 text-neon-red" />
+            <span className="flex-1 font-semibold text-slate-200">{t('auth.human.retry')}</span>
+          </button>
+        )}
       </div>
     )
   }

@@ -1,6 +1,17 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.9",
+    "date": "2026-10-11",
+    "emoji": "🛡️",
+    "colors": ["#22d3ee", "#ef4444", "#a78bfa"],
+    "title": { "en": "Cleaner anti-bot check", "id": "Cek anti-bot lebih rapi" },
+    "tagline": { "en": "A failed check now shows a clear retry button.", "id": "Cek yang gagal sekarang menampilkan tombol coba lagi yang jelas." },
+    "items": [
+      { "tag": "fix", "en": "Login: when the anti-bot check cannot load, the broken white box is replaced by a Try again button.", "id": "Login: saat cek anti-bot gagal dimuat, kotak putih rusak diganti tombol Coba lagi." }
+    ]
+  },
+  {
     "version": "2.9.8",
     "date": "2026-10-11",
     "emoji": "💎",
