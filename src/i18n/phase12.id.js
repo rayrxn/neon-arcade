@@ -3,10 +3,10 @@ export default {
   updates: {
     title: 'Update log', older: 'Update sebelumnya', ok: 'Mantap!', reload: 'Muat ulang untuk update', live: 'Baru',
     released: 'rilis {time}',
-    releaseTitle: 'Neon Arcade 1.0.0', journey: 'Perjalanan · {n} update', journeyStart: 'Awal mula: 1.0.0 BETA', watchTrailer: 'Tonton trailer', soundOn: 'Nyalakan suara', skip: 'Lewati', tags: { new: 'Baru', improve: 'Lebih baik', fix: 'Diperbaiki' },
+    releaseTitle: 'Neon Arcade 1.0.0', journey: 'Perjalanan · {n} update', journeyStart: 'Awal mula: 1.0.0 BETA', watchTrailer: 'Tonton trailer', soundOn: 'Nyalakan suara', skip: 'Lewati', holdSkip: 'Tahan Space atau layar untuk lewati', tags: { new: 'Baru', improve: 'Lebih baik', fix: 'Diperbaiki' },
   },
   exchange: {
-    rateAg: '1 AG = Rp1.000', rateAc: '100 AC = Rp1',
+    agOnly: 'Hanya AG yang bisa ditarik. Arcade Chips tetap di arcade.', rateAg: '1 AG = Rp1.000', rateAc: '100 AC = Rp1',
     gross: 'Nilai tukar', fee: 'Biaya admin',
     accountLabel: 'Nomor rekening {bank}', accountPlaceholder: 'Nomor rekening {n} digit', phoneLabel: 'Nomor HP {method}',
     holderLabel: 'Nama pemilik rekening', holderPlaceholder: 'Sesuai nama di bank', secure: 'Terenkripsi dan terlindungi',

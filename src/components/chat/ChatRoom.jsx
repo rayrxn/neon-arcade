@@ -1,3 +1,4 @@
+import { botChat, botUser, useBotsEnabled } from '@/services/bots'
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -90,6 +91,7 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
             {message.badge && COSMETICS[message.badge] && <span className="rounded bg-white/[0.06] px-1 text-[10px] font-bold text-neon-gold" title={COSMETICS[message.badge].name?.en}>{COSMETICS[message.badge].glyph}</span>}
             {!compact && <span className="text-xs text-slate-500">@{author?.username}</span>}
             {author?.isDemo && <DemoTag />}
+            {author?.bot && <span className="self-center rounded bg-white/10 px-1 text-[9px] font-black tracking-wider text-slate-400">BOT</span>}
             <span className="text-[11px] text-slate-600">{formatTime(message.at)}</span>
           </p>
         )}
@@ -102,7 +104,7 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
           </p>
         )}
       </div>
-      {mod && !message.deleted && (
+      {mod && !message.deleted && !author?.bot && (
         <div className="absolute right-20 top-2 hidden gap-1 group-hover:flex">
           <button onClick={() => onModerate({ kind: 'delete', message, author })} className="rounded-md p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-neon-red" title={t('chat.mod.delete')} aria-label={t('chat.mod.delete')}>
             <Trash2 className="h-3.5 w-3.5" />
@@ -114,7 +116,7 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
           )}
         </div>
       )}
-      {!compact && !mine && !message.deleted && (
+      {!compact && !mine && !message.deleted && !author?.bot && (
         <div className="absolute right-3 top-2 hidden gap-1 group-hover:flex group-focus-within:flex">
           {author && !author.isDemo && (
             <button onClick={() => onBlock(author)} className="rounded-md p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-white focus-ring" title={t('chat.block')} aria-label={t('chat.block')}>
@@ -143,14 +145,16 @@ export default function ChatRoom({ compact = false, limit, className, room = 'gl
   const blocks = usePlatformStore((s) => (me ? s.blocks[me.id] ?? EMPTY : EMPTY))
   const slowMode = usePlatformStore((s) => s.chatSettings?.slowMode ?? 0)
   const users = useAuthStore((s) => s.users)
-  const now = useNow(30_000)
+  const now = useNow(10_000)
+  const botsOn = useBotsEnabled()
 
   const byId = useMemo(() => Object.fromEntries(Object.values(users).map((u) => [u.id, u])), [users])
   const jackpotById = useMemo(() => Object.fromEntries(jackpots.map((j) => [j.id, j])), [jackpots])
   const visible = useMemo(() => {
-    const list = visibleMessages({ chat, hidden: { [me?.id]: hidden }, blocks: { [me?.id]: blocks } }, me?.id).filter((m) => (m.room ?? 'global') === room)
+    let list = visibleMessages({ chat, hidden: { [me?.id]: hidden }, blocks: { [me?.id]: blocks } }, me?.id).filter((m) => (m.room ?? 'global') === room)
+    if (botsOn && room === 'global') list = [...list, ...botChat(now).filter((m) => !blocks.includes(m.userId))].sort((a, b) => a.at - b.at)
     return limit ? list.slice(-limit) : list
-  }, [chat, hidden, blocks, limit, me?.id, room])
+  }, [chat, hidden, blocks, limit, me?.id, room, botsOn, now])
 
   const [text, setText] = useState('')
   const [error, setError] = useState(null)
@@ -216,7 +220,7 @@ export default function ChatRoom({ compact = false, limit, className, room = 'gl
             if (m.type === 'jackpot') return <JackpotMessage key={m.id} jackpot={jackpotById[m.jackpotId]} now={now} />
             const prev = visible[i - 1]
             const grouped = prev && prev.type === 'user' && prev.userId === m.userId && m.at - prev.at < 5 * 60_000
-            return <UserMessage key={m.id} message={m} author={byId[m.userId]} me={me} compact={compact} grouped={grouped} onReport={report} onModerate={setModAction} onBlock={block} />
+            return <UserMessage key={m.id} message={m} author={m.bot ? botUser(m.userId) : byId[m.userId]} me={me} compact={compact} grouped={grouped} onReport={report} onModerate={setModAction} onBlock={block} />
           })
         )}
       </div>

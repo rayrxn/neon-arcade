@@ -4,7 +4,7 @@ import clsx from 'clsx'
 export default function Logo({ compact = false, className }) {
   const gid = `logo-${useId().replace(/:/g, '')}`
   return (
-    <span className={clsx('inline-flex items-center gap-2.5', className)}>
+    <span className={clsx('inline-flex items-center gap-2', className)}>
       <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden>
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
@@ -17,8 +17,8 @@ export default function Logo({ compact = false, className }) {
         <circle cx="16" cy="18.6" r="2.3" fill="#ffc83d" />
       </svg>
       {!compact && (
-        <span className="flex items-center whitespace-nowrap font-display text-[15px] font-extrabold leading-none tracking-normal text-white">
-          NEON<span className="mx-[3px] inline-block -skew-x-12 text-neon-cyan">/</span>ARCADE
+        <span className="flex items-center whitespace-nowrap font-display text-[13.5px] font-extrabold leading-none tracking-tight text-white">
+          NEON<span className="mx-[2px] inline-block text-neon-cyan">/</span>ARCADE
         </span>
       )}
     </span>

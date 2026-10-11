@@ -29,7 +29,7 @@ export default function Header({ onMenu }) {
 
   return (
     <header className="fixed inset-x-0 top-0 z-20 lg:left-[var(--sb-w,248px)] lg:transition-[left] lg:duration-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      <div className="flex h-16 items-center gap-2 border-b hairline bg-ink-950/80 px-3 backdrop-blur-xl sm:gap-3 sm:px-6 lg:px-8">
+      <div className="flex h-16 items-center gap-2 border-b hairline bg-ink-950/80 px-3 backdrop-blur-xl sm:gap-3 sm:px-6 lg:px-5">
         <button
           onClick={onMenu}
           className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-300 transition hover:bg-white/5 hover:text-white lg:hidden"

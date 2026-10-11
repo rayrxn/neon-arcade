@@ -4,24 +4,20 @@ import CoinIcon from './CoinIcon'
 import AnimatedNumber from './AnimatedNumber'
 import { formatCoins } from '@/utils/format'
 
-/** Arcade Gem (AG): a brilliant-cut violet gem with facets and a sparkle — clearly different from the gold chip. */
+/** Arcade Gem (AG): an octagonal step-cut gem seen from above — table, crown facets and a rim light. */
 export function GemIcon({ size = 20, className }) {
-  const gid = `gem-${useId().replace(/:/g, '')}`
+  const g = `gem-${useId().replace(/:/g, '')}`
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} className={clsx('shrink-0', className)} aria-hidden>
       <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f5e9ff" />
-          <stop offset="0.4" stopColor="#c084fc" />
-          <stop offset="1" stopColor="#6d28d9" />
-        </linearGradient>
+        <linearGradient id={`${g}a`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f0abfc" /><stop offset="0.5" stopColor="#a855f7" /><stop offset="1" stopColor="#4c1d95" /></linearGradient>
+        <linearGradient id={`${g}b`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset="0.6" stopColor="#e9d5ff" /><stop offset="1" stopColor="#c084fc" /></linearGradient>
       </defs>
-      <path d="M9 5 H23 L30 12 L16 29 L2 12 Z" fill={`url(#${gid})`} stroke="#4c1d95" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M2 12 H30 L16 29 Z" fill="#7c3aed" opacity="0.45" />
-      <path d="M9 5 L12 12 L16 5 L20 12 L23 5" fill="#faf5ff" opacity="0.5" />
-      <path d="M12 12 L16 29 L20 12" fill="none" stroke="#ede9fe" strokeOpacity="0.6" strokeWidth="0.8" />
-      <path d="M2 12 H30" stroke="#ede9fe" strokeOpacity="0.7" strokeWidth="0.8" />
-      <path d="M26 2.5 L26.8 4.6 L29 5.4 L26.8 6.2 L26 8.4 L25.2 6.2 L23 5.4 L25.2 4.6 Z" fill="#fff" />
+      <path d="M11 2 H21 L30 11 V21 L21 30 H11 L2 21 V11 Z" fill={`url(#${g}a)`} stroke="#3b0764" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M11 2 L13 9 L2 11 Z M21 2 L19 9 L30 11 Z M30 21 L23 19 L21 30 Z M2 21 L9 19 L11 30 Z" fill="#fff" opacity="0.18" />
+      <path d="M13 9 H19 L23 13 V19 L19 23 H13 L9 19 V13 Z" fill={`url(#${g}b)`} stroke="#7e22ce" strokeWidth="0.6" />
+      <path d="M11 2 L13 9 M21 2 L19 9 M30 11 L23 13 M30 21 L23 19 M21 30 L19 23 M11 30 L13 23 M2 21 L9 19 M2 11 L9 13" stroke="#f5d0fe" strokeOpacity="0.55" strokeWidth="0.7" />
+      <path d="M14 11 L17.5 11 L13 15.5 L13 12 Z" fill="#fff" opacity="0.85" />
     </svg>
   )
 }

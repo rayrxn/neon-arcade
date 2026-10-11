@@ -1,3 +1,4 @@
+import { useExtras } from '@/services/platform2'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -78,7 +79,7 @@ export default function SendModal({ open, onClose, initial = {} }) {
   const recipient = Object.values(users).find((u) => u.id === toUserId) ?? null
   const amount = Number(amountText.replace(/[^\d]/g, '')) || 0
   const balance = wallet?.[FIELD[currency]] ?? 0
-  const limits = TRANSFER_LIMITS[currency]
+  const limits = useExtras().loyalty?.transfer?.[currency] ?? TRANSFER_LIMITS[currency]
   const usedToday = me ? sentToday(me.id, currency) : 0
   const problem = me ? validateTransfer({ fromUserId: me.id, toUserId, currency, amount }) : null
   const isAG = currency === 'AG'

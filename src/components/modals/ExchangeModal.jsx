@@ -66,7 +66,7 @@ const slide = { initial: { opacity: 0, x: 16 }, animate: { opacity: 1, x: 0 }, e
 export default function ExchangeModal({ open, onClose, initialStep = 'amount' }) {
   const { t } = useT()
   const [step, setStep] = useState(initialStep) // amount | method | details | confirm | processing | prank
-  const [currency, setCurrency] = useState('AG')
+  const [currency] = useState('AG')
   const [amount, setAmount] = useState('')
   const [method, setMethod] = useState(null)
   const [account, setAccount] = useState('')
@@ -127,14 +127,10 @@ export default function ExchangeModal({ open, onClose, initialStep = 'amount' })
         {step === 'amount' && (
           <motion.div key="amount" {...slide}>
             <p className="text-sm text-slate-400">{t('exchange.subtitle')}</p>
-            <div className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-white/[0.04] p-1 ring-1 ring-inset ring-white/[0.06]">
-              {['AG', 'AC'].map((c) => (
-                <button key={c} type="button" onClick={() => setCurrency(c)} aria-pressed={currency === c} className={clsx('flex h-9 items-center justify-center gap-1.5 rounded-lg text-sm font-bold transition', currency === c ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-200')}>
-                  <CurrencyIcon currency={c} size={15} /> {c}
-                </button>
-              ))}
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] p-2 text-sm font-bold text-white ring-1 ring-inset ring-white/[0.06]">
+              <CurrencyIcon currency="AG" size={16} /> AG
             </div>
-            <p className="mt-2 text-center text-[11px] font-semibold text-slate-500">{currency === 'AG' ? t('exchange.rateAg') : t('exchange.rateAc')}</p>
+            <p className="mt-2 text-center text-[11px] font-semibold text-slate-500">{t('exchange.rateAg')} · {t('exchange.agOnly')}</p>
             <label className="mt-3 block text-xs font-semibold text-slate-400" htmlFor="exchange-amount">{t('exchange.amount')}</label>
             <div className={clsx('input-shell mt-1.5 flex items-center gap-2 px-3', amountError && '!border-neon-red/60')}>
               <CurrencyIcon currency={currency} size={18} />

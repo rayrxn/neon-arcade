@@ -3,10 +3,10 @@ export default {
   updates: {
     title: 'Update log', older: 'Earlier updates', ok: 'Nice!', reload: 'Reload to update', live: 'New',
     released: 'released {time}',
-    releaseTitle: 'Neon Arcade 1.0.0', journey: 'The journey · {n} updates', journeyStart: 'Where it all began: 1.0.0 BETA', watchTrailer: 'Watch trailer', soundOn: 'Sound on', skip: 'Skip', tags: { new: 'New', improve: 'Better', fix: 'Fixed' },
+    releaseTitle: 'Neon Arcade 1.0.0', journey: 'The journey · {n} updates', journeyStart: 'Where it all began: 1.0.0 BETA', watchTrailer: 'Watch trailer', soundOn: 'Sound on', skip: 'Skip', holdSkip: 'Hold Space or the screen to skip', tags: { new: 'New', improve: 'Better', fix: 'Fixed' },
   },
   exchange: {
-    rateAg: '1 AG = Rp1.000', rateAc: '100 AC = Rp1',
+    agOnly: 'Only AG can be withdrawn. Arcade Chips stay in the arcade.', rateAg: '1 AG = Rp1.000', rateAc: '100 AC = Rp1',
     gross: 'Exchange value', fee: 'Admin fee',
     accountLabel: '{bank} account number', accountPlaceholder: '{n}-digit account number', phoneLabel: '{method} phone number',
     holderLabel: 'Account holder name', holderPlaceholder: 'As written in your bank', secure: 'Encrypted and protected',

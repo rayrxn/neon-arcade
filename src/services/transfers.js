@@ -1,3 +1,4 @@
+import { getExtras } from '@/services/platform2'
 import { accountBlock, getCurrentUser, getUserById } from '@/store/useAuthStore'
 import { FIELD, useWalletStore } from '@/store/useWalletStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
@@ -28,10 +29,13 @@ export function sentToday(userId, currency, now = Date.now()) {
     .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
 }
 
+/** Limits for this player: from the server (grow with the Loyalty Card), falling back to the base limits. */
+export const transferLimits = (currency) => getExtras().loyalty?.transfer?.[currency] ?? TRANSFER_LIMITS[currency]
+
 /** Validasi yang sama dipakai form (realtime) dan service. Mengembalikan { code, vars } atau null. */
 export function validateTransfer({ fromUserId, toUserId, currency, amount }) {
   const wallet = useWalletStore.getState().wallets[fromUserId]
-  const limits = TRANSFER_LIMITS[currency]
+  const limits = transferLimits(currency)
   if (!toUserId) return { code: 'send.errors.noRecipient' }
   if (toUserId === fromUserId) return { code: 'send.errors.self' }
   if (!Number.isFinite(amount) || amount <= 0) return { code: 'errors.invalidAmount' }

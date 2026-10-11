@@ -107,7 +107,7 @@ function loyalty_view(array $u): array
         'xp' => $xp, 'card' => $card, 'floor' => $u['loyalty_floor'], 'override' => $u['loyalty_override'],
         'next' => $next ? $next['slug'] : null, 'nextXp' => $next ? (int) $next['xp_required'] : null,
         'maxBetAC' => bet_limits($u)['AC'], 'maxBetAG' => bet_limits($u)['AG'],
-        'perks' => card_perks($card),
+        'perks' => card_perks($card), 'transfer' => transfer_limits($u), 'convertCap' => convert_cap($u),
     ];
 }
 

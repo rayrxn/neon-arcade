@@ -198,8 +198,11 @@ export default function UpdateLog() {
   const latest = list[0]
   useEffect(() => {
     if (!latest || readSeen() === latest.version) return
-    if (isRelease(latest.version) && visible && me?.id && !trailerSeen(me.id)) trailer.play()
-    else show(latest, 'current', BUILD.at)
+    if (isRelease(latest.version) && visible) {
+      if (!me?.id) return // wait for sign-in: the trailer plays before the release log
+      if (!trailerSeen(me.id)) return trailer.play()
+    }
+    show(latest, 'current', BUILD.at)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latest?.version, visible, me?.id])
 

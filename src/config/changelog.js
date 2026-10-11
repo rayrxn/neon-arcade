@@ -13,6 +13,11 @@ export default [
       { "tag": "improve", "en": "A new update log with the whole journey from 1.0.0 BETA to today.", "id": "Update log baru dengan seluruh perjalanan dari 1.0.0 BETA sampai sekarang." },
       { "tag": "improve", "en": "Slice: swipe across a fruit to cut it, like a real fruit slicer.", "id": "Slice: geser melewati buah untuk memotongnya, seperti fruit slicer sungguhan." },
       { "tag": "improve", "en": "Turned-off games show a proper page instead of a pop-up.", "id": "Game yang dimatikan menampilkan halaman sendiri, bukan pop-up." },
+      { "tag": "improve", "en": "MAX bet now uses your Loyalty Card bet limit, not your whole balance.", "id": "Bet MAX sekarang mengikuti batas taruhan Loyalty Card, bukan seluruh saldo." },
+      { "tag": "improve", "en": "Withdrawals are AG only. AC→AG exchange and AG/AC transfer limits now grow with your Loyalty Card.", "id": "Penarikan hanya AG. Batas tukar AC→AG dan kirim AG/AC sekarang naik sesuai Loyalty Card." },
+      { "tag": "improve", "en": "Hold Space (or hold the screen) for 3 seconds to skip the trailer.", "id": "Tahan Space (atau tahan layar) 3 detik untuk melewati trailer." },
+      { "tag": "improve", "en": "New Arcade Gems icon, tighter logo and header.", "id": "Ikon Arcade Gems baru, logo dan header lebih rapat." },
+      { "tag": "new", "en": "House players (tagged BOT) now chat in Global Chat.", "id": "Pemain house (bertanda BOT) sekarang ikut ngobrol di Global Chat." },
       { "tag": "fix", "en": "Snake: the lose sound plays together with the result. The NEON/ARCADE logo no longer overlaps.", "id": "Snake: suara kalah sekarang bersamaan dengan hasil. Logo NEON/ARCADE tidak lagi bertumpuk." }
     ]
   },

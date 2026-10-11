@@ -5,9 +5,10 @@
  */
 import { usePlatformStore } from '@/store/usePlatformStore'
 
-const NAMES = ['NeonFox', 'LuckyLuna', 'RazorKid', 'PixelPanda', 'MoonWalker', 'Zyra', 'KopiSusu', 'BudiGG', 'SiregarX', 'TokekMas', 'Nayla77', 'RioRush',
-  'Juragan', 'CryptoCat', 'AstraNova', 'Kenji', 'Dewi_ok', 'Bagas', 'Mbak_Rara', 'Gilang99', 'Sasuke_id', 'Wulan', 'HokiTerus', 'NgopiDulu', 'Arka', 'Vexa',
-  'Tari', 'Fajar', 'Indah', 'Yoga_', 'Kirana', 'Raka', 'Salsa', 'Dimas', 'Putri', 'Jojo', 'Bima', 'Citra', 'Rendy', 'Mika']
+const NAMES = ['rizky_pratama', 'ayu.lestari', 'dimas_ardi', 'nadia.putri', 'bagus_s', 'sarah.wln', 'fajar.nugraha', 'intan_ps', 'rendy.kurnia', 'citra_dewi',
+  'andre.gun', 'salsabila_r', 'yoga.pranata', 'nabila_az', 'kevin.hs', 'dinda.mrt', 'arif_rahman', 'putri.ayuu', 'gilang.ramadhan', 'tasya_ml',
+  'reza.fahlevi', 'mega_sari', 'ilham.akbar', 'vania.kr', 'bayu_wicak', 'anisa.fitri', 'hendra_sp', 'laras.ati', 'farhan_m', 'sinta.rhm',
+  'aldi.saputra', 'winda_ys', 'teguh.prasetyo', 'amelia.zs', 'rafi_hdyt', 'nurul.aini', 'yudha_p', 'clara.wjy', 'eko_setiawan', 'mira.lsr']
 const PRESETS = ['cyan', 'violet', 'sunset', 'mint', 'rose', 'gold']
 const GAMES = ['crash', 'plinko', 'mines', 'dice', 'roulette', 'blackjack', 'sweet', 'cross', 'tower', 'keno', 'coinflip', 'limbo', 'snake', 'slice', 'tarot', 'pump']
 const BETS = [100, 200, 250, 500, 1000, 2000, 5000, 10000, 25000]
@@ -54,3 +55,23 @@ export function botLive(slug, now = Date.now()) {
   }
   return rows
 }
+
+const LINES = ['gas lagi ah', 'crash tadi nyampe 12x anjir telat cashout', 'ada yang main plinko? lagi gacor nih', 'mines 3 bom aman sampe 6 tile wkwk',
+  'pagi semua', 'malem guys', 'akhirnya naik gold card', 'quest harian udah beres semua', 'snake lagi jahat banget dari tadi', 'slice anggur 4% kena dong',
+  'tower lantai 7 jatoh, sakit', 'ada yg tau cara dapet AG cepet?', 'tuker AC ke AG dulu ah', 'blackjack dapet 21 tiga kali berturut2', 'roulette merah terus dari tadi',
+  'hoki banget hari ini', 'rugi dikit gpp', 'case battle siapa ikut?', 'pump tadi meledak di 1.9x', 'dice 50% aja aman', 'limbo 100x kena sekali seumur hidup',
+  'gg', 'wkwkwk', 'mantap', 'semangat semua', 'coinflip 5x beruntun menang', 'trailer 1.0 keren juga', 'akhirnya keluar beta', 'keno 8 angka kena 6',
+  'lagi ngumpulin buat VIP', 'frame baru di shop bagus', 'sweet free spin dapet 40x', 'horse race kuda no 3 juara terus', 'udah klaim daily belum?', 'brb makan']
+
+/** Global chat lines from the house bots: one every ~40 s on average, deterministic so every viewer sees the same chat. */
+export function botChat(now = Date.now(), count = 30) {
+  const step = 20_000
+  const out = []
+  for (let s = Math.floor(now / step); out.length < count && s > Math.floor(now / step) - 400; s--) {
+    if (rnd(s, 7) > 0.5) continue
+    const i = Math.floor(rnd(s, 8) * NAMES.length)
+    out.push({ id: `botmsg-${s}`, type: 'user', room: 'global', userId: `bot-${i}`, text: LINES[Math.floor(rnd(s, 9) * LINES.length)], at: s * step + Math.floor(rnd(s, 10) * step), bot: true })
+  }
+  return out.filter((m) => m.at <= now).reverse()
+}
+export const botUser = (id) => bot(Number(String(id).slice(4)))
