@@ -144,9 +144,9 @@ function applyUsers(list) {
   useAuthStore.setState((s) => {
     const users = {}
     for (const [k, u] of Object.entries(s.users)) if (u.id === meId) users[k] = u
-    const myEmail = s.session?.email
-    // One email can hold up to 3 accounts: never let another account on my email take my key.
-    for (const u of list) if (u.id !== meId) users[(u.email && u.email !== myEmail ? u.email : null) || u.key || `u:${u.id}`] = u
+    // Other players are keyed by id, never by email: one email can hold up to 3 accounts, and an alt on the same email
+    // must never take the signed-in account's slot (that made the admin panel see a non-staff "me").
+    for (const u of list) if (u.id !== meId) users[`u:${u.id}`] = u
     return { users }
   })
 }
@@ -260,7 +260,8 @@ export function applyUser(user) {
     const users = { ...s.users }
     // Hapus salinan lama akun ini (mis. email diganti).
     for (const [k, u] of Object.entries(users)) if (u.id === user.id && k !== user.email) delete users[k]
-    users[user.email] = { ...users[user.email], ...user }
+    const prev = users[user.email]
+    users[user.email] = prev?.id === user.id ? { ...prev, ...user } : user // a stale alt on the same email is replaced, not merged
     return { users, session: { id: 'server', userId: user.id, email: user.email, createdAt: Date.now(), expiresAt: Date.now() + 7 * 86_400_000 } }
   })
 }
