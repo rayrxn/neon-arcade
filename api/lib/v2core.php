@@ -617,6 +617,7 @@ function admin_v3_action(array $me, string $name, array $a)
         case 'setLuck':
         case 'clearLuck':
         case 'setCaptcha':
+        case 'setBots':
             return admin_v4_action($me, $name, $a);
         case 'clearErrors': {
             require_user_perm($me, 'system.manage');
@@ -816,6 +817,13 @@ function admin_v4_action(array $me, string $name, array $a): ?array
             kv_set('crash_sched', $s);
             audit_log($me, 'crash.unschedule', null, 'round ' . (int) ($a['round'] ?? 0), null, null, null, $r);
             return crash_view();
+        }
+        case 'setBots': {
+            require_user_perm($me, 'system.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            kv_set('bots', ['enabled' => !empty($a['enabled'])]);
+            audit_log($me, 'bots.set', null, 'bots', null, null, ['enabled' => !empty($a['enabled'])], $r);
+            return ['enabled' => !empty($a['enabled'])];
         }
         case 'setCaptcha': {
             require_user_perm($me, 'system.manage');
