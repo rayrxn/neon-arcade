@@ -222,7 +222,8 @@ function captcha_cfg(): array
     $mode = $GLOBALS['NEON_CAPTCHA_MODE'] ?? ($k['mode'] ?? ($c['mode'] ?? 'auto'));
     $secret = (string) (($k['secret'] ?? '') !== '' ? $k['secret'] : ($c['turnstile_secret'] ?? ''));
     $site = (string) (($k['site'] ?? '') !== '' ? $k['site'] : ($c['turnstile_site'] ?? ''));
-    if ($mode === 'auto') $mode = $secret !== '' && $site !== '' ? 'turnstile' : 'pow';
+    // Cloudflare Turnstile removed (v2.9.10): every mode except 'off' is the built-in proof-of-work check.
+    if ($mode !== 'off') $mode = 'pow';
     return ['mode' => $mode, 'site' => $site, 'secret' => $secret, 'bits' => (int) ($c['pow_bits'] ?? 16)];
 }
 
@@ -237,7 +238,6 @@ function captcha_challenge(): array
 {
     $cfg = captcha_cfg();
     if ($cfg['mode'] === 'off') return ['mode' => 'off'];
-    if ($cfg['mode'] === 'turnstile') return ['mode' => 'turnstile', 'siteKey' => $cfg['site']];
     $payload = rtrim(strtr(base64_encode(jenc(['n' => rand_hex(12), 'b' => $cfg['bits'], 'e' => time() + 300])), '+/', '-_'), '=');
     return ['mode' => 'pow', 'challenge' => $payload . '.' . hash_hmac('sha256', $payload, captcha_key()), 'bits' => $cfg['bits']];
 }
@@ -261,16 +261,6 @@ function captcha_require(): void
     if ($cfg['mode'] === 'off') return;
     $c = arg('captcha');
     if (!is_array($c)) fail('auth.errors.captcha', [], 400);
-    if ($cfg['mode'] === 'turnstile') {
-        $token = (string) ($c['token'] ?? '');
-        if ($token === '' || strlen($token) > 2048) fail('auth.errors.captcha');
-        $ctx = stream_context_create(['http' => ['method' => 'POST', 'timeout' => 6, 'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-            'content' => http_build_query(['secret' => $cfg['secret'], 'response' => $token, 'remoteip' => client_ip() ?? ''])]]);
-        $res = @file_get_contents('https://challenges.cloudflare.com/turnstile/v0/siteverify', false, $ctx);
-        $ok = $res !== false && !empty(json_decode($res, true)['success']);
-        if (!$ok) fail('auth.errors.captcha');
-        return;
-    }
     $challenge = (string) ($c['challenge'] ?? '');
     $solution = (string) ($c['solution'] ?? '');
     [$payload, $sig] = array_pad(explode('.', $challenge, 2), 2, '');
@@ -831,12 +821,11 @@ function admin_v4_action(array $me, string $name, array $a): ?array
             require_user_perm($me, 'system.manage');
             $r = adm_reason($a['reason'] ?? '');
             $mode = (string) ($a['mode'] ?? '');
-            if (!in_array($mode, ['config', 'pow', 'turnstile'], true)) fail('admin.errors.invalid');
+            if (!in_array($mode, ['config', 'pow'], true)) fail('admin.errors.invalid');
             $k = kv_get('captcha');
             $next = ['mode' => $mode === 'config' ? null : $mode, 'site' => $k['site'] ?? '', 'secret' => $k['secret'] ?? ''];
             if (isset($a['siteKey'])) $next['site'] = mb_substr(trim((string) $a['siteKey']), 0, 120);
             if (isset($a['secret']) && trim((string) $a['secret']) !== '') $next['secret'] = mb_substr(trim((string) $a['secret']), 0, 200);
-            if ($mode === 'turnstile' && ($next['site'] === '' || $next['secret'] === '')) fail('admin.errors.captchaKeys');
             kv_set('captcha', $next);
             audit_log($me, 'captcha.set', null, 'captcha', null, null, ['mode' => $mode, 'site' => $next['site'], 'secret' => $next['secret'] !== '' ? 'set' : ''], $r);
             return captcha_admin_view();
