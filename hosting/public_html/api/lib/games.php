@@ -8,6 +8,7 @@ const MAX_MULTIPLIER = [
     'dice' => 49.5, 'limbo' => 1000000, 'coinflip' => 1.98, 'plinko' => 1000, 'roulette' => 36, 'case-opening' => 50,
     'case-battle' => 100, 'crash' => 1000000000, 'mines' => 6000000, 'blackjack' => 2.5,
     'keno' => 1000, 'tarot' => 110, 'sweet' => 5000, 'horse' => 30, 'tower' => 1000000, 'cross' => 1000000, 'pump' => 1000000,
+    'slice' => 1000000, 'moles' => 1000000, 'layer' => 1000000, 'snake' => 1000000,
 ];
 const STATUS_OF = ['win' => 'WON', 'loss' => 'LOST', 'push' => 'DRAW'];
 
@@ -689,6 +690,7 @@ function open_round(Ctx $c, array $a): ?array
     if ($game === 'mines') return ['id' => $r['id'], 'mines' => $r['mines'], 'revealed' => $r['revealed'], 'bet' => $r['bet'], 'multiplier' => mines_multiplier($r['mines'], count($r['revealed']))];
     if ($game === 'blackjack') return ['done' => false] + bj_view($r, false);
     if (isset(LADDER[$game])) return ladder_public($r);
+    if ($game === 'snake') return snake_public($r);
     return null;
 }
 
@@ -702,19 +704,24 @@ const GAME_ACTIONS = [
     'tower-start' => 'tower_start', 'tower-step' => 'tower_step', 'tower-cashout' => 'tower_cashout',
     'cross-start' => 'cross_start', 'cross-step' => 'cross_step', 'cross-cashout' => 'cross_cashout',
     'pump-start' => 'pump_start', 'pump-step' => 'pump_step', 'pump-cashout' => 'pump_cashout',
+    'slice-start' => 'slice_start', 'slice-step' => 'slice_step', 'slice-cashout' => 'slice_cashout',
+    'moles-start' => 'moles_start', 'moles-step' => 'moles_step', 'moles-cashout' => 'moles_cashout',
+    'layer-start' => 'layer_start', 'layer-step' => 'layer_step', 'layer-cashout' => 'layer_cashout',
+    'snake-start' => 'snake_start', 'snake-roll' => 'snake_roll', 'snake-cashout' => 'snake_cashout',
 ];
 
 /** Ronde terbuka (Crash/Mines/Blackjack) untuk resume setelah refresh — tanpa rahasia server. */
 function open_rounds_view(string $userId): array
 {
     $out = [];
-    foreach (q("SELECT game, state FROM game_sessions WHERE user_id = ? AND status = 'OPEN' AND game IN ('crash', 'mines', 'blackjack', 'tower', 'cross', 'pump')", [$userId])->fetchAll() as $row) {
+    foreach (q("SELECT game, state FROM game_sessions WHERE user_id = ? AND status = 'OPEN' AND game IN ('crash', 'mines', 'blackjack', 'tower', 'cross', 'pump', 'slice', 'moles', 'layer', 'snake')", [$userId])->fetchAll() as $row) {
         $r = jdec($row['state'], []);
         if (!$r) continue;
         if ($row['game'] === 'crash') $out['crash'] = ['id' => $r['id'], 'startedAt' => $r['startedAt'], 'autoCashout' => $r['autoCashout']];
         if ($row['game'] === 'mines') $out['mines'] = ['id' => $r['id'], 'mines' => $r['mines'], 'revealed' => $r['revealed'], 'bet' => $r['bet'], 'multiplier' => mines_multiplier($r['mines'], count($r['revealed']))];
         if ($row['game'] === 'blackjack') $out['blackjack'] = ['done' => false] + bj_view($r, false);
         if (isset(LADDER[$row['game']])) $out[$row['game']] = ladder_public($r);
+        if ($row['game'] === 'snake') $out['snake'] = snake_public($r);
     }
     return $out;
 }
