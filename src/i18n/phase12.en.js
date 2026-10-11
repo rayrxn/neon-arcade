@@ -3,7 +3,7 @@ export default {
   updates: {
     title: 'Update log', older: 'Earlier updates', ok: 'Nice!', reload: 'Reload to update', live: 'New',
     released: 'released {time}',
-    releaseTitle: 'Neon Arcade 1.0.0', journey: 'The journey · {n} updates', journeyStart: 'Where it all began: 1.0.0 BETA', watchTrailer: 'Watch trailer', soundOn: 'Sound on', skip: 'Skip', holdSkip: 'Hold Space or the screen to skip', tags: { new: 'New', improve: 'Better', fix: 'Fixed' },
+    releaseTitle: 'Neon Arcade 1.0.0', journey: 'The journey · {n} updates', journeyStart: 'Where it all began: 1.0.0 BETA', watchTrailer: 'Watch trailer', soundOn: 'Sound on', skip: 'Skip', holdSkip: 'Hold Space for 3 seconds to skip', holdSkipTouch: 'Press and hold for 3 seconds to skip', hold: 'Hold', tags: { new: 'New', improve: 'Better', fix: 'Fixed' },
   },
   exchange: {
     agOnly: 'Only AG can be withdrawn. Arcade Chips stay in the arcade.', rateAg: '1 AG = Rp1.000', rateAc: '100 AC = Rp1',

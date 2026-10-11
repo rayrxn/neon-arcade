@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Crown, ExternalLink, Flame, Gem, WalletCards } from 'lucide-react'
+import { ArrowRight, Crown, ExternalLink, Flame, Gem, Play, WalletCards } from 'lucide-react'
 import clsx from 'clsx'
 import { useCatalog, useExtras } from '@/services/platform2'
 import { SERVER_MODE } from '@/config/runtime'
 import { formatLeft } from '@/utils/format'
 import { useNow } from '@/hooks/useNow'
 import { useT } from '@/i18n'
+import { useRelease } from '@/config/release'
+import { useTrailer } from '@/components/updates/UpdateLog'
 
 const ROBLOX = 'https://www.roblox.com/games/87122632491799/Merge-Inc'
 
@@ -22,8 +24,13 @@ export default function EventBanner() {
   const now = useNow(60_000)
   const [i, setI] = useState(0)
   const [paused, setPaused] = useState(false)
+  const release = useRelease()
 
   const slides = [
+    release.visible && {
+      key: 'release', onClick: () => useTrailer.getState().play(), icon: Play, tone: 'event--release',
+      eyebrow: t('event.release.eyebrow'), title: t('event.release.title'), body: t('event.release.body'), cta: t('event.release.cta'),
+    },
     pass && {
       key: 'pass', to: '/pass', icon: Flame, tone: 'event--pass',
       eyebrow: t('event.pass.eyebrow', { id: pass.seasonId, time: formatLeft(pass.endAt - now) }),
@@ -59,8 +66,8 @@ export default function EventBanner() {
   if (!SERVER_MODE || !n) return null
   const s = slides[i % n]
   const Icon = s.icon
-  const Cta = s.href ? 'a' : Link
-  const ctaProps = s.href ? { href: s.href, target: '_blank', rel: 'noreferrer noopener' } : { to: s.to }
+  const Cta = s.onClick ? 'button' : s.href ? 'a' : Link
+  const ctaProps = s.onClick ? { type: 'button', onClick: s.onClick } : s.href ? { href: s.href, target: '_blank', rel: 'noreferrer noopener' } : { to: s.to }
 
   return (
     <section

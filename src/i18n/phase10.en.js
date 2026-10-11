@@ -61,6 +61,7 @@ export default {
   },
   popup: { ok: 'Got it', more: 'more', fromStaff: 'From the Neon Arcade team', fromModeration: 'Moderation notice' },
   event: {
+    release: { eyebrow: 'Neon Arcade 1.0.0', title: 'Watch the release video', body: 'Two minutes: the new logo, every page, the loyalty cards, VVIP and the 36 updates that got us here.', cta: 'Watch release video' },
     pass: { eyebrow: 'Season {id} · {time} left', title: 'Battle Pass is live', body: 'You’re on tier {tier}. Play any game to climb and claim rewards on the free track.', bodyPremium: 'Tier {tier} on the premium track. Claim your rewards before the season ends.', cta: 'Open Battle Pass' },
     vvip: { eyebrow: 'Membership', title: 'Go VVIP', body: 'Daily and weekly bonuses, higher bet limits, 25% off the Shop, the premium pass and your own manager.', cta: 'See perks' },
     member: { title: 'Your perks are waiting', body: 'Claim today’s member bonus and this week’s reward.', cta: 'Claim bonuses' },

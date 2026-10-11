@@ -3,9 +3,9 @@ import { motion } from 'framer-motion'
 import { Volume2 } from 'lucide-react'
 import { useT } from '@/i18n'
 
-export const TRAILER_SRC = '/neon-arcade-1.0.0.mp4'
+export const TRAILER_SRC = '/neon-arcade-1.0.0-reel.mp4'
 const HOLD_MS = 3000
-const key = (uid) => `neon-arcade:trailer-seen:${uid}`
+const key = (uid) => `neon-arcade:trailer2-seen:${uid}`
 export const trailerSeen = (uid) => {
   try { return localStorage.getItem(key(uid)) === '1' } catch { return false }
 }
@@ -69,33 +69,40 @@ export default function ReleaseTrailer({ userId, onDone }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const R = 38
-  const C = 2 * Math.PI * R
+  // Skip control: a pill keycap at the bottom centre; the ring starts at the top middle, runs clockwise and closes there.
+  const touch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+  const PW = 300, PH = 64, SW = 4
+  const r = (PH - SW) / 2, x0 = SW / 2, y0 = SW / 2, x1 = PW - SW / 2, y1 = PH - SW / 2, cx = PW / 2
+  const ring = `M${cx} ${y0} H${x1 - r} A${r} ${r} 0 0 1 ${x1 - r} ${y1} H${x0 + r} A${r} ${r} 0 0 1 ${x0 + r} ${y0} H${cx}`
+  const stop = (e) => e.preventDefault()
   return (
     <motion.div
       className="fixed inset-0 z-[90] grid select-none place-items-center bg-black"
+      style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', touchAction: 'none' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      onContextMenu={stop}
       onPointerDown={() => { holding.current = true }}
       onPointerUp={() => { holding.current = false }}
       onPointerLeave={() => { holding.current = false }}
       onPointerCancel={() => { holding.current = false }}
     >
-      <video ref={ref} src={TRAILER_SRC} playsInline onEnded={finish} onError={finish} className="pointer-events-none h-full w-full object-contain" />
+      <video ref={ref} src={TRAILER_SRC} playsInline onEnded={finish} onError={finish} onContextMenu={stop} controlsList="nodownload noplaybackrate noremoteplayback" disablePictureInPicture disableRemotePlayback
+        className="pointer-events-none h-full w-full object-contain" style={{ WebkitTouchCallout: 'none' }} />
       {muted && (
         <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => { ref.current.muted = false; setMuted(false) }} className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold text-white backdrop-blur hover:bg-white/25">
           <Volume2 className="h-4 w-4" /> {t('updates.soundOn')}
         </button>
       )}
-      <div className="pointer-events-none absolute bottom-6 right-6 flex items-center gap-3">
-        <span className="text-sm font-semibold text-white/80 drop-shadow">{t('updates.holdSkip')}</span>
-        <div className="relative grid h-24 w-24 place-items-center">
-          <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden>
-            <circle cx="50" cy="50" r={R} fill="rgba(0,0,0,0.45)" stroke="rgba(255,255,255,0.18)" strokeWidth="6" />
-            <circle cx="50" cy="50" r={R} fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - progress)} />
+      <div className="pointer-events-none absolute inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-2">
+        <div className="relative" style={{ width: PW, height: PH, maxWidth: '80vw' }}>
+          <svg viewBox={`0 0 ${PW} ${PH}`} className="absolute inset-0 h-full w-full" aria-hidden>
+            <path d={ring} fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.28)" strokeWidth={SW} />
+            <path d={ring} fill="none" stroke="#fff" strokeWidth={SW} strokeLinecap="round" pathLength={1} strokeDasharray="1 1" strokeDashoffset={1 - progress} />
           </svg>
-          <span className="relative rounded-md border border-slate-300 bg-white px-2.5 py-1.5 font-mono text-[11px] font-black tracking-wider text-slate-800 shadow-[0_3px_0_#94a3b8]" style={{ transform: `translateY(${progress > 0 ? 2 : 0}px)` }}>SPACE</span>
+          <span className="absolute inset-0 grid place-items-center text-xl font-bold tracking-wide text-white" style={{ transform: `scale(${progress > 0 ? 0.96 : 1})` }}>{touch ? t('updates.hold') : 'Space'}</span>
         </div>
+        <span className="text-xs font-semibold text-white/60">{t(touch ? 'updates.holdSkipTouch' : 'updates.holdSkip')}</span>
       </div>
     </motion.div>
   )

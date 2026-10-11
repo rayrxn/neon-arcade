@@ -7,7 +7,7 @@ import { AppError } from '@/utils/errors'
 import { USERNAME_RE } from '@/utils/validation'
 import { useWalletStore } from './useWalletStore'
 import { SERVER_MODE } from '@/config/runtime'
-import { api, applyPayload, clearSession, LOGOUT_KEY } from '@/services/server'
+import { api, applyPayload, clearSession, LOGOUT_KEY, sync } from '@/services/server'
 
 /**
  * Mock authentication + profil user.
@@ -43,6 +43,7 @@ export const useAuthStore = create(
       register: async ({ username, email, password }) => {
         if (SERVER_MODE) {
           const user = applyPayload(await api('auth/register', { username: username.trim(), email: normalizeEmail(email), password }))
+          sync() // shared data (release flag, chat…) right away, not on the next timer
           emit('USER_REGISTERED', { userId: user.id })
           return user
         }
@@ -89,6 +90,7 @@ export const useAuthStore = create(
       login: async ({ email, password }) => {
         if (SERVER_MODE) {
           const user = applyPayload(await api('auth/login', { email: normalizeEmail(email), password }))
+          sync() // shared data (release flag, chat…) right away, not on the next timer
           try {
             localStorage.setItem('neon-arcade:login', String(Date.now()))
           } catch {

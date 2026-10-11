@@ -21,6 +21,7 @@ export default [
       { "tag": "new", "en": "Settings: change your sign-in email while it is not verified yet.", "id": "Pengaturan: ganti email login selama belum diverifikasi." },
       { "tag": "new", "en": "One email can hold up to 3 accounts. Password reset lets you pick which account.", "id": "Satu email bisa dipakai sampai 3 akun. Reset password bisa pilih akunnya." },
       { "tag": "improve", "en": "New Neon Arcade logo: an Arcade Chip ring around the arcade A.", "id": "Logo Neon Arcade baru: cincin Arcade Chip mengelilingi huruf A arcade." },
+      { "tag": "new", "en": "A new 2-minute release video, also on the home banner. Hold the centre button 3 seconds to skip.", "id": "Video rilis baru 2 menit, juga ada di banner beranda. Tahan tombol tengah 3 detik untuk lewati." },
       { "tag": "fix", "en": "Snake: the lose sound plays together with the result. The NEON/ARCADE logo no longer overlaps.", "id": "Snake: suara kalah sekarang bersamaan dengan hasil. Logo NEON/ARCADE tidak lagi bertumpuk." }
     ]
   },

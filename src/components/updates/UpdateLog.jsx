@@ -196,15 +196,17 @@ export default function UpdateLog() {
   const me = useCurrentUser()
   const trailer = useTrailer()
   const latest = list[0]
+  // Server mode: wait for the first sync, so a published release is known before deciding what to show.
+  const synced = usePlatformStore((s) => !SERVER_MODE || s.release !== undefined)
   useEffect(() => {
-    if (!latest || readSeen() === latest.version) return
+    if (!synced || !latest || readSeen() === latest.version) return
     if (isRelease(latest.version) && visible) {
       if (!me?.id) return // wait for sign-in: the trailer plays before the release log
       if (!trailerSeen(me.id)) return trailer.play()
     }
     show(latest, 'current', BUILD.at)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latest?.version, visible, me?.id])
+  }, [latest?.version, visible, me?.id, synced])
 
   useEffect(() => {
     if (!SERVER_MODE || !BUILD.sha) return

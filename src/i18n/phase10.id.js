@@ -61,6 +61,7 @@ export default {
   },
   popup: { ok: 'Mengerti', more: 'lagi', fromStaff: 'Dari tim Neon Arcade', fromModeration: 'Pemberitahuan moderasi' },
   event: {
+    release: { eyebrow: 'Neon Arcade 1.0.0', title: 'Tonton video rilis', body: 'Dua menit: logo baru, semua halaman, kartu loyalty, VVIP, dan 36 update yang membawa kita ke sini.', cta: 'Tonton video rilis' },
     pass: { eyebrow: 'Season {id} · sisa {time}', title: 'Battle Pass sudah dibuka', body: 'Kamu di tier {tier}. Main game apa saja untuk naik dan klaim hadiah jalur gratis.', bodyPremium: 'Tier {tier} di jalur premium. Klaim hadiahmu sebelum season berakhir.', cta: 'Buka Battle Pass' },
     vvip: { eyebrow: 'Membership', title: 'Jadi VVIP', body: 'Bonus harian & mingguan, batas taruhan lebih tinggi, diskon Shop 25%, pass premium, dan manajer pribadi.', cta: 'Lihat perk' },
     member: { title: 'Perk-mu menunggu', body: 'Klaim bonus member hari ini dan hadiah minggu ini.', cta: 'Klaim bonus' },
