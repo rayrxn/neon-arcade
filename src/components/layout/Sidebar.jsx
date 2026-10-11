@@ -69,14 +69,14 @@ function SidebarContent({ idPrefix, onClose, rail = false, onToggle }) {
   return (
     <div className="flex h-full flex-col">
       {rail && tip && <span className="rail-tip" role="tooltip" style={{ top: tip.top }}>{tip.label}</span>}
-      <div className={clsx('flex h-16 shrink-0 items-center border-b hairline', rail ? 'justify-center px-2' : 'justify-between gap-3 pl-4 pr-3')}>
+      <div className={clsx('flex h-16 shrink-0 items-center border-b hairline', rail ? 'justify-center px-2' : 'justify-between gap-1.5 pl-3 pr-4')}>
         {onToggle && (
           <button onClick={onToggle} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-ring" aria-label={rail ? t('nav.expand') : t('nav.collapse')} aria-expanded={!rail}>
             <Menu className="h-5 w-5" />
           </button>
         )}
         {!rail && (
-          <NavLink to="/" aria-label="Neon Arcade" className="mr-auto flex items-center rounded-xl py-1 pl-1 pr-2 focus-ring">
+          <NavLink to="/" aria-label="Neon Arcade" className="mr-auto flex min-w-0 items-center rounded-xl px-1 py-1 focus-ring">
             <Logo />
           </NavLink>
         )}
@@ -103,14 +103,13 @@ function SidebarContent({ idPrefix, onClose, rail = false, onToggle }) {
       <div className={clsx('shrink-0 border-t hairline', rail ? 'space-y-1 p-2' : 'space-y-2 p-3')}>
         <NavItem item={SETTINGS_ITEM} layoutId={layoutId} rail={rail} onTip={setTip} />
         {isStaffUser && <NavItem item={ADMIN_ITEM} layoutId={layoutId} rail={rail} onTip={setTip} />}
-        {!rail && <p className="px-3 text-[11px] text-slate-600">{SERVER_MODE ? 'arcadebet.my.id' : t('nav.localMode')} · <NavLink to="/status" className="underline-offset-2 hover:text-slate-300 hover:underline">{t('status.title')}</NavLink></p>}
         {rail ? (
           <button type="button" onClick={openUpdateLog} className="block w-full text-center font-mono text-[9px] font-bold text-slate-600 hover:text-slate-300" title={t('updates.title')}>v{vLabel}</button>
         ) : (
-          <button type="button" onClick={openUpdateLog} className="site-version group flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[11px] text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-300">
-            <span className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-300 group-hover:text-white">v{vLabel}</span>
-            <span className="min-w-0 truncate">{BUILD.at ? t('updates.released', { time: formatRelease(BUILD.at, lang) }) : t('updates.title')}</span>
-          </button>
+          <p className="flex items-center gap-1 px-2.5 text-[10.5px] text-slate-600">
+            <span className="truncate">{SERVER_MODE ? 'arcadebet.my.id' : t('nav.localMode')} · <NavLink to="/status" className="underline-offset-2 hover:text-slate-300 hover:underline">{t('status.title')}</NavLink></span>
+            <button type="button" onClick={openUpdateLog} className="ml-auto shrink-0 font-mono text-[10px] font-bold text-slate-500 hover:text-slate-200" title={`v${vLabel} · ${BUILD.at ? t('updates.released', { time: formatRelease(BUILD.at, lang) }) : t('updates.title')}`}>v{String(vLabel).split(' ')[0]}</button>
+          </p>
         )}
       </div>
     </div>

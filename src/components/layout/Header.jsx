@@ -1,5 +1,6 @@
 import { matchPath, useLocation } from 'react-router-dom'
-import { Menu, Volume2, VolumeX } from 'lucide-react'
+import { Menu, ScrollText, Volume2, VolumeX } from 'lucide-react'
+import { openUpdateLog } from '@/components/updates/UpdateLog'
 import MusicPlayer from './MusicPlayer'
 import { usePrefsStore } from '@/store/usePrefsStore'
 import BalanceChip from './BalanceChip'
@@ -16,6 +17,15 @@ function MuteButton() {
   return (
     <button onClick={toggle} aria-pressed={muted} aria-label={muted ? t('settings.sound.unmute') : t('settings.sound.mute')} title={muted ? t('settings.sound.unmute') : t('settings.sound.mute')} className="hidden h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white sm:grid focus-ring">
       {muted ? <VolumeX className="h-[18px] w-[18px]" /> : <Volume2 className="h-[18px] w-[18px]" />}
+    </button>
+  )
+}
+
+function UpdateLogButton() {
+  const { t } = useT()
+  return (
+    <button onClick={openUpdateLog} aria-label={t('updates.title')} title={t('updates.title')} className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white focus-ring">
+      <ScrollText className="h-[18px] w-[18px]" />
     </button>
   )
 }
@@ -48,6 +58,7 @@ export default function Header({ onMenu }) {
           <BalanceChip currency="AG" />
         </div>
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1 lg:ml-1">
+          <UpdateLogButton />
           <MusicPlayer />
           <MuteButton />
           <NotificationBell />
