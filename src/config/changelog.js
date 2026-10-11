@@ -1,6 +1,22 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "3.0.0",
+    "date": "2026-10-12",
+    "emoji": "🚀",
+    "colors": ["#facc15", "#22d3ee", "#a855f7"],
+    "title": { "en": "Neon Arcade 1.0.0", "id": "Neon Arcade 1.0.0" },
+    "tagline": { "en": "Out of BETA. 22 games, two currencies, one arcade.", "id": "Keluar dari BETA. 22 game, dua mata uang, satu arcade." },
+    "items": [
+      { "tag": "new", "en": "Neon Arcade leaves BETA: 1.0.0 Release, launched 12 October 2026, 21:00 UTC.", "id": "Neon Arcade keluar dari BETA: Rilis 1.0.0, diluncurkan 12 Oktober 2026, 21:00 UTC." },
+      { "tag": "new", "en": "The release trailer plays once when you first sign in. Watch it again from the update log.", "id": "Trailer rilis diputar sekali saat pertama masuk. Tonton lagi dari update log." },
+      { "tag": "improve", "en": "A new update log with the whole journey from 1.0.0 BETA to today.", "id": "Update log baru dengan seluruh perjalanan dari 1.0.0 BETA sampai sekarang." },
+      { "tag": "improve", "en": "Slice: swipe across a fruit to cut it, like a real fruit slicer.", "id": "Slice: geser melewati buah untuk memotongnya, seperti fruit slicer sungguhan." },
+      { "tag": "improve", "en": "Turned-off games show a proper page instead of a pop-up.", "id": "Game yang dimatikan menampilkan halaman sendiri, bukan pop-up." },
+      { "tag": "fix", "en": "Snake: the lose sound plays together with the result. The NEON/ARCADE logo no longer overlaps.", "id": "Snake: suara kalah sekarang bersamaan dengan hasil. Logo NEON/ARCADE tidak lagi bertumpuk." }
+    ]
+  },
+  {
     "version": "2.9.16",
     "date": "2026-10-11",
     "emoji": "🧪",
@@ -396,6 +412,76 @@ export default [
       { "tag": "new", "en": "Forgot password on the sign-in page.", "id": "Lupa password di halaman masuk." },
       { "tag": "new", "en": "Verify your email in Settings.", "id": "Verifikasi email di Pengaturan." },
       { "tag": "fix", "en": "No more “[object Object]” text.", "id": "Tidak ada lagi tulisan “[object Object]”." }
+    ]
+  },
+  {
+    "version": "1.4.0",
+    "date": "2026-10-06",
+    "emoji": "🛍️",
+    "colors": ["#a855f7", "#facc15", "#22d3ee"],
+    "title": { "en": "Shop, gems & memberships", "id": "Shop, gem & membership" },
+    "tagline": { "en": "Arcade Gems arrive with a shop full of boosts and cosmetics.", "id": "Arcade Gems hadir dengan shop berisi boost dan kosmetik." },
+    "items": [
+      { "tag": "new", "en": "AG (Arcade Gems): a second currency for the shop and memberships.", "id": "AG (Arcade Gems): mata uang kedua untuk shop dan membership." },
+      { "tag": "new", "en": "Shop with boosts, emotes, name effects, chat effects, themes and frames.", "id": "Shop dengan boost, emote, efek nama, efek chat, tema, dan bingkai." },
+      { "tag": "new", "en": "VIP and VVIP memberships with daily bonuses.", "id": "Membership VIP dan VVIP dengan bonus harian." },
+      { "tag": "new", "en": "Admin panel for staff: players, economy, games and announcements.", "id": "Panel admin untuk staf: pemain, ekonomi, game, dan pengumuman." }
+    ]
+  },
+  {
+    "version": "1.3.0",
+    "date": "2026-10-05",
+    "emoji": "🏆",
+    "colors": ["#facc15", "#22c55e", "#f97316"],
+    "title": { "en": "Levels, quests & loyalty", "id": "Level, quest & loyalty" },
+    "tagline": { "en": "Play to level up, finish quests and climb the loyalty cards.", "id": "Main untuk naik level, selesaikan quest, dan naikkan kartu loyalty." },
+    "items": [
+      { "tag": "new", "en": "Levels and XP from every round.", "id": "Level dan XP dari setiap ronde." },
+      { "tag": "new", "en": "Daily, weekly and monthly quests plus achievements.", "id": "Quest harian, mingguan, bulanan, dan achievement." },
+      { "tag": "new", "en": "Loyalty cards from Silver to Black with bigger bet limits and perks.", "id": "Kartu loyalty dari Silver sampai Black dengan batas taruhan dan keuntungan lebih besar." },
+      { "tag": "new", "en": "Battle pass with free and premium tiers.", "id": "Battle pass dengan tier gratis dan premium." }
+    ]
+  },
+  {
+    "version": "1.2.0",
+    "date": "2026-10-04",
+    "emoji": "💬",
+    "colors": ["#22d3ee", "#a855f7", "#f472b6"],
+    "title": { "en": "Chat, friends & profiles", "id": "Chat, teman & profil" },
+    "tagline": { "en": "The arcade gets social.", "id": "Arcade jadi lebih ramai." },
+    "items": [
+      { "tag": "new", "en": "Global chat with mentions and emotes.", "id": "Chat global dengan mention dan emote." },
+      { "tag": "new", "en": "Friends, favorites and blocking.", "id": "Teman, favorit, dan blokir." },
+      { "tag": "new", "en": "Profiles with banners, stats and badges.", "id": "Profil dengan banner, statistik, dan badge." },
+      { "tag": "new", "en": "Notifications for transfers, quests and friends.", "id": "Notifikasi untuk transfer, quest, dan teman." }
+    ]
+  },
+  {
+    "version": "1.1.0",
+    "date": "2026-10-03",
+    "emoji": "🛡️",
+    "colors": ["#22c55e", "#22d3ee", "#0ea5e9"],
+    "title": { "en": "Accounts on the server", "id": "Akun di server" },
+    "tagline": { "en": "Your balance lives on the server and every round is provably fair.", "id": "Saldo tersimpan di server dan setiap ronde provably fair." },
+    "items": [
+      { "tag": "new", "en": "Accounts, wallets and rounds are stored on the server.", "id": "Akun, dompet, dan ronde disimpan di server." },
+      { "tag": "new", "en": "Provably fair: check any round with its server seed, client seed and nonce.", "id": "Provably fair: cek ronde mana saja dengan server seed, client seed, dan nonce." },
+      { "tag": "new", "en": "Send AC to other players.", "id": "Kirim AC ke pemain lain." },
+      { "tag": "new", "en": "Redeem codes and a daily reward.", "id": "Kode redeem dan hadiah harian." }
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "date": "2026-10-02",
+    "emoji": "🕹️",
+    "colors": ["#22d3ee", "#a855f7", "#facc15"],
+    "title": { "en": "Neon Arcade BETA", "id": "Neon Arcade BETA" },
+    "tagline": { "en": "The first public BETA: a neon arcade with play money.", "id": "BETA publik pertama: arcade neon dengan uang mainan." },
+    "items": [
+      { "tag": "new", "en": "Dice, Limbo, Coinflip, Plinko, Roulette, Blackjack, Crash and Mines.", "id": "Dice, Limbo, Coinflip, Plinko, Roulette, Blackjack, Crash, dan Mines." },
+      { "tag": "new", "en": "Case Opening and Case Battle.", "id": "Case Opening dan Case Battle." },
+      { "tag": "new", "en": "Arcade wallet with a sign-up bonus.", "id": "Dompet arcade dengan bonus daftar." },
+      { "tag": "new", "en": "Indonesian and English, light and dark themes.", "id": "Bahasa Indonesia dan Inggris, tema terang dan gelap." }
     ]
   }
 ]

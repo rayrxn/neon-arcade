@@ -8,7 +8,7 @@ import ReasonDialog from '@/components/admin/ReasonDialog'
 import { AdminPage, Badge, Card, FormField, Kpi, ROLE_TONE, STATUS_TONE, SearchInput, Table, Tabs, inputCls } from '@/components/admin/AdminKit'
 import { LogTable } from './Users'
 import { CrashCurveCard } from './Operations'
-import { BotsCard, CaptchaCard, LuckCard } from './PowerTools'
+import { BotsCard, CaptchaCard, LuckCard, ReleaseCard } from './PowerTools'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { usePlatformStore } from '@/store/usePlatformStore'
 import { useProgressStore } from '@/store/useProgressStore'
@@ -473,6 +473,7 @@ export function SettingsAdmin() {
       {SERVER_MODE && v3?.crash && can(me.role, 'games.manage') && <CrashCurveCard crash={v3.crash} me={me} />}
       {SERVER_MODE && v3?.luck && can(me.role, 'economy.manage') && <LuckCard luck={v3.luck} me={me} />}
       {SERVER_MODE && v3?.captcha && can(me.role, 'system.manage') && <CaptchaCard captcha={v3.captcha} me={me} />}
+      {SERVER_MODE && can(me.role, 'system.manage') && <ReleaseCard me={me} />}
       {SERVER_MODE && can(me.role, 'system.manage') && <BotsCard me={me} />}
       <Card title={t('admin.rbac')} bodyClassName="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-xs">

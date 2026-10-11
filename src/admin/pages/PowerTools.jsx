@@ -8,6 +8,26 @@ import { useNow } from '@/hooks/useNow'
 import { formatCountdown } from '@/utils/format'
 import { useT } from '@/i18n'
 
+/** Publish the 1.0.0 release to every player (until then staff see it as "1.0.0 DEV TEST"). */
+export function ReleaseCard({ me }) {
+  const { t } = useT()
+  const published = usePlatformStore((s) => !!s.release?.published)
+  const [pending, setPending] = useState(null)
+  return (
+    <Card title={t('admin.release.title')} bodyClassName="flex flex-wrap items-center justify-between gap-3 p-4">
+      <div className="max-w-md space-y-1">
+        <Badge tone={published ? 'green' : 'purple'}>{published ? t('admin.release.live') : t('admin.release.dev')}</Badge>
+        <p className="text-xs text-slate-500">{t('admin.release.desc')}</p>
+      </div>
+      <Button variant={published ? 'ghost' : 'primary'} onClick={() => setPending(!published)}>{published ? t('admin.release.unpublish') : t('admin.release.publish')}</Button>
+      {pending !== null && (
+        <ReasonDialog open onClose={() => setPending(null)} adminName={me.username} tone="primary" title={t('admin.release.title')}
+          onConfirm={(r) => adminCall('publishRelease', { published: pending, reason: r }).then(() => usePlatformStore.setState({ release: { published: pending } }))} />
+      )}
+    </Card>
+  )
+}
+
 /** Jam Gacor: extra payout on wins for everyone or one player. The game RNG is not changed. */
 export function LuckCard({ luck, me }) {
   const { t } = useT()

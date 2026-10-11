@@ -85,10 +85,11 @@ export default function Snake({ game }) {
     timers.current.push(setTimeout(() => {
       setRolling(false)
       setLanded({ ring: target, bad: !!res.lost })
+      play(res.lost ? 'explode' : 'reveal')
       if (res.done) {
         setOutcome(res)
         setRound(null)
-        if (!res.lost) playOutcome(res)
+        playOutcome(res)
       } else {
         setMult(res.multiplier)
         setRound(res)

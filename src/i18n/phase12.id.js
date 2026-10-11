@@ -3,7 +3,7 @@ export default {
   updates: {
     title: 'Update log', older: 'Update sebelumnya', ok: 'Mantap!', reload: 'Muat ulang untuk update', live: 'Baru',
     released: 'rilis {time}',
-    tags: { new: 'Baru', improve: 'Lebih baik', fix: 'Diperbaiki' },
+    releaseTitle: 'Neon Arcade 1.0.0', journey: 'Perjalanan · {n} update', journeyStart: 'Awal mula: 1.0.0 BETA', watchTrailer: 'Tonton trailer', soundOn: 'Nyalakan suara', skip: 'Lewati', tags: { new: 'Baru', improve: 'Lebih baik', fix: 'Diperbaiki' },
   },
   exchange: {
     rateAg: '1 AG = Rp1.000', rateAc: '100 AC = Rp1',

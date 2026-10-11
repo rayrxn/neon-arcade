@@ -618,6 +618,7 @@ function admin_v3_action(array $me, string $name, array $a)
         case 'clearLuck':
         case 'setCaptcha':
         case 'setBots':
+        case 'publishRelease':
             return admin_v4_action($me, $name, $a);
         case 'clearErrors': {
             require_user_perm($me, 'system.manage');
@@ -818,6 +819,14 @@ function admin_v4_action(array $me, string $name, array $a): ?array
             audit_log($me, 'crash.unschedule', null, 'round ' . (int) ($a['round'] ?? 0), null, null, null, $r);
             return crash_view();
         }
+        case 'publishRelease': {
+            require_user_perm($me, 'system.manage');
+            $r = adm_reason($a['reason'] ?? '');
+            $on = !empty($a['published']);
+            kv_set('release', ['published' => $on]);
+            audit_log($me, $on ? 'release.publish' : 'release.unpublish', null, 'release', null, null, ['published' => $on], $r);
+            return ['published' => $on];
+        }
         case 'setBots': {
             require_user_perm($me, 'system.manage');
             $r = adm_reason($a['reason'] ?? '');
@@ -850,7 +859,7 @@ function admin_v4_action(array $me, string $name, array $a): ?array
 function pulse_view(?array $u): array
 {
     $shared = (string) qv("SELECT concat_ws('|', (SELECT max(created_at) FROM chat_messages), (SELECT max(created_at) FROM announcements),
-        (SELECT max(updated_at) FROM games), (SELECT value::text FROM neon_kv WHERE key = 'luck'))");
+        (SELECT max(updated_at) FROM games), (SELECT value::text FROM neon_kv WHERE key = 'luck'), (SELECT value::text FROM neon_kv WHERE key = 'release'))");
     $out = ['shared' => substr(md5($shared), 0, 12), 'serverTime' => now_ms()];
     if ($u) {
         $acct = (string) qv("SELECT concat_ws('|', w.ac_balance, w.ag_balance, w.updated_at, u.role, u.status, u.loyalty_xp, u.wallet_frozen,

@@ -1,7 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader2, Plug, Wrench } from 'lucide-react'
-import Modal from '@/components/ui/Modal'
 import { useAdminStore } from '@/store/useAdminStore'
 import { useCurrentUser } from '@/store/useAuthStore'
 import Button from '@/components/ui/Button'
@@ -43,16 +42,26 @@ function ComingSoon({ game }) {
 
 const STAFF = ['owner', 'super_admin', 'admin', 'moderator', 'support', 'developer']
 
-/** Popup over a game the admin turned off or put in maintenance (staff may still open maintenance games). */
+/** Full page for a game the admin turned off or put in maintenance (same layout as "coming soon"). */
 function GameClosed({ game, status, message }) {
   const { t } = useT()
   const navigate = useNavigate()
-  const back = () => navigate('/games')
+  const off = status === 'disabled'
   return (
-    <Modal open locked onClose={back} icon={<Wrench className="h-5 w-5 text-neon-gold" />} title={t(status === 'disabled' ? 'games.closed.offTitle' : 'games.closed.maintTitle', { game: game.name })}
-      footer={<Button className="w-full" onClick={back}><ArrowLeft className="h-4 w-4" /> {t('games.back')}</Button>}>
-      <p className="text-sm text-slate-300">{message || t(status === 'disabled' ? 'games.closed.offBody' : 'games.closed.maintBody')}</p>
-    </Modal>
+    <section className="glass overflow-hidden rounded-2xl">
+      <GameArt slug={game.slug} className="aspect-[16/7] border-b hairline opacity-60 grayscale-[40%] sm:aspect-[16/5]" />
+      <div className="px-5 py-8 text-center sm:py-10">
+        <p className="label-caps">{t(categoryKey(game.category))} · {t(off ? 'games.closed.offTag' : 'games.closed.maintTag')}</p>
+        <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-white">{game.name}</h1>
+        <p className="mx-auto mt-3 max-w-md text-slate-400">{t(`games.list.${game.slug}`)}</p>
+        <p className="mx-auto mt-6 flex max-w-sm items-center justify-center gap-2 rounded-xl bg-white/[0.03] px-4 py-3 text-xs text-slate-400 ring-1 ring-inset ring-white/[0.06]">
+          <Wrench className="h-3.5 w-3.5 shrink-0 text-neon-gold" /> {message || t(off ? 'games.closed.offBody' : 'games.closed.maintBody')}
+        </p>
+        <Button variant="ghost" onClick={() => navigate('/games')} className="mt-6">
+          <ArrowLeft className="h-4 w-4" /> {t('games.back')}
+        </Button>
+      </div>
+    </section>
   )
 }
 
@@ -65,19 +74,17 @@ export default function GameRoute() {
 
   const GameComponent = getLazyComponent(game)
   return (
-    <>
-    <ClosedCheck game={game} />
+    <ClosedCheck game={game}>
     <Suspense fallback={<div className="glass grid h-[60vh] place-items-center rounded-2xl"><Loader2 className="h-6 w-6 animate-spin text-neon-cyan" /></div>}>
       <GameComponent game={game} api={gameApi} />
     </Suspense>
-    </>
+    </ClosedCheck>
   )
 }
 
-function ClosedCheck({ game }) {
+function ClosedCheck({ game, children }) {
   const cfg = useAdminStore((s) => s.gameConfig?.[game.slug])
   const role = useCurrentUser()?.role
-  if (!cfg || cfg.status === 'live') return null
-  if (cfg.status === 'maintenance' && STAFF.includes(role)) return null
+  if (!cfg || cfg.status === 'live' || (cfg.status === 'maintenance' && STAFF.includes(role))) return children
   return <GameClosed game={game} status={cfg.status} message={cfg.maintenanceMessage} />
 }

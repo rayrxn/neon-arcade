@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
@@ -67,6 +67,42 @@ export default function Slice({ game }) {
   const [outcome, setOutcome] = useState(null)
   const [busy, setBusy] = useState(false)
   const [pending, setPending] = useState(false)
+  const [trail, setTrail] = useState([]) // blade trail points [{x, y, t}] in stage coordinates
+  const area = useRef(null)
+  useEffect(() => {
+    if (!trail.length) return
+    const id = setTimeout(() => setTrail([]), 180)
+    return () => clearTimeout(id)
+  }, [trail])
+  const drag = useRef(null)
+
+  // Swipe across a fruit to slice it: the blade must travel at least 40 px and pass through the fruit.
+  const onDown = (e) => {
+    drag.current = { x: e.clientX, y: e.clientY, dist: 0 }
+  }
+  const onMove = (e) => {
+    const box = area.current?.getBoundingClientRect()
+    if (!box) return
+    const now = performance.now()
+    setTrail((tr) => [...tr.filter((p) => now - p.t < 160), { x: e.clientX - box.left, y: e.clientY - box.top, t: now }])
+    // A swipe may start outside the board: begin tracking as soon as a pressed pointer moves over it.
+    if (!drag.current && (e.buttons & 1 || e.pointerType === 'touch')) drag.current = { x: e.clientX, y: e.clientY, dist: 0 }
+    const d = drag.current
+    if (!d || !live || busy || pending) return
+    d.dist += Math.hypot(e.clientX - d.x, e.clientY - d.y)
+    d.x = e.clientX
+    d.y = e.clientY
+    if (d.dist < 40) return
+    for (const el of area.current.querySelectorAll('[data-fruit]')) {
+      const r = el.querySelector('[data-hit]').getBoundingClientRect()
+      if (e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
+        drag.current = null
+        slice(el.dataset.fruit, Number(el.dataset.lane))
+        break
+      }
+    }
+  }
+  const onUp = () => { drag.current = null }
   const live = round && !outcome
   const step = round?.step ?? 0
   const mult = step ? round?.multiplier ?? 1 : 1
@@ -134,7 +170,13 @@ export default function Slice({ game }) {
   const lost = outcome?.lost
   const stage = (
     <Stage className="relative bg-[repeating-linear-gradient(180deg,#8b5a2b_0_58px,#6b4220_58px_62px)] p-0">
-      <div className="relative h-[420px] overflow-hidden shadow-[inset_0_0_90px_rgba(0,0,0,0.5)]">
+      <div ref={area} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} className="relative h-[420px] touch-none select-none overflow-hidden shadow-[inset_0_0_90px_rgba(0,0,0,0.5)]" style={{ cursor: live ? 'crosshair' : 'default' }}>
+        {trail.length > 1 && (
+          <svg className="pointer-events-none absolute inset-0 z-20 h-full w-full" aria-hidden>
+            <polyline points={trail.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points={trail.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
         <div className="absolute left-3 top-3 z-10 rounded-xl bg-black/45 p-2.5 backdrop-blur">
           <p className="flex items-center gap-3 text-xs font-semibold text-white/70">{t('play.multiplier')} <b className="num font-mono text-base text-white">{fmtMult(lost ? 0 : mult)}</b></p>
           {round?.cuts?.length > 0 && (
@@ -144,22 +186,21 @@ export default function Slice({ game }) {
         {live && !busy && !pending && (
           <div className="absolute inset-x-0 bottom-0 top-10 flex items-end justify-around px-6">
             {fruits.map((k, lane) => (
-              <motion.button
+              <motion.div
                 key={`${throwN}-${k}`}
-                type="button"
-                onClick={() => slice(k, lane)}
-                className="group relative flex w-28 flex-col items-center"
+                data-fruit={k}
+                data-lane={lane}
+                className="relative flex w-28 select-none flex-col items-center"
                 initial={{ y: 320, rotate: -30 }}
                 animate={{ y: [320, -230 + lane * 30, -150 + lane * 20, -190 + lane * 30], rotate: [-30, 10, -6, 4] }}
                 transition={{ duration: 1.5 + lane * 0.15, times: [0, 0.45, 0.75, 1], ease: 'easeOut', delay: lane * 0.12 }}
-                whileHover={{ scale: 1.08 }}
               >
-                <span className="h-24 w-24"><FruitArt kind={k} /></span>
+                <span data-hit className="block h-24 w-24"><FruitArt kind={k} /></span>
                 <span className="mt-1 flex flex-col items-center rounded-lg bg-black/55 px-2 py-0.5 font-mono text-[11px] font-bold text-white">
                   <span>{(SLICE_FRUITS[k] * 100).toFixed(0)}% {t('play.ladder.chance')}</span>
                   <span className="text-neon-green">{fmtMult(nextOf(k))}</span>
                 </span>
-              </motion.button>
+              </motion.div>
             ))}
           </div>
         )}
