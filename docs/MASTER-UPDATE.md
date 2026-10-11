@@ -80,7 +80,7 @@ Status: `[x]` implemented + verified · `[~]` implemented, partly verified · `[
 - [x] Horse Racing (shared rounds, migration 018)
 - [x] Keno, Tower, Cross the Road, Pump (server-settled, RTP-checked in stage8)
 - [x] Tarot, Sweet (tumble slot, RTP via api/tests/sweet_rtp.php)
-- [ ] Snake, Slice, Layer, Moles
+- [x] Snake, Slice, Layer, Moles (skill arcades, capped XP, server score checks, migration 021)
 
 ## H. QA
 - [x] QA center (admin) running real checks

@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.0",
+    "date": "2026-10-11",
+    "emoji": "🕹️",
+    "colors": ["#22c55e", "#facc15", "#a855f7"],
+    "title": { "en": "Arcade corner", "id": "Pojok arkade" },
+    "tagline": { "en": "Snake, Moles, Slice and Layer: play for XP and the daily top 10.", "id": "Snake, Moles, Slice, dan Layer: main untuk XP dan top 10 harian." },
+    "items": [
+      { "tag": "new", "en": "Four skill games: Snake, Moles, Slice and Layer. Works with keyboard, mouse and touch.", "id": "Empat game skill: Snake, Moles, Slice, dan Layer. Bisa pakai keyboard, mouse, dan sentuh." },
+      { "tag": "new", "en": "Every point gives XP (up to 100 per game, 300 per day per game) and a spot on the daily top 10.", "id": "Tiap poin dapat XP (maks 100 per game, 300 per hari per game) dan kesempatan masuk top 10 harian." },
+      { "tag": "improve", "en": "Scores are checked by the server, so the board stays fair.", "id": "Skor dicek server, jadi papan skor tetap adil." }
+    ]
+  },
+  {
     "version": "2.8.0",
     "date": "2026-10-11",
     "emoji": "🎬",

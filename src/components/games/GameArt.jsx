@@ -80,6 +80,32 @@ const ART = {
       <path d="M102 44.5l2.5-2.5" {...S} strokeWidth="1.5" />
     </>
   ),
+  snake: () => (
+    <>
+      <path d="M50 64h20a8 8 0 0 0 8-8V44a8 8 0 0 1 8-8h22" {...S} strokeWidth="9" strokeOpacity="0.35" />
+      <path d="M50 64h20a8 8 0 0 0 8-8V44a8 8 0 0 1 8-8h22" {...S} />
+      <circle cx="112" cy="36" r="4" fill="currentColor" />
+    </>
+  ),
+  moles: () => (
+    <>
+      {[56, 80, 104].map((x) => <ellipse key={x} cx={x} cy="66" rx="10" ry="4" {...S} strokeOpacity="0.5" />)}
+      <path d="M72 64c0-14 16-14 16 0" {...S} {...soft(0.35)} />
+      <path d="M96 30l14 10-6 6-14-10z" {...S} {...soft(0.25)} />
+    </>
+  ),
+  slice: () => (
+    <>
+      <circle cx="74" cy="52" r="14" {...S} {...soft(0.25)} />
+      <path d="M50 70L112 28" {...S} strokeWidth="3" />
+      <circle cx="100" cy="60" r="9" {...S} {...soft(0.15)} />
+    </>
+  ),
+  layer: () => (
+    <>
+      {[0, 1, 2, 3].map((i) => <rect key={i} x={60 + i * 3} y={66 - i * 11} width={40 - i * 4} height="9" rx="2" {...S} {...soft(0.12 + i * 0.08)} />)}
+    </>
+  ),
   chess: () => (
     <>
       {[0, 1, 2, 3].map((r) => [0, 1, 2, 3].map((c) => (r + c) % 2 ? <rect key={`${r}${c}`} x={56 + c * 12} y={26 + r * 12} width="12" height="12" {...soft(0.18)} /> : null))}

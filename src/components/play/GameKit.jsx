@@ -365,7 +365,7 @@ export function GameShell({ game, controls, stage, outcome }) {
           <h1 className="truncate font-display text-xl font-bold text-white">{game.name}</h1>
           <p className="truncate text-xs text-slate-500">{t(`games.list.${game.slug}`)}</p>
         </div>
-        <span className="hidden items-center gap-1.5 text-xs text-slate-500 sm:flex">
+        <span className={clsx('hidden items-center gap-1.5 text-xs text-slate-500', game.category !== 'arcade' && game.slug !== 'chess' && 'sm:flex')}>
           <ShieldCheck className="h-3.5 w-3.5 text-neon-green" /> {t('play.fair')} · nonce {nonce}
         </span>
         <HowTo slug={game.slug} />

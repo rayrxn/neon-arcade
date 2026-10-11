@@ -1,4 +1,4 @@
-import { Bird, Bomb, Candy, Crown, Flag, Castle, CircleDot, Coins, Dice5, Grid3x3, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy, Wand2, Wind } from 'lucide-react'
+import { Bird, Bomb, Candy, Crown, Flag, Hammer, Rows3, Scissors, Worm, Castle, CircleDot, Coins, Dice5, Grid3x3, Layers, Package, Spade, Swords, Target, Triangle, TrendingUp, Trophy, Wand2, Wind } from 'lucide-react'
 
 /**
  * Registry game — satu-satunya tempat mendaftarkan mode baru.
@@ -15,6 +15,7 @@ export const GAME_CATEGORIES = [
   { id: 'originals', labelKey: 'games.categories.originals' },
   { id: 'table', labelKey: 'games.categories.table' },
   { id: 'slots', labelKey: 'games.categories.slots' },
+  { id: 'arcade', labelKey: 'games.categories.arcade' },
 ]
 
 /** Kelas Tailwind lengkap per aksen (ditulis utuh supaya terdeteksi JIT). */
@@ -37,6 +38,10 @@ export const GAMES = [
   { slug: 'tower', name: 'Tower', category: 'originals', icon: Castle, accent: 'cyan', load: () => import('@/games/Ladder.jsx') },
   { slug: 'cross', name: 'Cross the Road', category: 'originals', icon: Bird, accent: 'gold', load: () => import('@/games/Ladder.jsx') },
   { slug: 'pump', name: 'Pump', category: 'originals', icon: Wind, accent: 'pink', load: () => import('@/games/Ladder.jsx') },
+  { slug: 'snake', name: 'Snake', category: 'arcade', icon: Worm, accent: 'green', load: () => import('@/games/Arcade.jsx') },
+  { slug: 'moles', name: 'Moles', category: 'arcade', icon: Hammer, accent: 'gold', load: () => import('@/games/Arcade.jsx') },
+  { slug: 'slice', name: 'Slice', category: 'arcade', icon: Scissors, accent: 'pink', load: () => import('@/games/Arcade.jsx') },
+  { slug: 'layer', name: 'Layer', category: 'arcade', icon: Rows3, accent: 'purple', load: () => import('@/games/Arcade.jsx') },
   { slug: 'chess', name: 'Chess', category: 'table', icon: Crown, accent: 'cyan', featured: true, load: () => import('@/games/Chess.jsx') },
   { slug: 'horse', name: 'Horse Racing', category: 'originals', icon: Flag, accent: 'green', featured: true, load: () => import('@/games/HorseRacing.jsx') },
   { slug: 'tarot', name: 'Tarot', category: 'originals', icon: Wand2, accent: 'purple', load: () => import('@/games/Tarot.jsx') },

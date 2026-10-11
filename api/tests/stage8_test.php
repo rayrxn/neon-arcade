@@ -351,6 +351,24 @@ $s = call('GET', 'chess/state', [], 'a');
 check('flag fall: side to move loses on time', $s['ok'] && $s['data']['status'] === 'done' && $s['data']['reason'] === 'timeout' && $s['data']['result'] === 'b', $s);
 unset($_GET['id']);
 
+echo "Skill arcades\n";
+$st = call('POST', 'arcade/start', ['game' => 'snake'], 'a');
+$rid = $st['data']['result']['runId'] ?? '';
+q("UPDATE arcade_runs SET started_at = now() - interval '20 seconds' WHERE id = ?", [$rid]);
+$xp0 = (int) me('a')['progress']['xp'];
+$f = call('POST', 'arcade/finish', ['runId' => $rid, 'score' => 12], 'a');
+check('snake: 12 food in 20 s is accepted, pays 24 XP', $f['ok'] && $f['data']['result']['valid'] && $f['data']['result']['xp'] === 24 && (int) me('a')['progress']['xp'] === $xp0 + 24, $f);
+expect_error('a run can be submitted once', call('POST', 'arcade/finish', ['runId' => $rid, 'score' => 12], 'a'), 'play.errors.settled');
+$st = call('POST', 'arcade/start', ['game' => 'snake'], 'a');
+q("UPDATE arcade_runs SET started_at = now() - interval '5 seconds' WHERE id = ?", [$st['data']['result']['runId']]);
+$f = call('POST', 'arcade/finish', ['runId' => $st['data']['result']['runId'], 'score' => 500], 'a');
+check('impossible score in 5 s: no XP, score zeroed', $f['ok'] && !$f['data']['result']['valid'] && $f['data']['result']['xp'] === 0, $f);
+$_GET['game'] = 'snake';
+$b = call('GET', 'arcade/board', [], 'a');
+check('board lists today\'s best and XP left', $b['ok'] && $b['data']['best'] === 12 && $b['data']['xpLeft'] === 300 - 24 && $b['data']['top'][0]['score'] === 12, $b);
+unset($_GET['game']);
+expect_error('unknown arcade game', call('POST', 'arcade/start', ['game' => 'pong'], 'a'), 'play.errors.invalid');
+
 echo "Owner console\n";
 $_SERVER['REMOTE_ADDR'] = '10.9.8.7';
 $con = fn(string $path, array $body = []) => call('POST', $path, $body);
