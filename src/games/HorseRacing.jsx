@@ -12,6 +12,25 @@ import { useT } from '@/i18n'
 const COLORS = ['#f43f5e', '#f59e0b', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899']
 const NAMES = ['Blaze', 'Comet', 'Jade', 'Nova', 'Shadow', 'Tango']
 
+/** Side-view racehorse with a jockey in the horse's silk colour. Legs swing while running. */
+function HorseSvg({ silk, running }) {
+  return (
+    <svg viewBox="0 0 64 44" className="h-full w-full">
+      <ellipse cx="30" cy="41" rx="20" ry="2.5" fill="#000" opacity="0.3" />
+      {[[18, 0], [24, 0.12], [40, 0.06], [46, 0.18]].map(([x, d], k) => (
+        <motion.line key={k} x1={x} y1="27" x2={x} y2="39" stroke="#3b2414" strokeWidth="3" strokeLinecap="round" style={{ originX: `${x}px`, originY: '27px' }}
+          animate={running ? { rotate: k % 2 ? [-28, 28, -28] : [28, -28, 28] } : { rotate: 0 }} transition={{ duration: 0.32, repeat: Infinity, delay: d }} />
+      ))}
+      <path d="M12 24c0-6 6-9 14-9h14c4 0 8-3 11-7l5 1-2 7c-2 4-5 6-8 7v6c-4 3-10 4-17 4H18c-4 0-6-3-6-9z" fill="#6b3f1d" />
+      <path d="M51 8l3-5 2 6z" fill="#6b3f1d" /><circle cx="54" cy="12" r="1" fill="#000" />
+      <path d="M12 22c-4 0-8 3-9 7 4-1 7-2 9-4z" fill="#2a160a" />
+      <path d="M48 10c-3 3-6 5-9 6" stroke="#2a160a" strokeWidth="2.5" />
+      <path d="M28 15l4-9 6 1-2 9z" fill={silk} /><circle cx="35" cy="5" r="3.5" fill={silk} /><path d="M33 3h6" stroke="#fff" strokeWidth="1.5" />
+      <path d="M30 14l8 4" stroke="#f1f5f9" strokeWidth="2" />
+    </svg>
+  )
+}
+
 /** Frame-accurate clock (requestAnimationFrame) so the race moves smoothly instead of in 100 ms steps. */
 function useFrameNow() {
   const [now, setNow] = useState(Date.now())
@@ -110,7 +129,11 @@ export default function HorseRacing({ game }) {
   )
 
   const stage = (
-    <Stage className="p-3 sm:p-6">
+    <Stage className="relative overflow-hidden bg-gradient-to-b from-sky-900 via-sky-950 to-emerald-950 p-3 sm:p-6">
+      <svg className="pointer-events-none absolute inset-x-0 top-0 h-24 w-full opacity-70" viewBox="0 0 400 80" preserveAspectRatio="none">
+        <path d="M0 80V40l40-12h60l30 8h80l40-14h70l40 10h40v48z" fill="#0f172a" />
+        {Array.from({ length: 40 }, (_, k) => <circle key={k} cx={6 + k * 10} cy={50 + (k % 3) * 6} r="2.2" fill={['#f43f5e', '#facc15', '#38bdf8', '#e2e8f0'][k % 4]} opacity="0.7" />)}
+      </svg>
       <div className="mb-3 flex items-center justify-between text-xs">
         <span className="font-mono text-slate-500">#{r?.id ?? '—'}</span>
         <span className="flex items-center gap-1.5 font-semibold text-slate-300">
@@ -119,7 +142,7 @@ export default function HorseRacing({ game }) {
           {phase === 'finished' && <><Flag className="h-3.5 w-3.5 text-neon-green" />{t('play.horse.winner', { horse: NAMES[r.finish[0]] })} · {t('play.horse.nextIn', { s: secs(r.nextAt - now) })}</>}
         </span>
       </div>
-      <div className="relative space-y-1.5 rounded-xl bg-gradient-to-r from-emerald-950/60 via-emerald-900/30 to-emerald-950/60 p-2 ring-1 ring-inset ring-emerald-400/20">
+      <div className="relative mt-10 space-y-1.5 rounded-xl border-y-4 border-white/70 bg-[repeating-linear-gradient(90deg,#166534_0_60px,#15803d_60px_120px)] p-2 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.8)]">
         <div className="pointer-events-none absolute inset-y-2 right-[6%] w-0.5 bg-[repeating-linear-gradient(0deg,#fff_0_6px,#000_6px_12px)] opacity-60" />
         {NAMES.map((n, i) => {
           const x = phase === 'betting' || !r?.finish ? 0 : position(rank[i] ?? 5, i, phase === 'finished' ? 1 : k, r.id)
@@ -129,9 +152,8 @@ export default function HorseRacing({ game }) {
               <span className="absolute left-2 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-white/40">{i + 1}</span>
               <div className="absolute top-1/2 -translate-y-1/2 will-change-[left]" style={{ left: `${4 + x * 84}%` }}>
                 {phase === 'racing' && <span className="na-dust absolute -left-3 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-amber-200/40 blur-[2px]" style={{ animationDelay: `${i * 0.07}s` }} />}
-                <span className={clsx('relative grid h-7 w-7 place-items-center rounded-full text-base shadow-lg sm:h-8 sm:w-8', phase === 'racing' && 'na-gallop', first && 'ring-2 ring-neon-gold')}
-                  style={{ background: COLORS[i], animationDelay: `${i * 0.05}s` }}>
-                  🏇
+                <span className={clsx('relative block h-9 w-12 sm:h-10 sm:w-14', phase === 'racing' && 'na-gallop', first && 'drop-shadow-[0_0_10px_rgba(250,204,21,0.9)]')} style={{ animationDelay: `${i * 0.05}s` }}>
+                  <HorseSvg silk={COLORS[i]} running={phase === 'racing'} />
                 </span>
                 {mine?.horse === i && <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded bg-white px-1 text-[8px] font-black text-ink-950">YOU</span>}
               </div>

@@ -102,58 +102,68 @@ export default function Ladder({ game }) {
   return <GameShell game={game} controls={controls} stage={stage} outcome={outcome} />
 }
 
+const STARS = Array.from({ length: 34 }, (_, i) => ({ x: (i * 37) % 100, y: (i * 61) % 100, r: 0.6 + (i % 3) * 0.5, d: (i % 5) * 0.6 }))
+
+/** Tower: climb a castle keep at night. Stone blocks flip to reveal an emerald or a bomb. */
 function TowerBoard({ cfg, mode, live, end, onPick }) {
   const { cols, one } = cfg.modes[mode]
   const path = live?.path ?? end?.path ?? []
   const active = live ? live.step : -1
   const climbed = live ? live.step : end ? end.step : 0
+  const lostRow = end?.lost ? end.step : -1
   return (
-    <div className="relative mx-auto flex max-w-[380px] flex-col-reverse gap-1.5">
-      {Array.from({ length: cfg.steps }, (_, row) => {
-        const special = end?.layout?.[row]
-        const isActive = row === active
-        const past = row < climbed
-        return (
-          <motion.div key={row} className="flex items-center gap-2" animate={{ opacity: !live && !end ? 0.7 : row > active && live ? 0.55 : 1 }}>
-            <span className={clsx('num w-14 shrink-0 text-right font-mono text-[11px] transition-colors', isActive ? 'font-bold text-neon-cyan' : past ? 'text-neon-green' : 'text-slate-500')}>
-              {fmtMult(ladderMult('tower', mode, row + 1))}
-            </span>
-            <div className={clsx('grid flex-1 gap-1.5 rounded-lg p-0.5 transition-colors', isActive && 'bg-neon-cyan/[0.06] ring-1 ring-inset ring-neon-cyan/30')} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-              {Array.from({ length: cols }, (_, c) => {
-                const chosen = path[row] === c
-                const known = special != null
-                const isBomb = known && (one === 'bomb' ? special === c : special !== c)
-                const show = known || (chosen && past)
-                return (
-                  <motion.button
-                    key={c}
-                    whileHover={isActive ? { y: -2 } : undefined}
-                    whileTap={isActive ? { scale: 0.9 } : undefined}
-                    disabled={!isActive}
-                    onClick={() => onPick(c)}
-                    className="na-3d relative h-10 [perspective:600px]"
-                  >
-                    <motion.span
-                      className="na-3d absolute inset-0"
-                      initial={false}
-                      animate={{ rotateX: show ? 180 : 0 }}
-                      transition={spring(0.55, 0.3, known && !chosen ? 0.04 * (row + c) : 0)}
-                    >
-                      <span className={clsx('na-back absolute inset-0 rounded-lg ring-1 ring-inset', isActive ? 'bg-gradient-to-b from-violet-500/30 to-violet-700/20 ring-violet-300/40' : 'bg-white/[0.05] ring-white/[0.07]')} />
-                      <span
-                        className={clsx('na-back absolute inset-0 grid place-items-center rounded-lg ring-1 ring-inset [transform:rotateX(180deg)]',
-                          isBomb ? (chosen ? 'bg-neon-red/35 ring-neon-red' : 'bg-neon-red/10 ring-neon-red/30') : chosen ? 'bg-neon-green/20 ring-neon-green/60' : 'bg-white/[0.04] ring-white/10')}
-                      >
-                        {isBomb ? <Bomb className="h-4 w-4 text-neon-red" /> : <Gem className={clsx('h-4 w-4', chosen ? 'text-neon-green' : 'text-slate-500')} />}
-                      </span>
-                    </motion.span>
-                  </motion.button>
-                )
-              })}
-            </div>
-          </motion.div>
-        )
-      })}
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#0b1026] via-[#1a1440] to-[#2a1b3d] px-3 py-4 ring-1 ring-white/10">
+      {STARS.map((st, k) => (
+        <motion.span key={k} className="absolute rounded-full bg-white" style={{ left: `${st.x}%`, top: `${st.y * 0.6}%`, width: st.r * 2, height: st.r * 2 }} animate={{ opacity: [0.2, 0.9, 0.2] }} transition={{ duration: 2.5, delay: st.d, repeat: Infinity }} />
+      ))}
+      <div className="absolute right-6 top-5 h-12 w-12 rounded-full bg-amber-100 shadow-[0_0_40px_10px_rgba(254,243,199,0.25)]" />
+      <svg className="absolute inset-x-0 bottom-0 h-24 w-full opacity-60" viewBox="0 0 400 100" preserveAspectRatio="none">
+        <path d="M0 100V60h20V40h10v10h10V40h10v20h30V30h12v10h10V30h12v30h40V50h10v10h10V50h10v50zM260 100V55h30V35h12v10h10V35h12v20h40V45h10v10h10V45h10v55z" fill="#0b0a1a" />
+      </svg>
+      <div className="relative mx-auto flex max-w-[400px] flex-col-reverse gap-2">
+        {Array.from({ length: cfg.steps }, (_, row) => {
+          const special = end?.layout?.[row]
+          const isActive = row === active
+          const past = row < climbed
+          return (
+            <motion.div key={row} className="relative flex items-center gap-2" initial={false} animate={{ opacity: !live && !end ? 0.75 : row > active && live ? 0.5 : 1, x: isActive ? [0, 2, 0] : 0 }} transition={{ duration: 0.4 }}>
+              <span className={clsx('relative w-16 shrink-0 rounded-md py-1 text-center font-mono text-[11px] font-black transition-colors',
+                isActive ? 'bg-amber-400 text-amber-950 shadow-[0_0_14px_rgba(251,191,36,0.6)]' : past ? 'bg-emerald-500/80 text-emerald-950' : 'bg-white/[0.06] text-slate-400')}>
+                {fmtMult(ladderMult('tower', mode, row + 1))}
+              </span>
+              <div className="relative grid flex-1 gap-1.5 rounded-lg bg-[repeating-linear-gradient(90deg,#3f3a52_0_2px,transparent_2px_100%)] p-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+                {isActive && <motion.div layoutId="torch" className="pointer-events-none absolute -inset-1 rounded-xl bg-amber-400/10 ring-2 ring-amber-300/60" transition={spring(0.5, 0.3)} />}
+                {Array.from({ length: cols }, (_, c) => {
+                  const chosen = path[row] === c
+                  const known = special != null
+                  const isBomb = known && (one === 'bomb' ? special === c : special !== c)
+                  const show = known || (chosen && past)
+                  const boom = row === lostRow && chosen
+                  return (
+                    <motion.button key={c} type="button" whileHover={isActive ? { y: -3 } : undefined} whileTap={isActive ? { scale: 0.9 } : undefined}
+                      disabled={!isActive} onClick={() => onPick(c)} className="na-3d relative h-11 [perspective:700px]">
+                      <motion.span className="na-3d absolute inset-0" initial={false} animate={{ rotateX: show ? 180 : 0 }} transition={spring(0.55, 0.3, known && !chosen ? 0.03 * (row + c) : 0)}>
+                        <span className={clsx('na-back absolute inset-0 rounded-md border-b-4 border-black/40 bg-gradient-to-b shadow-inner',
+                          isActive ? 'from-[#8a7f9e] to-[#5d5470]' : 'from-[#5b546b] to-[#3e3850]')}>
+                          <span className="absolute inset-x-2 top-1.5 h-0.5 rounded bg-white/15" />
+                        </span>
+                        <span className={clsx('na-back absolute inset-0 grid place-items-center rounded-md [transform:rotateX(180deg)]',
+                          isBomb ? (chosen ? 'bg-gradient-to-b from-red-500 to-red-800' : 'bg-red-950/70 ring-1 ring-red-500/40') : chosen ? 'bg-gradient-to-b from-emerald-400 to-emerald-700' : 'bg-[#2b2640] ring-1 ring-white/10')}>
+                          {isBomb ? <Bomb className={clsx('h-5 w-5', chosen ? 'text-white' : 'text-red-400')} /> : <Gem className={clsx('h-5 w-5', chosen ? 'text-white drop-shadow' : 'text-emerald-300/60')} />}
+                        </span>
+                      </motion.span>
+                      {boom && [...Array(10)].map((_, k) => (
+                        <motion.span key={k} className="absolute left-1/2 top-1/2 z-10 h-2 w-2 rounded-full bg-orange-400" initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
+                          animate={{ x: Math.cos(k * 0.63) * 40, y: Math.sin(k * 0.63) * 40, scale: 0.2, opacity: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} />
+                      ))}
+                    </motion.button>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -275,13 +285,23 @@ function Balloon({ mode, step, live, end, pumps }) {
   const bits = useMemo(() => Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * Math.PI * 2, d: 70 + (i % 4) * 22, r: (i * 47) % 360 })), [])
   const tension = Math.min(1, step / 18)
   return (
-    <div className="relative grid h-[320px] place-items-center overflow-hidden">
+    <div className="relative grid h-[360px] place-items-center overflow-hidden rounded-2xl bg-[repeating-linear-gradient(90deg,#7f1d1d_0_44px,#1c1917_44px_88px)] ring-1 ring-white/10">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/80" />
+      <svg className="pointer-events-none absolute inset-x-0 top-0 h-16 w-full" viewBox="0 0 400 60" preserveAspectRatio="none"><path d="M0 0h400v18c-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0z" fill="#b91c1c" /></svg>
+      <div className="pointer-events-none absolute inset-x-4 top-12 flex justify-between">
+        {Array.from({ length: 14 }, (_, k) => <motion.span key={k} className="h-2.5 w-2.5 rounded-full" style={{ background: ['#fde047', '#f472b6', '#22d3ee'][k % 3] }} animate={{ opacity: [0.35, 1, 0.35] }} transition={{ duration: 1.2, delay: (k % 4) * 0.25, repeat: Infinity }} />)}
+      </div>
+      <div className="pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 flex-col items-center">
+        <motion.div key={`p${pumps}`} className="h-10 w-3 rounded-t bg-slate-300" initial={{ y: 0 }} animate={{ y: [0, 18, 0] }} transition={{ duration: 0.35 }} />
+        <div className="h-3 w-12 rounded bg-slate-200" />
+        <div className="h-16 w-9 rounded-b-lg bg-gradient-to-b from-red-500 to-red-800 shadow-lg" />
+      </div>
       <AnimatePresence mode="wait">
         {popped ? (
           <motion.div key="pop" className="relative grid place-items-center" initial={{ opacity: 1 }} animate={{ opacity: 1 }}>
             {bits.map((b, i) => (
               <motion.span key={i} className={clsx('absolute h-3 w-2 rounded-sm bg-gradient-to-br', hue)}
-                initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }} animate={{ x: Math.cos(b.a) * b.d, y: Math.sin(b.a) * b.d + 40, rotate: b.r, opacity: 0 }} transition={{ duration: 0.9, ease: 'easeOut' }} />
+                initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }} animate={{ x: Math.cos(b.a) * b.d * 1.4, y: Math.sin(b.a) * b.d + 60, rotate: b.r * 2, opacity: 0 }} transition={{ duration: 1.1, ease: 'easeOut' }} />
             ))}
             <motion.p initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }} className="font-display text-5xl font-black text-neon-red">POP!</motion.p>
           </motion.div>
@@ -296,7 +316,7 @@ function Balloon({ mode, step, live, end, pumps }) {
               </motion.div>
             </motion.div>
             <span className="-mt-0.5 h-2.5 w-3 rounded-b-full bg-slate-400/70" />
-            <svg width="20" height="60" viewBox="0 0 20 60" className="text-slate-500"><path d="M10 0 C2 15 18 30 10 45 C6 52 10 58 10 60" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
+            <svg width="20" height="70" viewBox="0 0 20 70" className="text-slate-300/70"><path d="M10 0 C2 18 18 36 10 52 C6 60 10 66 10 70" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
           </motion.div>
         )}
       </AnimatePresence>

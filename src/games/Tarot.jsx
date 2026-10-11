@@ -47,7 +47,18 @@ export default function Tarot({ game }) {
   )
 
   const stage = (
-    <Stage className="p-4 sm:p-8">
+    <Stage className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_40%,#4c1d95_0%,#1e1035_55%,#0b0716_100%)] p-4 sm:p-8">
+      <div className="pointer-events-none absolute inset-3 rounded-[22px] border border-amber-300/30" />
+      <div className="pointer-events-none absolute inset-5 rounded-[18px] border border-amber-300/10" />
+      {[{ l: '5%' }, { r: '5%' }].map((pos, i) => (
+        <div key={i} className="pointer-events-none absolute bottom-6 hidden flex-col items-center sm:flex" style={pos.l ? { left: pos.l } : { right: pos.r }}>
+          <motion.span className="h-6 w-3 rounded-[50%_50%_50%_50%/60%_60%_40%_40%] bg-gradient-to-t from-orange-500 via-amber-300 to-yellow-100 shadow-[0_0_24px_8px_rgba(251,191,36,0.35)]"
+            animate={{ scaleY: [1, 1.18, 0.92, 1], rotate: [-3, 3, -2, 0] }} transition={{ duration: 0.9 + i * 0.2, repeat: Infinity }} />
+          <span className="h-0.5 w-0.5 bg-slate-900" />
+          <span className="h-16 w-5 rounded-sm bg-gradient-to-b from-amber-50 to-amber-200/80" />
+        </div>
+      ))}
+      <motion.div className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-72 -translate-x-1/2 rounded-full bg-fuchsia-400/10 blur-3xl" animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} />
       <div className="mx-auto grid max-w-[460px] grid-cols-3 gap-3 sm:gap-5">
         {[0, 1, 2].map((i) => {
           const c = cards?.[i]

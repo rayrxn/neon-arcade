@@ -1,6 +1,18 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.3",
+    "date": "2026-10-11",
+    "emoji": "🏰",
+    "colors": ["#a855f7", "#facc15", "#22c55e"],
+    "title": { "en": "New worlds, part 1", "id": "Dunia baru, bagian 1" },
+    "tagline": { "en": "Tower, Pump, Keno, Tarot and Horse Racing each get their own place.", "id": "Tower, Pump, Keno, Tarot, dan Horse Racing punya tempatnya sendiri." },
+    "items": [
+      { "tag": "improve", "en": "Tower: a castle keep under the stars with stone blocks and explosions. Pump: a carnival tent with a real pump.", "id": "Tower: menara kastil di bawah bintang dengan balok batu dan ledakan. Pump: tenda karnaval dengan pompa sungguhan." },
+      { "tag": "improve", "en": "Keno: a lottery machine full of bouncing balls. Tarot: a candle-lit fortune table. Horse Racing: a stadium with real racehorses.", "id": "Keno: mesin lotre penuh bola memantul. Tarot: meja ramalan diterangi lilin. Horse Racing: stadion dengan kuda pacu sungguhan." }
+    ]
+  },
+  {
     "version": "2.9.2",
     "date": "2026-10-11",
     "emoji": "🎯",
