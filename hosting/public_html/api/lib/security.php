@@ -94,6 +94,15 @@ function strict_allowed(array $u): bool
     return in_array($u['role'] ?? '', STRICT_ROLES, true);
 }
 
+/** Strict sessions need two-step sign-in: the authenticator app, or email codes to a verified email. */
+function strict_method_ok(array $u): void
+{
+    $m = $u['twofa_method'] ?? '';
+    if ($m === 'totp') return;
+    if ($m === 'email' && !empty($u['email_verified_at'])) return;
+    fail($m === 'email' ? 'security.errors.verifyEmailFirst' : 'security.errors.needTwofa');
+}
+
 function strict_on(array $u): bool
 {
     return strict_allowed($u) && !empty($u['strict_session']) && $u['strict_session'] !== 'f';
@@ -114,7 +123,8 @@ function security_view(array $u): array
 /** The method a sign-in must pass, or null. Strict mode always means the authenticator. */
 function login_method(array $u): ?string
 {
-    if (strict_on($u)) return 'totp';
+    // Strict sessions use the account's own two-step method (authenticator or verified email).
+    if (strict_on($u)) return $u['twofa_method'] ?: 'totp';
     return $u['twofa_method'] ?? null;
 }
 
@@ -361,8 +371,8 @@ function api_strict_session(): array
     $code = (string) arg('code', '');
     return tx(function () use ($u, $on, $code) {
         if (!strict_allowed($u)) fail('admin.errors.forbidden', [], 403);
-        if (($u['twofa_method'] ?? '') !== 'totp') fail('security.errors.needTotp');
-        confirm_code($u, 'totp', $code);
+        strict_method_ok($u);
+        confirm_code($u, $u['twofa_method'], $code);
         q('UPDATE users SET strict_session = ? WHERE id = ?', [$on, $u['id']]);
         if ($on) q("UPDATE sessions SET expires_at = LEAST(expires_at, now() + make_interval(secs => ?)) WHERE user_id = ?", [SESSION_STRICT_S, $u['id']]);
         log_event($on ? 'STRICT_SESSION_ON' : 'STRICT_SESSION_OFF', $u['id']);
@@ -380,7 +390,7 @@ function security_admin_set(array $t, string $what, bool $on): array
         q('DELETE FROM sessions WHERE user_id = ?', [$t['id']]);
     } else {
         if (!strict_allowed($t)) fail('security.errors.strictRole');
-        if ($on && ($t['twofa_method'] ?? '') !== 'totp') fail('security.errors.needTotp');
+        if ($on) strict_method_ok($t);
         q('UPDATE users SET strict_session = ? WHERE id = ?', [$on, $t['id']]);
         if ($on) q("UPDATE sessions SET expires_at = LEAST(expires_at, now() + make_interval(secs => ?)) WHERE user_id = ?", [SESSION_STRICT_S, $t['id']]);
     }
