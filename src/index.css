@@ -1280,3 +1280,6 @@ html[data-perf='ultra'] .lc-face:not(.lc-face--sm):hover { transform: perspectiv
     radial-gradient(circle at 34% 76%, rgb(255 255 255 / .05) 0 1.5px, transparent 2.5px),
     linear-gradient(160deg, #6b5a49 0%, #4a3c30 55%, #33291f 100%);
 }
+@keyframes na-twinkle { 0%,100% { opacity: .2 } 50% { opacity: .9 } }
+.na-twinkle { animation: na-twinkle 2.5s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { .na-twinkle { animation: none } }

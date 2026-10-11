@@ -90,15 +90,17 @@ export function drawFrame(canvas, state, colors) {
   ctx.fill()
 
   // Garis + glow
+  // Glow as a wide translucent stroke under the line (shadowBlur every frame was the main cause of lag).
   ctx.save()
-  ctx.shadowColor = line
-  ctx.shadowBlur = 14
-  ctx.strokeStyle = line
-  ctx.lineWidth = 3.5
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
   ctx.beginPath()
   pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)))
+  ctx.strokeStyle = lineA(0.25)
+  ctx.lineWidth = 11
+  ctx.stroke()
+  ctx.strokeStyle = line
+  ctx.lineWidth = 3.5
   ctx.stroke()
   ctx.restore()
 
@@ -163,29 +165,63 @@ export const makeParticles = (colors) =>
   })
 
 
-// Deep-space backdrop: three parallax star layers that stream faster as the multiplier climbs, plus a ringed planet.
-const STAR_LAYERS = [0.15, 0.4, 0.9].map((speed, l) => ({ speed, stars: Array.from({ length: 40 - l * 10 }, (_, i) => ({ x: (i * 97 + l * 31) % 1000 / 1000, y: (i * 57 + l * 71) % 1000 / 1000, r: 0.5 + l * 0.6 })) }))
+// Deep-space backdrop: a cached nebula + planets layer (drawn once per size) and three parallax star layers
+// that stream faster as the multiplier climbs.
+const STAR_LAYERS = [0.15, 0.4, 0.9].map((speed, l) => ({ speed, stars: Array.from({ length: 46 - l * 12 }, (_, i) => ({ x: (i * 97 + l * 31) % 1000 / 1000, y: (i * 57 + l * 71) % 1000 / 1000, r: 0.5 + l * 0.6 })) }))
+let bgCache = null
+function backdrop(w, h) {
+  const dpr = window.devicePixelRatio || 1
+  if (bgCache && bgCache.w === w && bgCache.h === h) return bgCache.c
+  const c = document.createElement('canvas')
+  c.width = Math.round(w * dpr)
+  c.height = Math.round(h * dpr)
+  const g = c.getContext('2d')
+  g.scale(dpr, dpr)
+  const sky = g.createLinearGradient(0, 0, 0, h)
+  sky.addColorStop(0, '#04030d'); sky.addColorStop(0.55, '#0c0a24'); sky.addColorStop(1, '#1d0f33')
+  g.fillStyle = sky
+  g.fillRect(0, 0, w, h)
+  for (const [x, y, r, col] of [[0.25, 0.3, 0.45, '124,58,237'], [0.7, 0.65, 0.4, '236,72,153'], [0.5, 0.15, 0.3, '34,211,238']]) {
+    const n = g.createRadialGradient(x * w, y * h, 0, x * w, y * h, r * Math.max(w, h))
+    n.addColorStop(0, `rgba(${col},0.18)`); n.addColorStop(1, `rgba(${col},0)`)
+    g.fillStyle = n
+    g.fillRect(0, 0, w, h)
+  }
+  // Ringed planet
+  const px = w * 0.82, py = h * 0.24, pr = Math.min(w, h) * 0.11
+  g.strokeStyle = 'rgba(244,114,182,0.35)'; g.lineWidth = 3
+  g.beginPath(); g.ellipse(px, py, pr * 1.7, pr * 0.42, -0.35, Math.PI, Math.PI * 2); g.stroke()
+  const pg = g.createRadialGradient(px - pr * 0.4, py - pr * 0.4, pr * 0.1, px, py, pr)
+  pg.addColorStop(0, '#e9d5ff'); pg.addColorStop(0.35, '#a855f7'); pg.addColorStop(1, '#3b0764')
+  g.fillStyle = pg
+  g.beginPath(); g.arc(px, py, pr, 0, Math.PI * 2); g.fill()
+  g.strokeStyle = 'rgba(244,114,182,0.6)'
+  g.beginPath(); g.ellipse(px, py, pr * 1.7, pr * 0.42, -0.35, 0, Math.PI); g.stroke()
+  // Small moon
+  const mx = w * 0.12, my = h * 0.18, mr = Math.min(w, h) * 0.035
+  const mg = g.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, 0, mx, my, mr)
+  mg.addColorStop(0, '#f1f5f9'); mg.addColorStop(1, '#64748b')
+  g.fillStyle = mg
+  g.beginPath(); g.arc(mx, my, mr, 0, Math.PI * 2); g.fill()
+  // Planet horizon at the bottom
+  const hz = g.createLinearGradient(0, h * 0.86, 0, h)
+  hz.addColorStop(0, 'rgba(56,189,248,0.0)'); hz.addColorStop(1, 'rgba(56,189,248,0.22)')
+  g.fillStyle = hz
+  g.beginPath(); g.ellipse(w / 2, h * 1.55, w * 1.1, h * 0.7, 0, 0, Math.PI * 2); g.fill()
+  bgCache = { w, h, c }
+  return c
+}
 function drawSpace(ctx, w, h, state) {
-  const g = ctx.createLinearGradient(0, 0, 0, h)
-  g.addColorStop(0, '#05030f'); g.addColorStop(0.6, '#0d0a24'); g.addColorStop(1, '#1b0f2e')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, w, h)
+  ctx.drawImage(backdrop(w, h), 0, 0, w, h)
   const t = (state.elapsed ?? 0) / 1000
   const boost = Math.min(6, Math.log2(Math.max(1, state.multiplier ?? 1)) + 1)
   for (const layer of STAR_LAYERS) {
     ctx.fillStyle = `rgba(226,232,240,${0.35 + layer.speed * 0.6})`
+    const len = layer.speed * boost * 3
     for (const st of layer.stars) {
       const x = (((st.x - t * layer.speed * 0.05 * boost) % 1) + 1) % 1
       const y = (((st.y + t * layer.speed * 0.03 * boost) % 1) + 1) % 1
-      const len = layer.speed * boost * 3
       ctx.fillRect(x * w, y * h, st.r + len, st.r)
     }
   }
-  const px = w * 0.82, py = h * 0.24, pr = Math.min(w, h) * 0.11
-  const pg = ctx.createRadialGradient(px - pr * 0.4, py - pr * 0.4, pr * 0.1, px, py, pr)
-  pg.addColorStop(0, '#c084fc'); pg.addColorStop(1, '#4c1d95')
-  ctx.fillStyle = pg
-  ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = 'rgba(244,114,182,0.55)'; ctx.lineWidth = 3
-  ctx.beginPath(); ctx.ellipse(px, py, pr * 1.7, pr * 0.42, -0.35, 0, Math.PI * 2); ctx.stroke()
 }

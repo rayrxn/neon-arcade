@@ -9,6 +9,7 @@ import { ladderCashout, ladderStart, ladderStep, openRound } from '@/services/ga
 import { LADDER, ladderMult } from '@/config/games2'
 import { formatCoins } from '@/utils/format'
 import { LayerBoard, MolesBoard, SliceBoard } from './LadderArcade'
+import Explosion from '@/components/play/Explosion'
 import { useT } from '@/i18n'
 
 /** One engine: Tower, Cross the Road, Pump, Slice, Moles and Layer. */
@@ -108,7 +109,38 @@ export default function Ladder({ game }) {
 
 const STARS = Array.from({ length: 34 }, (_, i) => ({ x: (i * 37) % 100, y: (i * 61) % 100, r: 0.6 + (i % 3) * 0.5, d: (i % 5) * 0.6 }))
 
-/** Tower: climb a castle keep at night. Stone blocks flip to reveal an emerald or a bomb. */
+/** Tower: a castle wall at night. Each floor is a row of arched doors; open one to find treasure or a bomb. */
+function Door({ open, bomb, chosen, active, onClick, delay }) {
+  return (
+    <button type="button" disabled={!active} onClick={onClick} className={clsx('group relative h-14 [perspective:600px] disabled:cursor-default', active && 'cursor-pointer')}>
+      {/* doorway interior */}
+      <span className={clsx('absolute inset-0 grid place-items-center rounded-t-[18px] rounded-b-md shadow-[inset_0_6px_14px_rgba(0,0,0,0.8)]',
+        bomb ? (chosen ? 'bg-red-900' : 'bg-[#2a0f12]') : chosen ? 'bg-[radial-gradient(circle,#fde68a_0%,#b45309_70%)]' : 'bg-[#1b1626]')}>
+        {open && (bomb
+          ? <Bomb className={clsx('h-5 w-5', chosen ? 'text-white' : 'text-red-400/70')} />
+          : <Gem className={clsx('h-5 w-5', chosen ? 'text-white drop-shadow-[0_0_6px_#fff]' : 'text-emerald-300/50')} />)}
+      </span>
+      {/* wooden door swinging open on its left hinge */}
+      <motion.span className="absolute inset-0 origin-left rounded-t-[18px] rounded-b-md border-2 border-[#2b1a0e] bg-[repeating-linear-gradient(90deg,#8b5a2b_0_9px,#6f4521_9px_11px)] shadow-[inset_0_-4px_0_rgba(0,0,0,0.35)] [backface-visibility:hidden]"
+        initial={false} animate={{ rotateY: open ? -105 : 0 }} transition={spring(0.6, 0.25, delay)}>
+        <span className="absolute inset-x-1 top-[45%] h-1 rounded bg-[#3a2a1a]" />
+        <span className="absolute right-1.5 top-[52%] h-1.5 w-1.5 rounded-full bg-amber-300" />
+        {active && <span className="absolute inset-0 rounded-t-[18px] rounded-b-md ring-2 ring-amber-300/0 transition group-hover:ring-amber-300/80" />}
+      </motion.span>
+      {chosen && bomb && open && <Explosion size={110} />}
+    </button>
+  )
+}
+
+function Torch({ lit }) {
+  return (
+    <span className="relative flex h-10 w-3 flex-col items-center">
+      {lit && <motion.span className="absolute -top-3 h-4 w-3 rounded-[50%_50%_40%_40%] bg-gradient-to-t from-orange-500 via-amber-300 to-yellow-100 shadow-[0_0_16px_6px_rgba(251,146,60,0.55)]" animate={{ scaleY: [1, 1.25, 0.9, 1.15, 1], x: [0, 0.5, -0.5, 0] }} transition={{ duration: 0.8, repeat: Infinity }} />}
+      <span className="mt-1 h-7 w-1.5 rounded bg-[#5b3a1e]" />
+    </span>
+  )
+}
+
 function TowerBoard({ cfg, mode, live, end, onPick }) {
   const { cols, one } = cfg.modes[mode]
   const path = live?.path ?? end?.path ?? []
@@ -116,55 +148,34 @@ function TowerBoard({ cfg, mode, live, end, onPick }) {
   const climbed = live ? live.step : end ? end.step : 0
   const lostRow = end?.lost ? end.step : -1
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#0b1026] via-[#1a1440] to-[#2a1b3d] px-3 py-4 ring-1 ring-white/10">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#0b1026] via-[#151236] to-[#1e1633] px-3 pb-4 pt-6">
       {STARS.map((st, k) => (
-        <motion.span key={k} className="absolute rounded-full bg-white" style={{ left: `${st.x}%`, top: `${st.y * 0.6}%`, width: st.r * 2, height: st.r * 2 }} animate={{ opacity: [0.2, 0.9, 0.2] }} transition={{ duration: 2.5, delay: st.d, repeat: Infinity }} />
+        <span key={k} className="na-twinkle absolute rounded-full bg-white" style={{ left: `${st.x}%`, top: `${st.y * 0.25}%`, width: st.r * 2, height: st.r * 2, animationDelay: `${st.d}s` }} />
       ))}
-      <div className="absolute right-6 top-5 h-12 w-12 rounded-full bg-amber-100 shadow-[0_0_40px_10px_rgba(254,243,199,0.25)]" />
-      <svg className="absolute inset-x-0 bottom-0 h-24 w-full opacity-60" viewBox="0 0 400 100" preserveAspectRatio="none">
-        <path d="M0 100V60h20V40h10v10h10V40h10v20h30V30h12v10h10V30h12v30h40V50h10v10h10V50h10v50zM260 100V55h30V35h12v10h10V35h12v20h40V45h10v10h10V45h10v55z" fill="#0b0a1a" />
-      </svg>
-      <div className="relative mx-auto flex max-w-[400px] flex-col-reverse gap-2">
+      <div className="absolute right-6 top-3 h-10 w-10 rounded-full bg-amber-100 shadow-[0_0_40px_10px_rgba(254,243,199,0.2)]" />
+      {/* battlements */}
+      <div className="relative mx-auto flex max-w-[440px] justify-between px-2">{Array.from({ length: 9 }, (_, k) => <span key={k} className="h-4 w-8 rounded-t-sm bg-[#4b4560]" />)}</div>
+      <div className="relative mx-auto flex max-w-[440px] flex-col-reverse gap-1.5 rounded-b-xl bg-[#3f3a52] bg-[linear-gradient(rgba(0,0,0,0.25)_2px,transparent_2px),linear-gradient(90deg,rgba(0,0,0,0.2)_2px,transparent_2px)] bg-[length:44px_22px] p-2.5 shadow-[inset_0_0_30px_rgba(0,0,0,0.5)]">
         {Array.from({ length: cfg.steps }, (_, row) => {
           const special = end?.layout?.[row]
           const isActive = row === active
           const past = row < climbed
           return (
-            <motion.div key={row} className="relative flex items-center gap-2" initial={false} animate={{ opacity: !live && !end ? 0.75 : row > active && live ? 0.5 : 1, x: isActive ? [0, 2, 0] : 0 }} transition={{ duration: 0.4 }}>
-              <span className={clsx('relative w-16 shrink-0 rounded-md py-1 text-center font-mono text-[11px] font-black transition-colors',
-                isActive ? 'bg-amber-400 text-amber-950 shadow-[0_0_14px_rgba(251,191,36,0.6)]' : past ? 'bg-emerald-500/80 text-emerald-950' : 'bg-white/[0.06] text-slate-400')}>
-                {fmtMult(ladderMult('tower', mode, row + 1))}
-              </span>
-              <div className="relative grid flex-1 gap-1.5 rounded-lg bg-[repeating-linear-gradient(90deg,#3f3a52_0_2px,transparent_2px_100%)] p-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-                {isActive && <motion.div layoutId="torch" className="pointer-events-none absolute -inset-1 rounded-xl bg-amber-400/10 ring-2 ring-amber-300/60" transition={spring(0.5, 0.3)} />}
+            <div key={row} className={clsx('relative flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors', isActive && 'bg-amber-400/10 ring-1 ring-amber-300/40')}>
+              <Torch lit={isActive || (past && !end?.lost)} />
+              <div className="grid flex-1 gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
                 {Array.from({ length: cols }, (_, c) => {
                   const chosen = path[row] === c
                   const known = special != null
-                  const isBomb = known && (one === 'bomb' ? special === c : special !== c)
-                  const show = known || (chosen && past)
-                  const boom = row === lostRow && chosen
-                  return (
-                    <motion.button key={c} type="button" whileHover={isActive ? { y: -3 } : undefined} whileTap={isActive ? { scale: 0.9 } : undefined}
-                      disabled={!isActive} onClick={() => onPick(c)} className="na-3d relative h-11 [perspective:700px]">
-                      <motion.span className="na-3d absolute inset-0" initial={false} animate={{ rotateX: show ? 180 : 0 }} transition={spring(0.55, 0.3, known && !chosen ? 0.03 * (row + c) : 0)}>
-                        <span className={clsx('na-back absolute inset-0 rounded-md border-b-4 border-black/40 bg-gradient-to-b shadow-inner',
-                          isActive ? 'from-[#8a7f9e] to-[#5d5470]' : 'from-[#5b546b] to-[#3e3850]')}>
-                          <span className="absolute inset-x-2 top-1.5 h-0.5 rounded bg-white/15" />
-                        </span>
-                        <span className={clsx('na-back absolute inset-0 grid place-items-center rounded-md [transform:rotateX(180deg)]',
-                          isBomb ? (chosen ? 'bg-gradient-to-b from-red-500 to-red-800' : 'bg-red-950/70 ring-1 ring-red-500/40') : chosen ? 'bg-gradient-to-b from-emerald-400 to-emerald-700' : 'bg-[#2b2640] ring-1 ring-white/10')}>
-                          {isBomb ? <Bomb className={clsx('h-5 w-5', chosen ? 'text-white' : 'text-red-400')} /> : <Gem className={clsx('h-5 w-5', chosen ? 'text-white drop-shadow' : 'text-emerald-300/60')} />}
-                        </span>
-                      </motion.span>
-                      {boom && [...Array(10)].map((_, k) => (
-                        <motion.span key={k} className="absolute left-1/2 top-1/2 z-10 h-2 w-2 rounded-full bg-orange-400" initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
-                          animate={{ x: Math.cos(k * 0.63) * 40, y: Math.sin(k * 0.63) * 40, scale: 0.2, opacity: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} />
-                      ))}
-                    </motion.button>
-                  )
+                  const isBomb = known ? (one === 'bomb' ? special === c : special !== c) : row === lostRow && chosen
+                  return <Door key={c} open={known || (chosen && (past || row === lostRow))} bomb={isBomb} chosen={chosen} active={isActive} onClick={() => onPick(c)} delay={known && !chosen ? 0.03 * (row + c) : 0} />
                 })}
               </div>
-            </motion.div>
+              <span className={clsx('w-14 shrink-0 rounded-md py-1 text-center font-mono text-[11px] font-black',
+                isActive ? 'bg-amber-400 text-amber-950 shadow-[0_0_14px_rgba(251,191,36,0.6)]' : past ? 'bg-emerald-500/85 text-emerald-950' : 'bg-black/30 text-slate-400')}>
+                {fmtMult(ladderMult('tower', mode, row + 1))}
+              </span>
+            </div>
           )
         })}
       </div>
@@ -282,49 +293,61 @@ function RoadBoard({ cfg, mode, live, end }) {
   )
 }
 
+const BALLOON_HUE = { easy: ['#6ee7b7', '#059669'], medium: ['#7dd3fc', '#6d28d9'], hard: ['#fdba74', '#db2777'], expert: ['#fda4af', '#b91c1c'] }
+
+/** Pump: a hand pump feeds a balloon through a hose. Scale is a transform (GPU), so growth stays smooth. */
 function Balloon({ mode, step, live, end, pumps }) {
   const popped = !!end?.lost
-  const size = 92 + Math.min(step, 25) * 6.5
-  const hue = mode === 'expert' ? 'from-rose-300 via-rose-500 to-red-700' : mode === 'hard' ? 'from-amber-200 via-orange-400 to-pink-600' : mode === 'medium' ? 'from-sky-200 via-sky-400 to-violet-600' : 'from-emerald-200 via-emerald-400 to-cyan-600'
-  const bits = useMemo(() => Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * Math.PI * 2, d: 70 + (i % 4) * 22, r: (i * 47) % 360 })), [])
-  const tension = Math.min(1, step / 18)
+  const [c1, c2] = BALLOON_HUE[mode] ?? BALLOON_HUE.medium
+  const scale = 0.55 + Math.min(step, 25) * 0.045
+  const bits = useMemo(() => Array.from({ length: 16 }, (_, i) => ({ a: (i / 16) * Math.PI * 2, d: 90 + (i % 4) * 26, r: (i * 47) % 360 })), [])
   return (
-    <div className="relative grid h-[360px] place-items-center overflow-hidden rounded-2xl bg-[repeating-linear-gradient(90deg,#7f1d1d_0_44px,#1c1917_44px_88px)] ring-1 ring-white/10">
+    <div className="relative h-[380px] overflow-hidden rounded-2xl bg-[repeating-linear-gradient(90deg,#7f1d1d_0_44px,#1c1917_44px_88px)]">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/80" />
-      <svg className="pointer-events-none absolute inset-x-0 top-0 h-16 w-full" viewBox="0 0 400 60" preserveAspectRatio="none"><path d="M0 0h400v18c-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0z" fill="#b91c1c" /></svg>
-      <div className="pointer-events-none absolute inset-x-4 top-12 flex justify-between">
-        {Array.from({ length: 14 }, (_, k) => <motion.span key={k} className="h-2.5 w-2.5 rounded-full" style={{ background: ['#fde047', '#f472b6', '#22d3ee'][k % 3] }} animate={{ opacity: [0.35, 1, 0.35] }} transition={{ duration: 1.2, delay: (k % 4) * 0.25, repeat: Infinity }} />)}
-      </div>
-      <div className="pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 flex-col items-center">
-        <motion.div key={`p${pumps}`} className="h-10 w-3 rounded-t bg-slate-300" initial={{ y: 0 }} animate={{ y: [0, 18, 0] }} transition={{ duration: 0.35 }} />
-        <div className="h-3 w-12 rounded bg-slate-200" />
-        <div className="h-16 w-9 rounded-b-lg bg-gradient-to-b from-red-500 to-red-800 shadow-lg" />
-      </div>
-      <AnimatePresence mode="wait">
-        {popped ? (
-          <motion.div key="pop" className="relative grid place-items-center" initial={{ opacity: 1 }} animate={{ opacity: 1 }}>
-            {bits.map((b, i) => (
-              <motion.span key={i} className={clsx('absolute h-3 w-2 rounded-sm bg-gradient-to-br', hue)}
-                initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }} animate={{ x: Math.cos(b.a) * b.d * 1.4, y: Math.sin(b.a) * b.d + 60, rotate: b.r * 2, opacity: 0 }} transition={{ duration: 1.1, ease: 'easeOut' }} />
-            ))}
-            <motion.p initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }} className="font-display text-5xl font-black text-neon-red">POP!</motion.p>
-          </motion.div>
-        ) : (
-          <motion.div key="b" className="flex flex-col items-center" exit={{ scale: 1.25, opacity: 0, transition: { duration: 0.12 } }}>
-            <motion.div key={pumps} initial={{ scaleX: 1.08, scaleY: 0.92 }} animate={{ scaleX: 1, scaleY: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 9 }}>
-              <motion.div animate={{ width: size, height: size * 1.16 }} transition={{ type: 'spring', stiffness: 200, damping: 13 }}
-                className={clsx('relative grid place-items-center rounded-[50%_50%_48%_48%] bg-gradient-to-br shadow-[inset_-14px_-18px_34px_rgba(0,0,0,0.28),0_18px_40px_-12px_rgba(0,0,0,0.6)]', hue, live ? 'na-breathe' : 'opacity-80')}
-                style={{ filter: `saturate(${1 + tension * 0.4})` }}>
-                <span className="absolute left-[20%] top-[14%] h-[20%] w-[13%] rotate-[-28deg] rounded-full bg-white/60 blur-[1px]" />
-                <span className="num font-mono text-base font-black text-white drop-shadow">{fmtMult(ladderMult('pump', mode, step))}</span>
-              </motion.div>
-            </motion.div>
-            <span className="-mt-0.5 h-2.5 w-3 rounded-b-full bg-slate-400/70" />
-            <svg width="20" height="70" viewBox="0 0 20 70" className="text-slate-300/70"><path d="M10 0 C2 18 18 36 10 52 C6 60 10 66 10 70" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
-          </motion.div>
+      <svg className="pointer-events-none absolute inset-x-0 top-0 h-14 w-full" viewBox="0 0 400 60" preserveAspectRatio="none"><path d="M0 0h400v18c-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0-25 22-25 22-50 0z" fill="#b91c1c" /></svg>
+      <svg viewBox="0 0 400 380" className="absolute inset-0 h-full w-full" aria-hidden>
+        <defs>
+          <radialGradient id="bal-g" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#fff" stopOpacity="0.9" /><stop offset="0.18" stopColor={c1} /><stop offset="1" stopColor={c2} /></radialGradient>
+          <linearGradient id="pump-g" x1="0" x2="1"><stop offset="0" stopColor="#991b1b" /><stop offset="0.5" stopColor="#ef4444" /><stop offset="1" stopColor="#7f1d1d" /></linearGradient>
+        </defs>
+        {/* floor */}
+        <ellipse cx="200" cy="362" rx="190" ry="14" fill="#000" opacity="0.4" />
+        {/* hose from pump to balloon nozzle */}
+        <path d="M92 330 C92 372 200 372 200 336" fill="none" stroke="#1f2937" strokeWidth="7" strokeLinecap="round" />
+        {/* hand pump */}
+        <rect x="70" y="250" width="44" height="96" rx="8" fill="url(#pump-g)" />
+        <rect x="64" y="340" width="56" height="10" rx="4" fill="#334155" />
+        <motion.g key={`p${pumps}`} initial={{ y: 0 }} animate={{ y: [0, 26, 0] }} transition={{ duration: 0.38, ease: 'easeInOut' }}>
+          <rect x="88" y="196" width="8" height="58" fill="#cbd5e1" />
+          <rect x="62" y="188" width="60" height="12" rx="6" fill="#e2e8f0" />
+        </motion.g>
+        {/* nozzle */}
+        <rect x="192" y="318" width="16" height="22" rx="3" fill="#475569" />
+        {!popped && (
+          <motion.g style={{ originX: '200px', originY: '320px' }} initial={false} animate={{ scale }} transition={{ type: 'spring', stiffness: 170, damping: 14 }}>
+            <motion.g key={pumps} initial={{ scaleX: 1.06, scaleY: 0.94 }} animate={{ scaleX: 1, scaleY: 1 }} style={{ originX: '200px', originY: '320px' }} transition={{ type: 'spring', stiffness: 420, damping: 10 }}>
+              <path d="M200 316 C120 300 96 200 120 140 C140 88 260 88 280 140 C304 200 280 300 200 316 Z" fill="url(#bal-g)" />
+              <ellipse cx="158" cy="150" rx="16" ry="30" fill="#fff" opacity="0.35" transform="rotate(-25 158 150)" />
+              <path d="M192 316 L208 316 L204 326 L196 326 Z" fill={c2} />
+            </motion.g>
+          </motion.g>
         )}
-      </AnimatePresence>
-      {live && tension > 0.5 && <p className="absolute bottom-2 text-[11px] font-semibold text-amber-300/80">{'•'.repeat(Math.round(tension * 5))}</p>}
+      </svg>
+      {!popped && (
+        <div className="pointer-events-none absolute inset-x-0 top-[52%] text-center">
+          <motion.span key={step} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="num inline-block font-mono text-2xl font-black text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">{fmtMult(ladderMult('pump', mode, step))}</motion.span>
+        </div>
+      )}
+      {popped && (
+        <div className="absolute inset-0 grid place-items-center">
+          {bits.map((b, i) => (
+            <motion.span key={i} className="absolute h-3 w-2 rounded-sm" style={{ background: i % 2 ? c1 : c2 }}
+              initial={{ x: 0, y: -40, rotate: 0, opacity: 1 }} animate={{ x: Math.cos(b.a) * b.d * 1.4, y: Math.sin(b.a) * b.d + 40, rotate: b.r * 2, opacity: 0 }} transition={{ duration: 1.1, ease: 'easeOut' }} />
+          ))}
+          <motion.p initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }} className="-mt-16 font-display text-5xl font-black text-neon-red drop-shadow">POP!</motion.p>
+        </div>
+      )}
+      {live && step > 9 && <motion.div className="pointer-events-none absolute inset-0 ring-4 ring-inset ring-red-500/30" animate={{ opacity: [0.2, 0.7, 0.2] }} transition={{ duration: 0.9, repeat: Infinity }} />}
     </div>
   )
 }

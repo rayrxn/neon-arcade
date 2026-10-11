@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Bomb } from 'lucide-react'
+import Explosion from '@/components/play/Explosion'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import { BetInput, Field, GameShell, Stage, fmtMult, playOutcome, useRunner } from '@/components/play/GameKit'
@@ -100,7 +101,7 @@ export default function Mines({ game }) {
               onClick={() => reveal(i)}
               aria-label={`${t('play.mines.tile')} ${i + 1}`}
               className={clsx(
-                'grid aspect-square place-items-center rounded-xl transition-colors',
+                'relative grid aspect-square place-items-center rounded-xl transition-colors',
                 !shown && 'mines-rock border-b-4 border-black/45 shadow-[inset_0_2px_0_rgba(255,255,255,0.12)]',
                 !shown && (round ? 'hover:-translate-y-0.5 hover:brightness-125 transition-[transform,filter]' : 'brightness-75'),
                 isGem && 'bg-gradient-to-b from-emerald-400/30 to-emerald-900/40 ring-1 ring-inset ring-emerald-300/60 shadow-[0_0_16px_rgba(52,211,153,0.4)]',
@@ -118,6 +119,7 @@ export default function Mines({ game }) {
                 </motion.svg>
               )}
               {board && isMine && <Bomb className="h-6 w-6 text-neon-red sm:h-7 sm:w-7" />}
+              {board && board.hit === i && <Explosion size={150} />}
             </motion.button>
           )
         })}

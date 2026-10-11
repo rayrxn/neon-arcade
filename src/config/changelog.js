@@ -1,6 +1,21 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.13",
+    "date": "2026-10-11",
+    "emoji": "💥",
+    "colors": ["#f97316", "#a855f7", "#22d3ee"],
+    "title": { "en": "Boom, smoother", "id": "Boom, lebih mulus" },
+    "tagline": { "en": "New Tower and Pump, a better roulette wheel, real explosions and a smooth Crash.", "id": "Tower dan Pump baru, roda roulette lebih bagus, ledakan sungguhan, dan Crash yang mulus." },
+    "items": [
+      { "tag": "improve", "en": "Tower: a castle wall with wooden doors that swing open, torches on the active floor and banners for each multiplier.", "id": "Tower: dinding kastil dengan pintu kayu yang terbuka, obor di lantai aktif, dan label pengali tiap lantai." },
+      { "tag": "improve", "en": "Pump: a real hand pump and hose; the balloon now grows smoothly.", "id": "Pump: pompa tangan dan selang sungguhan; balon sekarang membesar dengan mulus." },
+      { "tag": "improve", "en": "Roulette: wooden wheel with a gold turret, a ball that spins the other way and drops into the pocket, chips on the table, and the winning number lights up.", "id": "Roulette: roda kayu dengan menara emas, bola yang berputar berlawanan lalu jatuh ke kantong, chip di meja, dan angka pemenang menyala." },
+      { "tag": "improve", "en": "Bombs now explode with a fireball in Mines, Tower, Slice and Moles.", "id": "Bom sekarang meledak dengan bola api di Mines, Tower, Slice, dan Moles." },
+      { "tag": "fix", "en": "Crash: the rocket moves every frame instead of stuttering, with a new nebula sky.", "id": "Crash: roket bergerak tiap frame, tidak patah-patah lagi, dengan langit nebula baru." }
+    ]
+  },
+  {
     "version": "2.9.12",
     "date": "2026-10-11",
     "emoji": "🐍",

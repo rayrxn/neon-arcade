@@ -73,7 +73,13 @@ export default function CrashGlobal({ game }) {
       const tnow = Date.now()
       if (++frames % 6 === 0) setNow(tnow)
       if (frames % 120 === 0) colors = themeColors(canvas)
-      drawFrame(canvas, draw.current, colors)
+      // Advance the curve every frame (React state only ticks every 6th frame, which made the rocket stutter).
+      const d = draw.current
+      if (d.active && d.startAt) {
+        d.elapsed = Math.max(0, tnow - d.startAt)
+        d.multiplier = Math.max(1, crashMultiplierAt(d.elapsed))
+      }
+      drawFrame(canvas, d, colors)
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
@@ -87,6 +93,7 @@ export default function CrashGlobal({ game }) {
     if (phase === 'flying') {
       d.active = true
       d.end = null
+      d.startAt = round.startAt
       d.elapsed = now - round.startAt
       d.multiplier = live
     } else if (phase === 'crashed') {
