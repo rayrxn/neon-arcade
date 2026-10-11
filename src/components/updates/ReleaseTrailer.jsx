@@ -24,11 +24,24 @@ export default function ReleaseTrailer({ userId, onDone }) {
   const [progress, setProgress] = useState(0)
   const holding = useRef(false)
   const done = useRef(false)
+  const [closing, setClosing] = useState(false)
+  // Smooth exit: the sound fades out and the picture dissolves (~0.7 s) before the update log takes over.
   const finish = () => {
     if (done.current) return
     done.current = true
+    holding.current = false
     if (userId) markSeen(userId)
-    onDone()
+    setClosing(true)
+    const v = ref.current
+    const v0 = v ? v.volume : 0
+    const t0 = performance.now()
+    const fade = (now) => {
+      const k = Math.min(1, (now - t0) / 650)
+      if (v) v.volume = Math.max(0, v0 * (1 - k))
+      if (k < 1) requestAnimationFrame(fade)
+      else { v?.pause(); onDone() }
+    }
+    requestAnimationFrame(fade)
   }
 
   useEffect(() => {
@@ -50,6 +63,7 @@ export default function ReleaseTrailer({ userId, onDone }) {
       const dt = now - last
       last = now
       setProgress((p) => {
+        if (done.current) return p
         const next = holding.current ? Math.min(1, p + dt / HOLD_MS) : Math.max(0, p - dt / 600)
         if (next >= 1) setTimeout(finish, 0)
         return next
@@ -80,7 +94,8 @@ export default function ReleaseTrailer({ userId, onDone }) {
       className="fixed inset-0 z-[90] grid select-none place-items-center bg-black"
       style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', touchAction: 'none' }}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      animate={closing ? { opacity: 0, scale: 1.03, filter: 'blur(6px)' } : { opacity: 1, scale: 1, filter: 'blur(0px)' }}
+      transition={{ duration: closing ? 0.65 : 0.4, ease: [0.22, 1, 0.36, 1] }}
       onContextMenu={stop}
       onPointerDown={() => { holding.current = true }}
       onPointerUp={() => { holding.current = false }}
