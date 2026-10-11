@@ -41,7 +41,8 @@ function api_forgot(): array
     $ip = client_ip();
     return tx(function () use ($email, $ip) {
         if ((int) qv("SELECT count(*) FROM email_tokens WHERE ip = ?::inet AND kind = 'reset' AND created_at > now() - interval '1 hour'", [$ip]) >= 10) fail('auth.errors.tooManyEmails', ['minutes' => 60], 429);
-        $u = q1('SELECT id, username, email, status FROM users WHERE email = ?', [$email]);
+        // One email can hold up to 3 accounts: one link, the reset page lets the player pick which account.
+        $u = q1('SELECT id, username, email, status FROM users WHERE email = ? ORDER BY created_at LIMIT 1', [$email]);
         if ($u && $u['status'] !== 'deleted') {
             $recent = (int) qv("SELECT count(*) FROM email_tokens WHERE user_id = ? AND kind = 'reset' AND created_at > now() - interval '15 minutes'", [$u['id']]);
             if ($recent < 3) {
@@ -62,7 +63,15 @@ function api_reset_check(): array
 {
     $t = token_find((string) arg('token', ''), 'reset');
     if (!$t) fail('auth.errors.linkInvalid');
-    return ['ok' => true, 'email' => mask_email((string) $t['current_email']), 'username' => $t['username'], 'expiresAt' => iso_to_ms($t['expires_at'])];
+    return ['ok' => true, 'email' => mask_email((string) $t['current_email']), 'username' => $t['username'], 'expiresAt' => iso_to_ms($t['expires_at']),
+        'accounts' => reset_accounts($t)];
+}
+
+/** Accounts the reset link may change: every account on the emailed address (max 3). */
+function reset_accounts(array $t): array
+{
+    return array_map(fn($r) => ['username' => $r['username'], 'displayName' => $r['display_name'], 'avatar' => json_decode((string) $r['avatar'], true)],
+        q('SELECT username, display_name, avatar FROM users WHERE email = ? ORDER BY created_at LIMIT 3', [$t['email']])->fetchAll());
 }
 
 function api_reset_password(): array
@@ -73,6 +82,13 @@ function api_reset_password(): array
     return tx(function () use ($raw, $password) {
         $t = token_find($raw, 'reset');
         if (!$t) fail('auth.errors.linkInvalid');
+        $pick = trim((string) arg('username', ''));
+        if ($pick !== '' && $pick !== $t['username']) {
+            $other = q1('SELECT id, username FROM users WHERE username = ? AND email = ?', [$pick, $t['email']]);
+            if (!$other) fail('auth.errors.linkInvalid');
+            $t['user_id'] = $other['id'];
+            $t['username'] = $other['username'];
+        }
         q('SELECT id FROM email_tokens WHERE id = ? FOR UPDATE', [$t['id']]);
         q('UPDATE email_tokens SET used_at = now() WHERE id = ?', [$t['id']]);
         // The link went to the inbox, so the address is proven too.
@@ -117,7 +133,7 @@ function api_email_change(): array
     if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120) fail('validation.emailFormat');
     if (strtolower($email) === strtolower((string) $u['email'])) fail('account.email.same');
     return tx(function () use ($u, $email) {
-        if (qv('SELECT 1 FROM users WHERE email = ? AND id <> ?', [$email, $u['id']])) fail('errors.emailTaken');
+        if ((int) qv('SELECT count(*) FROM users WHERE email = ? AND id <> ?', [$email, $u['id']]) >= 3) fail('errors.emailTaken');
         q('UPDATE users SET email = ? WHERE id = ?', [$email, $u['id']]);
         // Verification links sent to the old address stop working.
         q("UPDATE email_tokens SET used_at = now() WHERE user_id = ? AND kind = 'verify' AND used_at IS NULL", [$u['id']]);

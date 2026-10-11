@@ -119,7 +119,9 @@ function api_login(): array
     $password = (string) arg('password', '');
     captcha_require_tx();
     return tx(function () use ($email, $password) {
-        if (!str_contains($email, '@')) {
+        $login = $email;
+        $byUsername = !str_contains($email, '@');
+        if ($byUsername) {
             $byName = qv('SELECT email FROM users WHERE username = ?', [$email]);
             if ($byName) $email = (string) $byName;
         }
@@ -128,8 +130,12 @@ function api_login(): array
             $minutes = max(1, (int) ceil((strtotime((string) $first) + 900 - time()) / 60));
             fail('errors.tooManyAttempts', ['minutes' => $minutes], 429);
         }
-        $u = q1('SELECT * FROM users WHERE email = ?', [$email]);
-        $ok = $u && password_verify($password, $u['password_hash']);
+        // One email can hold up to 3 accounts: a username picks one directly; an email picks the account whose password matches.
+        $rows = $byUsername ? q('SELECT * FROM users WHERE username = ?', [$login])->fetchAll() : q('SELECT * FROM users WHERE email = ? ORDER BY created_at', [$email])->fetchAll();
+        $matches = array_values(array_filter($rows, fn($r) => password_verify($password, $r['password_hash'])));
+        if (count($matches) > 1) fail('auth.errors.pickAccount', ['accounts' => implode(', ', array_column($matches, 'username'))], 409);
+        $u = $matches[0] ?? ($rows[0] ?? null);
+        $ok = (bool) $matches;
         if (!$ok) {
             q('INSERT INTO login_attempts (email, ok, ip) VALUES (?, false, ?::inet)', [$email, client_ip()]);
             $fails = (int) qv("SELECT count(*) FROM login_attempts WHERE email = ? AND NOT ok AND at > now() - interval '15 minutes'", [$email]);
