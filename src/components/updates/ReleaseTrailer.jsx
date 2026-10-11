@@ -6,16 +6,20 @@ import { useT } from '@/i18n'
 
 export const TRAILER_SRC = '/neon-arcade-1.0.0-reel.mp4'
 const HOLD_MS = 3000
-const key = (uid) => `neon-arcade:trailer2-seen:${uid}`
-export const trailerSeen = (uid) => {
-  try { return localStorage.getItem(key(uid)) === '1' } catch { return false }
+/** The trailer plays as a cutscene for anyone who has not been on the site for 3 hours. */
+export const AWAY_MS = 3 * 60 * 60 * 1000
+const key = (uid) => `neon-arcade:last-active:${uid}`
+const lastActive = (uid) => {
+  try { return Number(localStorage.getItem(key(uid))) || 0 } catch { return 0 }
 }
-const markSeen = (uid) => {
-  try { localStorage.setItem(key(uid), '1') } catch { /* storage blocked: may replay next visit */ }
+export const trailerDue = (uid) => Date.now() - lastActive(uid) > AWAY_MS
+export const touchActive = (uid) => {
+  try { localStorage.setItem(key(uid), String(Date.now())) } catch { /* storage blocked: may replay next visit */ }
 }
+const markSeen = touchActive
 
 /**
- * Full-screen 1.0.0 trailer, played once per player after the release. To skip, hold Space (or press and hold
+ * Full-screen 1.0.0 trailer, played as a cutscene when a player comes back after 3 hours away. To skip, hold Space (or press and hold
  * anywhere on the screen) for 3 seconds: a ring fills around a white Space keycap.
  */
 export default function ReleaseTrailer({ userId, onDone }) {

@@ -11,7 +11,7 @@ import { pick, useT } from '@/i18n'
 import { isRelease, useChangelog, useRelease } from '@/config/release'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { usePlatformStore } from '@/store/usePlatformStore'
-import ReleaseTrailer, { trailerSeen } from './ReleaseTrailer'
+import ReleaseTrailer, { AWAY_MS, touchActive, trailerDue } from './ReleaseTrailer'
 
 const SEEN_KEY = 'neon-arcade:seen-version'
 const POLL_MS = 60_000
@@ -187,7 +187,7 @@ export const useTrailer = create((set) => ({ on: false, play: () => set({ on: tr
 /**
  * Shows the update log once per new version (after a reload), and watches version.json while the tab is open:
  * when the server publishes a new build, the log for it pops up with a reload button.
- * The 1.0.0 release (staff in DEV TEST, everyone once published) first plays the trailer, once per player.
+ * The 1.0.0 release (staff in DEV TEST, everyone once published) first plays the trailer; it plays again after 3 hours away.
  */
 export default function UpdateLog() {
   const show = useUpdateLog((s) => s.show)
@@ -202,11 +202,32 @@ export default function UpdateLog() {
     if (!synced || !latest || readSeen() === latest.version) return
     if (isRelease(latest.version) && visible) {
       if (!me?.id) return // wait for sign-in: the trailer plays before the release log
-      if (!trailerSeen(me.id)) return trailer.play()
+      if (trailerDue(me.id)) return trailer.play()
     }
     show(latest, 'current', BUILD.at)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latest?.version, visible, me?.id, synced])
+
+  // Cutscene: anyone away for 3+ hours (or back on a tab hidden that long) sees the trailer again.
+  // Activity is stamped every minute while the tab is visible, and when it is hidden or closed.
+  useEffect(() => {
+    if (!synced || !visible || !me?.id || !latest || !isRelease(latest.version)) return
+    const uid = me.id
+    let hiddenAt = 0
+    if (readSeen() === latest.version && trailerDue(uid)) trailer.play()
+    else if (!trailerDue(uid)) touchActive(uid)
+    const stamp = () => { if (document.visibilityState === 'visible' && !useTrailer.getState().on) touchActive(uid) }
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); if (!useTrailer.getState().on) touchActive(uid); return }
+      if (hiddenAt && Date.now() - hiddenAt > AWAY_MS) useTrailer.getState().play()
+      else stamp()
+    }
+    const id = setInterval(stamp, 60_000)
+    document.addEventListener('visibilitychange', onVis)
+    window.addEventListener('pagehide', stamp)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); window.removeEventListener('pagehide', stamp) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [synced, visible, me?.id, latest?.version])
 
   useEffect(() => {
     if (!SERVER_MODE || !BUILD.sha) return
