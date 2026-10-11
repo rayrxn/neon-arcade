@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="build" content="32ecdf6">
+<meta name="build" content="720498b">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "32ecdf6", "at": "2026-10-11T15:01:38Z", "version": "3.0.0"};</script>
+<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "720498b", "at": "2026-10-11T15:08:35Z", "version": "3.0.0"};</script>
 <title>Neon Arcade</title>
 <meta name="theme-color" content="#06070c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16996,13 +16996,31 @@ function ReleaseTrailer({ userId, onDone }) {
     const [progress, setProgress] = (0, react_1.useState)(0);
     const holding = (0, react_1.useRef)(false);
     const done = (0, react_1.useRef)(false);
+    const [closing, setClosing] = (0, react_1.useState)(false);
+    // Smooth exit: the sound fades out and the picture dissolves (~0.7 s) before the update log takes over.
     const finish = () => {
         if (done.current)
             return;
         done.current = true;
+        holding.current = false;
         if (userId)
             markSeen(userId);
-        onDone();
+        setClosing(true);
+        const v = ref.current;
+        const v0 = v ? v.volume : 0;
+        const t0 = performance.now();
+        const fade = (now) => {
+            const k = Math.min(1, (now - t0) / 650);
+            if (v)
+                v.volume = Math.max(0, v0 * (1 - k));
+            if (k < 1)
+                requestAnimationFrame(fade);
+            else {
+                v?.pause();
+                onDone();
+            }
+        };
+        requestAnimationFrame(fade);
     };
     (0, react_1.useEffect)(() => {
         const v = ref.current;
@@ -17023,6 +17041,8 @@ function ReleaseTrailer({ userId, onDone }) {
             const dt = now - last;
             last = now;
             setProgress((p) => {
+                if (done.current)
+                    return p;
                 const next = holding.current ? Math.min(1, p + dt / HOLD_MS) : Math.max(0, p - dt / 600);
                 if (next >= 1)
                     setTimeout(finish, 0);
@@ -17052,7 +17072,7 @@ function ReleaseTrailer({ userId, onDone }) {
     const r = (PH - SW) / 2, x0 = SW / 2, y0 = SW / 2, x1 = PW - SW / 2, y1 = PH - SW / 2, cx = PW / 2;
     const ring = `M${cx} ${y0} H${x1 - r} A${r} ${r} 0 0 1 ${x1 - r} ${y1} H${x0 + r} A${r} ${r} 0 0 1 ${x0 + r} ${y0} H${cx}`;
     const stop = (e) => e.preventDefault();
-    return ((0, jsx_runtime_1.jsxs)(framer_motion_1.motion.div, { className: "fixed inset-0 z-[90] grid select-none place-items-center bg-black", style: { WebkitTouchCallout: 'none', WebkitUserSelect: 'none', touchAction: 'none' }, initial: { opacity: 0 }, animate: { opacity: 1 }, onContextMenu: stop, onPointerDown: () => { holding.current = true; }, onPointerUp: () => { holding.current = false; }, onPointerLeave: () => { holding.current = false; }, onPointerCancel: () => { holding.current = false; }, children: [(0, jsx_runtime_1.jsx)("video", { ref: ref, src: exports.TRAILER_SRC, playsInline: true, onEnded: finish, onError: finish, onContextMenu: stop, controlsList: "nodownload noplaybackrate noremoteplayback", disablePictureInPicture: true, disableRemotePlayback: true, className: "pointer-events-none h-full w-full object-contain", style: { WebkitTouchCallout: 'none' } }), muted && ((0, jsx_runtime_1.jsxs)("button", { type: "button", onPointerDown: (e) => e.stopPropagation(), onClick: () => { ref.current.muted = false; setMuted(false); }, className: "absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold text-white backdrop-blur hover:bg-white/25", children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Volume2, { className: "h-4 w-4" }), " ", t('updates.soundOn')] })), (0, jsx_runtime_1.jsxs)("div", { className: "pointer-events-none absolute inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-2", children: [(0, jsx_runtime_1.jsxs)("div", { className: "relative", style: { width: PW, height: PH, maxWidth: '80vw' }, children: [(0, jsx_runtime_1.jsxs)("svg", { viewBox: `0 0 ${PW} ${PH}`, className: "absolute inset-0 h-full w-full", "aria-hidden": true, children: [(0, jsx_runtime_1.jsx)("path", { d: ring, fill: "rgba(0,0,0,0.55)", stroke: "rgba(255,255,255,0.28)", strokeWidth: SW }), (0, jsx_runtime_1.jsx)("path", { d: ring, fill: "none", stroke: "#fff", strokeWidth: SW, strokeLinecap: "round", pathLength: 1, strokeDasharray: "1 1", strokeDashoffset: 1 - progress })] }), (0, jsx_runtime_1.jsx)("span", { className: "absolute inset-0 grid place-items-center text-xl font-bold tracking-wide text-white", style: { transform: `scale(${progress > 0 ? 0.96 : 1})` }, children: touch ? t('updates.hold') : 'Space' })] }), (0, jsx_runtime_1.jsx)("span", { className: "text-xs font-semibold text-white/60", children: t(touch ? 'updates.holdSkipTouch' : 'updates.holdSkip') })] })] }));
+    return ((0, jsx_runtime_1.jsxs)(framer_motion_1.motion.div, { className: "fixed inset-0 z-[90] grid select-none place-items-center bg-black", style: { WebkitTouchCallout: 'none', WebkitUserSelect: 'none', touchAction: 'none' }, initial: { opacity: 0 }, animate: closing ? { opacity: 0, scale: 1.03, filter: 'blur(6px)' } : { opacity: 1, scale: 1, filter: 'blur(0px)' }, transition: { duration: closing ? 0.65 : 0.4, ease: [0.22, 1, 0.36, 1] }, onContextMenu: stop, onPointerDown: () => { holding.current = true; }, onPointerUp: () => { holding.current = false; }, onPointerLeave: () => { holding.current = false; }, onPointerCancel: () => { holding.current = false; }, children: [(0, jsx_runtime_1.jsx)("video", { ref: ref, src: exports.TRAILER_SRC, playsInline: true, onEnded: finish, onError: finish, onContextMenu: stop, controlsList: "nodownload noplaybackrate noremoteplayback", disablePictureInPicture: true, disableRemotePlayback: true, className: "pointer-events-none h-full w-full object-contain", style: { WebkitTouchCallout: 'none' } }), muted && ((0, jsx_runtime_1.jsxs)("button", { type: "button", onPointerDown: (e) => e.stopPropagation(), onClick: () => { ref.current.muted = false; setMuted(false); }, className: "absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold text-white backdrop-blur hover:bg-white/25", children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Volume2, { className: "h-4 w-4" }), " ", t('updates.soundOn')] })), (0, jsx_runtime_1.jsxs)("div", { className: "pointer-events-none absolute inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-2", children: [(0, jsx_runtime_1.jsxs)("div", { className: "relative", style: { width: PW, height: PH, maxWidth: '80vw' }, children: [(0, jsx_runtime_1.jsxs)("svg", { viewBox: `0 0 ${PW} ${PH}`, className: "absolute inset-0 h-full w-full", "aria-hidden": true, children: [(0, jsx_runtime_1.jsx)("path", { d: ring, fill: "rgba(0,0,0,0.55)", stroke: "rgba(255,255,255,0.28)", strokeWidth: SW }), (0, jsx_runtime_1.jsx)("path", { d: ring, fill: "none", stroke: "#fff", strokeWidth: SW, strokeLinecap: "round", pathLength: 1, strokeDasharray: "1 1", strokeDashoffset: 1 - progress })] }), (0, jsx_runtime_1.jsx)("span", { className: "absolute inset-0 grid place-items-center text-xl font-bold tracking-wide text-white", style: { transform: `scale(${progress > 0 ? 0.96 : 1})` }, children: touch ? t('updates.hold') : 'Space' })] }), (0, jsx_runtime_1.jsx)("span", { className: "text-xs font-semibold text-white/60", children: t(touch ? 'updates.holdSkipTouch' : 'updates.holdSkip') })] })] }));
 }
 
 } };
