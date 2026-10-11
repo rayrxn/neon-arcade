@@ -329,14 +329,21 @@ export const PLINKO_TABLES = {
   high: [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000],
 }
 
-export function playPlinko({ bet, risk }) {
-  if (SERVER_MODE) return remoteStart('plinko', { bet, risk })
+export const PLINKO_MAX_BALLS = 16
+/** 1–16 balls dropped together as one round; bet is per ball, multiplier = average of the balls. */
+export function playPlinko({ bet, risk, balls: n = 1 }) {
+  if (SERVER_MODE) return remoteStart('plinko', { bet, risk, balls: n })
   const table = PLINKO_TABLES[risk]
-  if (!table) throw new AppError('play.errors.invalid')
-  const round = begin('plinko', bet, PLINKO_ROWS)
-  const { path, bin } = plinkoPath(forced(round, PLINKO_ROWS, (f) => table[plinkoPath(f, PLINKO_ROWS).bin] > 1), PLINKO_ROWS)
-  const multiplier = table[bin]
-  return { path, bin, risk, multiplier, ...finish(round, { multiplier, result: classify(multiplier), detail: { bin, risk } }) }
+  if (!table || !Number.isInteger(n) || n < 1 || n > PLINKO_MAX_BALLS) throw new AppError('play.errors.invalid')
+  const drop = (f) => Array.from({ length: n }, (_, i) => {
+    const { path, bin } = plinkoPath(f.slice(i * PLINKO_ROWS, (i + 1) * PLINKO_ROWS), PLINKO_ROWS)
+    return { path, bin, multiplier: table[bin] }
+  })
+  const round = begin('plinko', bet * n, PLINKO_ROWS * n)
+  const balls = drop(forced(round, PLINKO_ROWS * n, (f) => drop(f).reduce((s, x) => s + x.multiplier, 0) > n))
+  const multiplier = Math.round((balls.reduce((s, x) => s + x.multiplier, 0) / n) * 1e6) / 1e6
+  const detail = n === 1 ? { bin: balls[0].bin, risk } : { bins: balls.map((x) => x.bin), balls: n, risk }
+  return { balls, path: balls[0].path, bin: balls[0].bin, risk, multiplier, ...finish(round, { multiplier, result: classify(multiplier), detail }) }
 }
 
 /** Roulette Eropa. bets: [{ type, value?, amount }] */

@@ -10,7 +10,7 @@ export default {
   play: {
     errors: { cooldown: 'Wait for this round to finish ({seconds} s).' },
     crash: { betClosed: 'Betting for this round is closed. Join the next one.', alreadyIn: 'You already have a bet in this round.' },
-    plinko: { recent: 'Recent results', balls: 'Balls', totalBet: 'Total bet', dropN: 'Drop {n} balls', dropping: 'Dropping {n}/{total}…', hint: 'Slide to drop up to 16 balls in one go. Each ball is its own round.' },
+    plinko: { recent: 'Recent results', balls: 'Balls', totalBet: 'Total bet', dropN: 'Drop {n} balls', dropping: 'Dropping {n}/{total}…', hint: 'Slide to drop up to 16 balls at once. All balls fall together as one round.' },
   },
   chat: {
     rooms: { global: 'Global', vip: 'VIP room' },

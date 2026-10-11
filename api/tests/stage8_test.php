@@ -497,5 +497,12 @@ $res = $r['ok'] ? $r['data']['result'] : [];
 check('Crazy battle: 5 rounds, lowest total wins', $r['ok'] && count($res['player']) === 5 && $res['mode'] === 'crazy' && ($res['playerTotal'] == $res['botTotal'] || ($res['session']['result'] === 'win') === ($res['playerTotal'] < $res['botTotal'])), $r);
 expect_error('battle mode must be classic or crazy', call('POST', 'game/case-battle', ['caseId' => 'starter', 'rounds' => 2, 'mode' => 'x'], 'a'), 'play.errors.invalid');
 
+echo "Plinko multi-ball\n";
+cool(); $r = call('POST', 'game/plinko', ['bet' => 10, 'risk' => 'medium', 'balls' => 16], 'a');
+$res = $r['ok'] ? $r['data']['result'] : [];
+$avg = $r['ok'] ? array_sum(array_column($res['balls'], 'multiplier')) / 16 : 0;
+check('16 balls settle as one round: bet 160, payout = 10 × sum of ball multipliers', $r['ok'] && count($res['balls']) === 16 && (float) $res['session']['bet'] === 160.0 && abs((float) $res['session']['payout'] - round(160 * round($avg, 6), 2)) < 0.011, $r);
+cool(); expect_error('at most 16 balls', call('POST', 'game/plinko', ['bet' => 10, 'risk' => 'medium', 'balls' => 17], 'a'), 'play.errors.invalid');
+
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

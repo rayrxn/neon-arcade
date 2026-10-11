@@ -1,6 +1,18 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.7",
+    "date": "2026-10-11",
+    "emoji": "🔴",
+    "colors": ["#ff4fa3", "#facc15", "#ef4444"],
+    "title": { "en": "Plinko all at once", "id": "Plinko sekaligus" },
+    "tagline": { "en": "All your balls drop together, into brand-new buckets.", "id": "Semua bola jatuh bersamaan, ke wadah yang baru." },
+    "items": [
+      { "tag": "improve", "en": "Plinko: up to 16 balls now fall at the same time instead of one by one. They settle as one round: your payout is the bet × the sum of every ball.", "id": "Plinko: sampai 16 bola sekarang jatuh bersamaan, tidak satu per satu lagi. Semua dihitung satu ronde: hadiah = taruhan × jumlah pengali semua bola." },
+      { "tag": "improve", "en": "New multiplier buckets: 3D blocks that glow from gold in the middle to red at the edges, line up exactly under the pegs and bounce when a ball lands.", "id": "Wadah pengali baru: balok 3D bergradasi emas di tengah sampai merah di pinggir, pas di bawah pasak, dan memantul saat bola masuk." }
+    ]
+  },
+  {
     "version": "2.9.6",
     "date": "2026-10-11",
     "emoji": "🪙",

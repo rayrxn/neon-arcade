@@ -10,7 +10,7 @@ export default {
   play: {
     errors: { cooldown: 'Tunggu ronde ini selesai ({seconds} dtk).' },
     crash: { betClosed: 'Taruhan ronde ini sudah ditutup. Ikut ronde berikutnya.', alreadyIn: 'Kamu sudah bertaruh di ronde ini.' },
-    plinko: { recent: 'Hasil terakhir', balls: 'Jumlah bola', totalBet: 'Total taruhan', dropN: 'Jatuhkan {n} bola', dropping: 'Menjatuhkan {n}/{total}…', hint: 'Geser untuk jatuhkan sampai 16 bola sekaligus. Tiap bola satu ronde.' },
+    plinko: { recent: 'Hasil terakhir', balls: 'Jumlah bola', totalBet: 'Total taruhan', dropN: 'Jatuhkan {n} bola', dropping: 'Menjatuhkan {n}/{total}…', hint: 'Geser untuk jatuhkan sampai 16 bola sekaligus. Semua bola jatuh bersamaan dalam satu ronde.' },
   },
   chat: {
     rooms: { global: 'Global', vip: 'Ruang VIP' },
