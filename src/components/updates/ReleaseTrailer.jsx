@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import clsx from 'clsx'
 import { Volume2 } from 'lucide-react'
 import { useT } from '@/i18n'
 
@@ -35,13 +36,16 @@ export default function ReleaseTrailer({ userId, onDone }) {
     const v = ref.current
     const v0 = v ? v.volume : 0
     const t0 = performance.now()
-    const fade = (now) => {
-      const k = Math.min(1, (now - t0) / 650)
-      if (v) v.volume = Math.max(0, v0 * (1 - k))
+    let closed = false
+    const close = () => { if (closed) return; closed = true; try { v?.pause() } catch { /* already gone */ } onDone() }
+    const fade = () => {
+      const k = Math.min(1, Math.max(0, (performance.now() - t0) / 650))
+      try { if (v) v.volume = Math.min(1, Math.max(0, v0 * (1 - k))) } catch { /* some browsers lock volume */ }
       if (k < 1) requestAnimationFrame(fade)
-      else { v?.pause(); onDone() }
+      else close()
     }
     requestAnimationFrame(fade)
+    setTimeout(close, 900) // safety net: never leave an invisible overlay on top of the app
   }
 
   useEffect(() => {
@@ -91,7 +95,7 @@ export default function ReleaseTrailer({ userId, onDone }) {
   const stop = (e) => e.preventDefault()
   return (
     <motion.div
-      className="fixed inset-0 z-[90] grid select-none place-items-center bg-black"
+      className={clsx('fixed inset-0 z-[90] grid select-none place-items-center bg-black', closing && 'pointer-events-none')}
       style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', touchAction: 'none' }}
       initial={{ opacity: 0 }}
       animate={closing ? { opacity: 0, scale: 1.03, filter: 'blur(6px)' } : { opacity: 1, scale: 1, filter: 'blur(0px)' }}
