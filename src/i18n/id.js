@@ -59,7 +59,7 @@ export default {
   errors: {
     generic: 'Terjadi kesalahan. Coba lagi.',
     sessionExpired: 'Sesi berakhir. Silakan masuk lagi.',
-    emailTaken: 'Email ini sudah terdaftar. Coba masuk.',
+    emailTaken: 'Email ini sudah punya 3 akun. Pakai email lain.',
     usernameTaken: 'Username sudah dipakai.',
     wrongCredentials: 'Email atau password salah.',
     wrongPassword: 'Password saat ini salah.',

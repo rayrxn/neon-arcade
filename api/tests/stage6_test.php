@@ -127,5 +127,24 @@ expect_error('expired link rejected', call('POST', 'auth/reset', ['token' => $to
 check('tokens stored only as hashes', (int) qv('SELECT count(*) FROM email_tokens WHERE token_hash = ?', [$tok]) === 0 && (int) qv('SELECT count(*) FROM email_tokens WHERE token_hash = ?', [hash('sha256', $tok)]) === 1);
 check('security notice for the reset', (int) qv("SELECT count(*) FROM notifications WHERE user_id = (SELECT id FROM users WHERE email = ?) AND kind = 'security'", [$EMAIL]) >= 1);
 
+
+echo "Reset with several accounts on one email\n";
+$r2 = call('POST', 'auth/register', ['username' => "alt_$tag", 'email' => $EMAIL, 'password' => 'altalt12345'], 'v');
+check('second account on the same email', $r2['ok'], $r2);
+q("UPDATE email_tokens SET created_at = created_at - interval '1 hour'");
+@unlink($LOG);
+call('POST', 'auth/forgot', ['email' => $EMAIL]);
+check('one reset email for the address', count(mails()) === 1);
+$tok = tokenOf(lastMail());
+$c = call('POST', 'auth/reset/check', ['token' => $tok]);
+check('reset page lists both accounts', count($c['data']['accounts'] ?? []) === 2 && in_array("alt_$tag", array_column($c['data']['accounts'], 'username')), $c);
+expect_error('cannot pick an account on another email', call('POST', 'auth/reset', ['token' => $tok, 'password' => 'xyzxyz12345', 'username' => 'player_2']), 'auth.errors.linkInvalid');
+$tok = tokenOf(lastMail());
+q("UPDATE email_tokens SET used_at = NULL WHERE token_hash = ?", [hash('sha256', $tok)]);
+$r = call('POST', 'auth/reset', ['token' => $tok, 'password' => 'altnew12345', 'username' => "alt_$tag"]);
+check('picked account reset', $r['ok'] && $r['data']['username'] === "alt_$tag", $r);
+check('picked account signs in with the new password', call('POST', 'auth/login', ['email' => "alt_$tag", 'password' => 'altnew12345'])['ok']);
+check('other account kept its password', call('POST', 'auth/login', ['email' => "mailer_$tag", 'password' => 'barubaru123'])['ok']);
+
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

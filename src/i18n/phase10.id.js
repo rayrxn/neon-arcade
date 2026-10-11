@@ -116,7 +116,7 @@ export default {
       tryAnother: 'Pakai email lain',
     },
     reset: {
-      title: 'Buat password baru', subtitle: 'Untuk @{user} ({email}). Minimal 8 karakter.', newPassword: 'Password baru', submit: 'Simpan password baru',
+      title: 'Buat password baru', subtitle: 'Untuk @{user} ({email}). Minimal 8 karakter.', pickAccount: 'Akun yang mana?', newPassword: 'Password baru', submit: 'Simpan password baru',
       signOutNote: 'Setelah disimpan, semua perangkat akan keluar. Masuk lagi dengan password baru.',
       doneTitle: 'Password berhasil diganti', doneBody: 'Password barumu sudah aktif. Semua perangkat sudah keluar, jadi masuk lagi untuk lanjut.', signIn: 'Masuk',
       invalidTitle: 'Link ini sudah tidak berlaku', invalidBody: 'Link reset hanya bisa dipakai sekali dan berlaku 30 menit. Link yang lebih baru juga menggantikan link lama. Minta link baru untuk mencoba lagi.', newLink: 'Kirim link baru',
@@ -133,7 +133,7 @@ export default {
   },
   auth: {
     errors: {
-      linkInvalid: 'Link tidak valid atau sudah kedaluwarsa.', alreadyVerified: 'Emailmu sudah terverifikasi.',
+      pickAccount: 'Email ini punya beberapa akun dengan kata sandi ini. Masuk pakai username: {accounts}', linkInvalid: 'Link tidak valid atau sudah kedaluwarsa.', alreadyVerified: 'Emailmu sudah terverifikasi.',
       waitResend: 'Tunggu {seconds} detik sebelum mengirim email lagi.', tooManyEmails: 'Terlalu banyak permintaan email. Coba lagi dalam {minutes} menit.',
       mailFailed: 'Email belum bisa dikirim sekarang. Coba lagi beberapa menit lagi.',
     },

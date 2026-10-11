@@ -19,6 +19,7 @@ export default [
       { "tag": "improve", "en": "New Arcade Gems icon, tighter logo and header.", "id": "Ikon Arcade Gems baru, logo dan header lebih rapat." },
       { "tag": "new", "en": "Global Chat and live feeds are busier with house players. Their mini profile says they are house players.", "id": "Global Chat dan live feed lebih ramai dengan pemain house. Mini profil mereka menandai sebagai pemain house." },
       { "tag": "new", "en": "Settings: change your sign-in email while it is not verified yet.", "id": "Pengaturan: ganti email login selama belum diverifikasi." },
+      { "tag": "new", "en": "One email can hold up to 3 accounts. Password reset lets you pick which account.", "id": "Satu email bisa dipakai sampai 3 akun. Reset password bisa pilih akunnya." },
       { "tag": "fix", "en": "Snake: the lose sound plays together with the result. The NEON/ARCADE logo no longer overlaps.", "id": "Snake: suara kalah sekarang bersamaan dengan hasil. Logo NEON/ARCADE tidak lagi bertumpuk." }
     ]
   },

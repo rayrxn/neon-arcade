@@ -116,7 +116,7 @@ export default {
       tryAnother: 'Use a different email',
     },
     reset: {
-      title: 'Choose a new password', subtitle: 'For @{user} ({email}). Use at least 8 characters.', newPassword: 'New password', submit: 'Save new password',
+      title: 'Choose a new password', subtitle: 'For @{user} ({email}). Use at least 8 characters.', pickAccount: 'Which account?', newPassword: 'New password', submit: 'Save new password',
       signOutNote: 'Saving signs you out on every device. Sign in again with the new password.',
       doneTitle: 'Password changed', doneBody: 'Your new password is ready. All devices were signed out, so sign in again to continue.', signIn: 'Sign in',
       invalidTitle: 'This link doesn’t work anymore', invalidBody: 'Reset links work once and expire after 30 minutes. A newer link also replaces older ones. Request a fresh link to try again.', newLink: 'Send a new link',
@@ -133,7 +133,7 @@ export default {
   },
   auth: {
     errors: {
-      linkInvalid: 'This link is invalid or has expired.', alreadyVerified: 'Your email is already verified.',
+      pickAccount: 'This email has several accounts with this password. Sign in with your username: {accounts}', linkInvalid: 'This link is invalid or has expired.', alreadyVerified: 'Your email is already verified.',
       waitResend: 'Wait {seconds} seconds before sending another email.', tooManyEmails: 'Too many emails requested. Try again in {minutes} minutes.',
       mailFailed: 'We couldn’t send the email right now. Try again in a few minutes.',
     },

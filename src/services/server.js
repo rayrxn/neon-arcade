@@ -144,7 +144,9 @@ function applyUsers(list) {
   useAuthStore.setState((s) => {
     const users = {}
     for (const [k, u] of Object.entries(s.users)) if (u.id === meId) users[k] = u
-    for (const u of list) if (u.id !== meId) users[u.email || u.key || `u:${u.id}`] = u
+    const myEmail = s.session?.email
+    // One email can hold up to 3 accounts: never let another account on my email take my key.
+    for (const u of list) if (u.id !== meId) users[(u.email && u.email !== myEmail ? u.email : null) || u.key || `u:${u.id}`] = u
     return { users }
   })
 }

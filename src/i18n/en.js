@@ -59,7 +59,7 @@ export default {
   errors: {
     generic: 'Something went wrong. Try again.',
     sessionExpired: 'Your session ended. Log in again.',
-    emailTaken: 'This email is already registered. Try logging in.',
+    emailTaken: 'This email already has 3 accounts. Use another email.',
     usernameTaken: 'That username is taken.',
     wrongCredentials: 'Wrong email or password.',
     wrongPassword: 'Current password is incorrect.',

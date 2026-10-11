@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import Button from '@/components/ui/Button'
 import Field from '@/components/ui/Field'
 import Logo from '@/components/ui/Logo'
+import Avatar from '@/components/ui/Avatar'
 import AuthBackdrop from '@/components/auth/AuthBackdrop'
 import { checkResetLink, resetPassword, verifyEmail } from '@/services/account'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -60,10 +61,11 @@ export function ResetPasswordPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
+  const [pick, setPick] = useState(null) // username of the account to reset (one email can hold up to 3)
 
   useEffect(() => {
     let alive = true
-    checkResetLink(token).then((r) => alive && setLink(r)).catch(() => alive && setLink(false))
+    checkResetLink(token).then((r) => { if (alive) { setLink(r); setPick(r.username) } }).catch(() => alive && setLink(false))
     return () => { alive = false }
   }, [token])
 
@@ -78,7 +80,7 @@ export function ResetPasswordPage() {
     setBusy(true)
     setError(null)
     try {
-      await resetPassword(token, password)
+      await resetPassword(token, password, pick)
       // Every device is signed out by the reset, this one included.
       useAuthStore.setState({ session: null })
       setDone(true)
@@ -114,7 +116,22 @@ export function ResetPasswordPage() {
         <form noValidate onSubmit={submit}>
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-neon-cyan/10 text-neon-cyan ring-1 ring-inset ring-neon-cyan/25"><KeyRound className="h-6 w-6" /></span>
           <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-white">{t('account.reset.title')}</h1>
-          <p className="mt-1.5 text-sm text-slate-400">{t('account.reset.subtitle', { user: link.username, email: link.email })}</p>
+          <p className="mt-1.5 text-sm text-slate-400">{t('account.reset.subtitle', { user: pick ?? link.username, email: link.email })}</p>
+          {link.accounts?.length > 1 && (
+            <div className="mt-4" role="radiogroup" aria-label={t('account.reset.pickAccount')}>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">{t('account.reset.pickAccount')}</p>
+              <div className="grid gap-2">
+                {link.accounts.map((a) => (
+                  <button key={a.username} type="button" role="radio" aria-checked={pick === a.username} onClick={() => setPick(a.username)} disabled={busy}
+                    className={clsx('flex items-center gap-3 rounded-xl px-3 py-2.5 text-left ring-1 ring-inset transition', pick === a.username ? 'bg-neon-cyan/10 ring-neon-cyan/50' : 'bg-white/[0.03] ring-white/10 hover:bg-white/[0.06]')}>
+                    <Avatar user={{ id: a.username, username: a.username, avatar: a.avatar }} name={a.username} size="sm" />
+                    <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-white">{a.displayName || a.username}</span><span className="block truncate text-xs text-slate-500">@{a.username}</span></span>
+                    <span className={clsx('grid h-4 w-4 place-items-center rounded-full ring-2', pick === a.username ? 'ring-neon-cyan' : 'ring-slate-600')}>{pick === a.username && <span className="h-2 w-2 rounded-full bg-neon-cyan" />}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-6 space-y-4">
             <div>
               <Field id="reset-password" label={t('account.reset.newPassword')} icon={Lock} type={show ? 'text' : 'password'} autoComplete="new-password" autoFocus placeholder={t('auth.passwordPlaceholder')} value={password} disabled={busy} trailing={toggle}

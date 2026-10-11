@@ -7,7 +7,7 @@ const lang = () => usePrefsStore.getState().language
 
 export const requestPasswordReset = (email) => api('auth/forgot', { email: String(email).trim(), lang: lang() })
 export const checkResetLink = (token) => api('auth/reset/check', { token })
-export const resetPassword = (token, password) => api('auth/reset', { token, password })
+export const resetPassword = (token, password, username) => api('auth/reset', { token, password, ...(username ? { username } : {}) })
 export const changeEmail = async (email, password) => applyPayload(await api('auth/email', { email: String(email).trim(), password }))
 export const sendVerificationEmail = () => api('auth/verify/send', { lang: lang() })
 
