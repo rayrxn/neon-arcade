@@ -6,10 +6,13 @@ export const LADDER = {
   tower: { steps: 9, modes: { easy: { cols: 4, one: 'bomb' }, medium: { cols: 3, one: 'bomb' }, hard: { cols: 2, one: 'safe' }, expert: { cols: 3, one: 'safe' } } },
   cross: { steps: 20, rtp: 0.94, modes: { easy: { p: 0.6 }, medium: { p: 0.45 }, hard: { p: 0.33 }, daredevil: { p: 0.22 } } },
   pump: { steps: 25, modes: { easy: { p: 0.96 }, medium: { p: 0.9 }, hard: { p: 0.8 }, expert: { p: 0.65 } } },
-  slice: { steps: 20, rtp: 0.95, modes: { easy: { p: 0.8 }, medium: { p: 0.6667 }, hard: { p: 0.5 }, expert: { p: 0.33 } } },
   moles: { steps: 15, rtp: 0.95, modes: { easy: { p: 0.75 }, medium: { p: 0.6 }, hard: { p: 0.45 }, expert: { p: 0.3 } } },
   layer: { steps: 50, rtp: 0.97, modes: { easy: { p: 0.98 }, medium: { p: 0.95 }, hard: { p: 0.9 }, expert: { p: 0.8 } } },
 }
+/** Slice fruit → safe chance (mirrors SLICE_FRUITS). Multiplier per cut ×1/p; the first cut also takes the 5% edge. */
+export const SLICE_FRUITS = { watermelon: 0.8, apple: 0.6, orange: 0.55, lemon: 0.4, pineapple: 0.25, cherry: 0.12, grape: 0.04 }
+export const SLICE_RTP = 0.95
+
 /** Snake board per mode (tile = dice sum − 2; 0 = snake). Mirrors SNAKE_BOARD in api/lib/games2.php. */
 export const SNAKE_BOARD = {
   easy: [1.94, 1.26, 1.16, 1.06, 1.01, 0, 1.01, 1.06, 1.16, 1.26, 1.94],

@@ -22,7 +22,7 @@ export default {
     ladder: {
       chance: 'Aman', snake: { roll: 'Lempar dadu', hint: 'Lempar dua dadu. Jumlahnya memilih kotak: kena ular kamu kalah, kotak lain mengalikan kemenanganmu.', idle: 'Pilih tingkat kesulitan lalu mulai.', lost: 'Digigit ular!' },
       mode: 'Kesulitan', modes: { easy: 'Mudah', medium: 'Sedang', hard: 'Sulit', expert: 'Ahli', daredevil: 'Nekat' },
-      go: { cross: 'Lajur berikutnya', pump: 'Pompa', slice: 'Potong', moles: 'Pukul', layer: 'Jatuhkan lapisan' }, hint: { tower: 'Pilih satu kotak di lantai yang menyala.', cross: 'Seberangi lajur berikutnya atau cash out.', pump: 'Pompa terus atau cash out sebelum meletus.', slice: 'Potong buahnya. Persen = peluang buah tidak meledak.', moles: 'Pukul lubang mana saja. Persen = peluang isinya tikus, bukan bom.', layer: 'Jatuhkan lapisan berikutnya. Persen = peluang menara tetap berdiri.' },
+      go: { cross: 'Lajur berikutnya', pump: 'Pompa', slice: 'Potong satu buah tiap lemparan. Tiap buah menampilkan peluang aman: buah langka bayar pengali lebih besar, bom mengakhiri ronde.', moles: 'Pukul', layer: 'Jatuhkan lapisan' }, hint: { tower: 'Pilih satu kotak di lantai yang menyala.', cross: 'Seberangi lajur berikutnya atau cash out.', pump: 'Pompa terus atau cash out sebelum meletus.', slice: 'Potong buahnya. Persen = peluang buah tidak meledak.', moles: 'Pukul lubang mana saja. Persen = peluang isinya tikus, bukan bom.', layer: 'Jatuhkan lapisan berikutnya. Persen = peluang menara tetap berdiri.' },
       idle: 'Pilih kesulitan lalu mulai.', lost: 'Kalah di langkah {step}.',
     },
     errors: {
@@ -66,6 +66,7 @@ export default {
   chat: { mod: { ban: '{user} di-ban oleh {by} ({duration})', unban: '{user} di-unban oleh {by}', kick: '{user} di-kick oleh {by}', mute: '{user} di-mute oleh {by} ({duration})', unmute: '{user} bisa chat lagi', forever: 'permanen', gacor: '🔥 Jam Gacor ×{mult} aktif {minutes} menit!' } },
   gacor: { global: 'Jam Gacor ×{mult} sedang aktif', personal: 'Boost hoki ×{mult} kamu aktif', hint: 'menang dapat bonus' },
   games: {
+    closed: { offTitle: '{game} sedang dimatikan', maintTitle: '{game} sedang maintenance', offBody: 'Game ini dimatikan untuk sementara. Coba game lain dulu.', maintBody: 'Game ini sedang kami perbaiki. Segera kembali.' },
     list: { snake: 'Snake klasik. Makan, tumbuh, bertahan.', moles: 'Pukul tikus, hindari bom.', slice: 'Potong buah, hindari bom.', layer: 'Tumpuk balok setinggi mungkin.', chess: 'Catur real-time. Lawan pemain dengan taruhan atau latihan lawan bot.', horse: 'Balap kuda. Tebak pemenang, dibayar sesuai odds.', tarot: 'Tiga kartu, dikalikan.', sweet: 'Permen berjatuhan, bom sampai ×100.', keno: 'Pilih sampai 10 angka, 10 bola jatuh.', tower: 'Naik lantai demi lantai, hindari bom.', cross: 'Lajur demi lajur. Cash out sebelum mobil datang.', pump: 'Pompa balonnya. Berhenti sebelum meletus.' },
     categories: { arcade: 'Arkade', slots: 'Slot' },
   },

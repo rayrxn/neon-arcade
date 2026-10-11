@@ -8,7 +8,7 @@ import { BetInput, Choice, Field, GameShell, Stage, fmtMult, playOutcome, useRun
 import { ladderCashout, ladderStart, ladderStep, openRound } from '@/services/games'
 import { LADDER, ladderMult } from '@/config/games2'
 import { formatCoins } from '@/utils/format'
-import { LayerBoard, MolesBoard, SliceBoard } from './LadderArcade'
+import { LayerBoard, MolesBoard } from './LadderArcade'
 import Explosion from '@/components/play/Explosion'
 import { useT } from '@/i18n'
 
@@ -96,7 +96,6 @@ export default function Ladder({ game }) {
         {slug === 'tower' && <TowerBoard cfg={cfg} mode={m} live={live} end={end} onPick={advance} />}
         {slug === 'cross' && <RoadBoard cfg={cfg} mode={m} live={live} end={end} />}
         {slug === 'pump' && <Balloon mode={m} step={step} live={live} end={end} pumps={pumps} />}
-        {slug === 'slice' && <SliceBoard mode={m} step={step} live={live} end={end} onGo={() => advance(null)} />}
         {slug === 'moles' && <MolesBoard mode={m} step={step} live={live} end={end} onGo={() => advance(null)} />}
         {slug === 'layer' && <LayerBoard mode={m} step={step} end={end} />}
       </div>

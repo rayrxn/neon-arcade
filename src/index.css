@@ -1283,3 +1283,13 @@ html[data-perf='ultra'] .lc-face:not(.lc-face--sm):hover { transform: perspectiv
 @keyframes na-twinkle { 0%,100% { opacity: .2 } 50% { opacity: .9 } }
 .na-twinkle { animation: na-twinkle 2.5s ease-in-out infinite }
 @media (prefers-reduced-motion: reduce) { .na-twinkle { animation: none } }
+/* Particle profile effects (ProfileParticles.jsx). */
+.pfx-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.pfx-p { position: absolute; display: block; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform; }
+.pfx-p--fall { top: -12%; animation-name: pfx-fall; }
+.pfx-p--rise { top: 105%; animation-name: pfx-rise; }
+.pfx-p--float { animation-name: pfx-float; animation-timing-function: ease-in-out; }
+@keyframes pfx-fall { 0% { top: -12%; transform: translateX(0) rotate(0); opacity: 0 } 10% { opacity: 1 } 50% { transform: translateX(var(--sway)) rotate(calc(var(--spin) / 2)) } 90% { opacity: 1 } 100% { top: 105%; transform: translateX(0) rotate(var(--spin)); opacity: 0 } }
+@keyframes pfx-rise { 0% { top: 105%; transform: translateX(0) scale(.8); opacity: 0 } 15% { opacity: 1 } 50% { transform: translateX(var(--sway)) scale(1) } 85% { opacity: .9 } 100% { top: -12%; transform: translateX(0) scale(.6); opacity: 0 } }
+@keyframes pfx-float { 0%, 100% { transform: translate(0, 0) scale(.6); opacity: .15 } 50% { transform: translate(var(--sway), -14px) scale(1.1); opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .pfx-p { animation: none; opacity: .6 } }

@@ -36,37 +36,7 @@ function Tally({ game, mode, step }) {
   )
 }
 
-// ───────────────────────────── Slice ─────────────────────────────
-
-const FRUITS = [
-  { c: '#ef4444', in: '#fca5a5', seed: '#1f2937', leaf: '#16a34a' }, // watermelon (red flesh)
-  { c: '#facc15', in: '#fef08a', seed: '#a16207', leaf: '#65a30d' }, // pineapple
-  { c: '#f97316', in: '#fed7aa', seed: '#fff7ed', leaf: '#15803d' }, // orange
-  { c: '#84cc16', in: '#d9f99d', seed: '#3f6212', leaf: '#4d7c0f' }, // lime
-  { c: '#e11d48', in: '#fecdd3', seed: '#78350f', leaf: '#166534' }, // apple
-]
-
-function Fruit({ f, half }) {
-  // half: undefined = whole, 'l' / 'r' = cut halves showing the inside.
-  const clip = half === 'l' ? 'inset(0 50% 0 0)' : half === 'r' ? 'inset(0 0 0 50%)' : undefined
-  return (
-    <svg viewBox="0 0 100 100" className="h-full w-full drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]" style={{ clipPath: clip }} aria-hidden>
-      <path d="M50 14 C46 4 40 2 34 4 C40 8 44 12 46 18 Z" fill={f.leaf} />
-      <path d="M52 16 C58 6 66 4 72 8 C64 10 58 14 54 20 Z" fill={f.leaf} />
-      <circle cx="50" cy="56" r="36" fill={f.c} />
-      {half ? (
-        <>
-          <circle cx="50" cy="56" r="30" fill={f.in} />
-          {[0, 60, 120, 180, 240, 300].map((a) => <ellipse key={a} cx={50 + Math.cos((a * Math.PI) / 180) * 16} cy={56 + Math.sin((a * Math.PI) / 180) * 16} rx="2.5" ry="4" fill={f.seed} transform={`rotate(${a} ${50 + Math.cos((a * Math.PI) / 180) * 16} ${56 + Math.sin((a * Math.PI) / 180) * 16})`} />)}
-        </>
-      ) : (
-        <ellipse cx="36" cy="42" rx="10" ry="6" fill="#fff" opacity="0.35" transform="rotate(-30 36 42)" />
-      )}
-    </svg>
-  )
-}
-
-function BombSvg() {
+export function BombSvg() {
   return (
     <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
       <path d="M62 22 Q70 8 82 10" stroke="#a16207" strokeWidth="4" fill="none" />
@@ -75,45 +45,6 @@ function BombSvg() {
       <circle cx="46" cy="58" r="34" fill="#1e293b" />
       <ellipse cx="34" cy="44" rx="10" ry="6" fill="#fff" opacity="0.25" transform="rotate(-30 34 44)" />
     </svg>
-  )
-}
-
-export function SliceBoard({ mode, live, end, step, onGo }) {
-  const lost = end?.lost
-  const f = FRUITS[step % FRUITS.length]
-  const prev = FRUITS[(step + FRUITS.length - 1) % FRUITS.length]
-  return (
-    <div className="relative h-[380px] overflow-hidden rounded-xl bg-[repeating-linear-gradient(180deg,#8b5a2b_0_58px,#6b4220_58px_62px)] shadow-[inset_0_0_80px_rgba(0,0,0,0.45)]">
-      <Tally game="slice" mode={mode} step={step} />
-      <AnimatePresence>
-        {step > 0 && !lost && (
-          <motion.div key={`cut${step}`} className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ delay: 0.6, duration: 0.4 }}>
-            <motion.div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(239,68,68,0.55),transparent_65%)]" initial={{ scale: 0.3 }} animate={{ scale: 1.8 }} transition={{ duration: 0.5 }} />
-            <motion.div className="absolute inset-0" initial={{ x: 0, rotate: 0 }} animate={{ x: -70, y: 40, rotate: -35 }} transition={{ duration: 0.6 }}><Fruit f={prev} half="l" /></motion.div>
-            <motion.div className="absolute inset-0" initial={{ x: 0, rotate: 0 }} animate={{ x: 70, y: 40, rotate: 35 }} transition={{ duration: 0.6 }}><Fruit f={prev} half="r" /></motion.div>
-            <motion.span className="absolute left-1/2 top-0 -translate-x-1/2 font-display text-3xl font-black text-neon-green drop-shadow" initial={{ y: 0, opacity: 1 }} animate={{ y: -50, opacity: 0 }} transition={{ duration: 0.9 }}>+{fmtMult(ladderMult('slice', mode, step))}</motion.span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2">
-        {!lost && <Odds game="slice" mode={mode} step={step} />}
-        <motion.button
-          key={lost ? 'bomb' : `f${step}`}
-          type="button"
-          disabled={!live}
-          onClick={onGo}
-          aria-label="Slice"
-          className="relative h-32 w-32 disabled:cursor-default"
-          initial={{ y: -260, rotate: -40 }}
-          animate={{ y: [null, 0], rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 160, damping: 14, delay: step > 0 && !lost ? 0.25 : 0 }}
-          whileHover={live ? { scale: 1.06, rotate: 4 } : undefined}
-        >
-          {lost ? <BombSvg /> : <Fruit f={f} />}
-        </motion.button>
-      </div>
-      {lost && <Explosion size={260} />}
-    </div>
   )
 }
 

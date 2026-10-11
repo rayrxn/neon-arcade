@@ -1,3 +1,5 @@
+import ProfileParticles, { PARTICLE_FX } from '@/components/ui/ProfileParticles'
+import ShopIcon from '@/components/shop/ShopIcon'
 import { Fragment, useMemo } from 'react'
 import { Crown, Dice5, Flame, Gem, Shield, Sparkles, Sprout, Star, Target, Zap } from 'lucide-react'
 import clsx from 'clsx'
@@ -106,7 +108,7 @@ export function StyleBadge({ user, className }) {
   const catalog = useCatalog()
   const b = itemOf(catalog, user?.style?.badge)
   if (!b?.style?.glyph) return null
-  return <span className={clsx('style-badge', className)} style={{ color: b.style.color ?? '#e2e8f0', '--sb': b.style.color ?? '#e2e8f0' }} title={b.description ? `${b.name} — ${b.description}` : b.name} aria-label={b.name}>{b.style.glyph}</span>
+  return <span className={clsx('style-badge', className)} style={{ color: b.style.color ?? '#e2e8f0', '--sb': b.style.color ?? '#e2e8f0' }} title={b.description ? `${b.name} — ${b.description}` : b.name} aria-label={b.name}><ShopIcon glyph={b.style.glyph} color={b.style.color ?? '#e2e8f0'} size={14} glow={false} /></span>
 }
 
 /** All tags for a user, in a fixed order: staff → membership → loyalty card → progression role.
@@ -209,6 +211,7 @@ export function ProfileBanner({ user, fallback, className }) {
 }
 
 export function ProfileFx({ kind, colors }) {
+  if (PARTICLE_FX[kind]) return <ProfileParticles kind={kind} colors={colors} />
   if (kind === 'scan') return <span className="pfx-scan" style={{ '--c1': colors[0] }} aria-hidden="true" />
   if (kind === 'notes') return <span className="fx-vivace" aria-hidden="true">{['♪', '♫', '𝄞', '♩', '♬', '♪'].map((n, i) => <span key={i} style={{ left: `${8 + i * 16}%`, animationDelay: `${i * -1.15}s`, fontSize: `${14 + (i % 3) * 5}px` }}>{n}</span>)}</span>
   if (kind === 'stars') return <span className="pfx-stars" style={{ '--c1': colors[0], '--c2': colors[1] ?? colors[0] }} aria-hidden="true" />

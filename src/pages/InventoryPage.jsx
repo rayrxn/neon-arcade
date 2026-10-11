@@ -172,14 +172,14 @@ export default function InventoryPage() {
                     </div>
                     <p className="line-clamp-1 text-sm font-bold text-white">{pick(it.name, lang)}</p>
                     <p className="text-[11px] text-slate-500">{t(`inventory.kinds.${it.kind}`)} · {t(`inventory.sources.${it.source}`)}</p>
-                    <div className="mt-auto flex h-8 w-full items-center justify-center gap-1.5">
+                    <div className="mt-auto flex w-full flex-col items-center justify-center gap-1">
                       {has ? (
                         it.kind === 'emote' ? (
                           <span className="rounded-lg bg-white/[0.05] px-2.5 py-1 font-mono text-[11px] text-slate-300">:{it.code}:</span>
                         ) : (
                           <>
-                            <Button size="xs" variant={on ? 'ghost' : 'primary'} className="flex-1" onClick={() => toggle(id)}>{on ? t('inventory.unequip') : t('inventory.equip')}</Button>
-                            <Button size="xs" variant="subtle" onClick={() => setPreview(preview === id ? null : id)}>{t('inventory.preview')}</Button>
+                            <Button size="xs" variant={on ? 'ghost' : 'primary'} className="w-full max-w-[160px]" onClick={() => toggle(id)}>{on ? t('inventory.unequip') : t('inventory.equip')}</Button>
+                            <button type="button" className="text-[11px] font-semibold text-slate-400 hover:text-white" onClick={() => setPreview(preview === id ? null : id)}>{t('inventory.preview')}</button>
                           </>
                         )
                       ) : (

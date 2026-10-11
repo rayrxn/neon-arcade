@@ -1,6 +1,21 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.14",
+    "date": "2026-10-11",
+    "emoji": "🍉",
+    "colors": ["#16a34a", "#f97316", "#7c3aed"],
+    "title": { "en": "Pick your fruit", "id": "Pilih buahmu" },
+    "tagline": { "en": "Slice lets you choose the risk, plus 14 new profile effects.", "id": "Slice sekarang kamu pilih risikonya, plus 14 efek profil baru." },
+    "items": [
+      { "tag": "new", "en": "Slice: fruits jump up and you slice one. Each fruit has its own safe chance (watermelon 80% … grape 4%); rarer fruit pays a bigger multiplier.", "id": "Slice: buah meloncat dan kamu potong satu. Tiap buah punya peluang aman sendiri (semangka 80% … anggur 4%); buah langka bayar pengali lebih besar." },
+      { "tag": "new", "en": "14 profile effects in the shop: autumn leaves, sakura, snow, hearts, embers, coin rain, storm, fireflies and more.", "id": "14 efek profil di shop: daun musim gugur, sakura, salju, hati, bara api, hujan koin, badai, kunang-kunang, dan lainnya." },
+      { "tag": "improve", "en": "Shop boosts and badges use drawn icons instead of emoji. Equip buttons in your inventory are centered.", "id": "Boost dan badge di shop pakai ikon gambar, bukan emoji. Tombol Equip di inventori sekarang di tengah." },
+      { "tag": "improve", "en": "Opening a game that is turned off or in maintenance shows a popup.", "id": "Membuka game yang dimatikan atau sedang maintenance menampilkan popup." },
+      { "tag": "fix", "en": "Layer and Moles are turned off for now.", "id": "Layer dan Moles dimatikan sementara." }
+    ]
+  },
+  {
     "version": "2.9.13",
     "date": "2026-10-11",
     "emoji": "💥",

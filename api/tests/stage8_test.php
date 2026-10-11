@@ -514,10 +514,14 @@ for ($i = 0; $i < 6; $i++) { $res = call('POST', 'game/snake-roll', ['id' => $si
 $rr = $res['data']['result'] ?? [];
 check('snake roll: dice 1–6, tile = sum − 2, snake tile ends the round', $res['ok'] && $rr['dice'][0] >= 1 && $rr['dice'][1] <= 6 && $rr['tile'] === $rr['dice'][0] + $rr['dice'][1] - 2 && (!empty($rr['done']) === (SNAKE_BOARD['medium'][$rr['tile']] == 0)), $res);
 if (empty($rr['done'])) { $co = call('POST', 'game/snake-cashout', ['id' => $sid], 'a'); check('snake cash out pays bet × running multiplier', $co['ok'] && abs((float) $co['data']['result']['session']['payout'] - round(100 * floor($rr['multiplier'] * 100) / 100, 2)) < 0.011, $co); }
-cool(); $l = call('POST', 'game/layer-start', ['bet' => 100, 'mode' => 'easy'], 'a');
-check('layer easy: each layer ×1.02 (p 0.98)', $l['ok'] && abs(ladder_mult('layer', 'easy', 2) / ladder_mult('layer', 'easy', 1) - 1.02) < 0.011, $l);
-call('POST', 'game/layer-cashout', ['id' => $l['data']['result']['id'] ?? ''], 'a');
-foreach (['slice', 'moles'] as $g) { cool(); $x = call('POST', "game/$g-start", ['bet' => 100, 'mode' => 'medium'], 'a'); check("$g starts on the ladder engine", $x['ok'] && $x['data']['result']['steps'] === LADDER[$g]['steps'], $x); call('POST', "game/$g-cashout", ['id' => $x['data']['result']['id'] ?? ''], 'a'); }
+check('layer easy: each layer ×1.02 (p 0.98)', abs(ladder_mult('layer', 'easy', 3) / ladder_mult('layer', 'easy', 2) - 1.02) < 0.011);
+cool(); $x = call('POST', 'game/slice-start', ['bet' => 100], 'a');
+$sl = $x['data']['result']['id'] ?? '';
+$y = call('POST', 'game/slice-step', ['id' => $sl, 'fruit' => 'watermelon'], 'a');
+check('slice: watermelon cut is safe 80% → ×0.95/0.8 or explodes', $y['ok'] && (!empty($y['data']['result']['lost']) || abs($y['data']['result']['multiplier'] - floor(0.95 / 0.8 * 100) / 100) < 0.001), $y);
+expect_error('slice: unknown fruit', call('POST', 'game/slice-step', ['id' => $sl, 'fruit' => 'durian'], 'a'), 'play.errors.invalid');
+if (empty($y['data']['result']['done'])) call('POST', 'game/slice-cashout', ['id' => $sl], 'a');
+check('layer and moles are turned off', qv("SELECT count(*) FROM games WHERE slug IN ('layer', 'moles') AND status = 'disabled'") == 2);
 
 echo $failures ? "\n" . count($failures) . " failed: " . implode(', ', $failures) . "\n" : "\nALL PASSED — $pass passed\n";
 exit($failures ? 1 : 0);

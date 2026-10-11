@@ -62,7 +62,6 @@ const LADDER = [
     'cross' => ['steps' => 20, 'rtp' => 0.94, 'modes' => ['easy' => ['p' => 0.6], 'medium' => ['p' => 0.45], 'hard' => ['p' => 0.33], 'daredevil' => ['p' => 0.22]]],
     'pump' => ['steps' => 25, 'modes' => ['easy' => ['p' => 0.96], 'medium' => ['p' => 0.9], 'hard' => ['p' => 0.8], 'expert' => ['p' => 0.65]]],
     // v2.9.12: former skill arcades, now bet games on the same engine. p = chance shown under each fruit / hole / layer.
-    'slice' => ['steps' => 20, 'rtp' => 0.95, 'modes' => ['easy' => ['p' => 0.8], 'medium' => ['p' => 0.6667], 'hard' => ['p' => 0.5], 'expert' => ['p' => 0.33]]],
     'moles' => ['steps' => 15, 'rtp' => 0.95, 'modes' => ['easy' => ['p' => 0.75], 'medium' => ['p' => 0.6], 'hard' => ['p' => 0.45], 'expert' => ['p' => 0.3]]],
     'layer' => ['steps' => 50, 'rtp' => 0.97, 'modes' => ['easy' => ['p' => 0.98], 'medium' => ['p' => 0.95], 'hard' => ['p' => 0.9], 'expert' => ['p' => 0.8]]],
 ];
@@ -76,6 +75,58 @@ const SNAKE_BOARD = [
     'expert' => [8.64, 4.32, 0, 0, 0, 0, 0, 0, 0, 4.32, 8.64],
 ];
 const SNAKE_ROLLS = 40;
+
+/** Slice: fruits jump up; the player slices one per step. Each fruit has its own safe chance — the lower the chance,
+ *  the bigger the jump in multiplier (×1/p). First slice carries the house edge, so cashing out at any step returns 95%. */
+const SLICE_FRUITS = ['watermelon' => 0.8, 'apple' => 0.6, 'orange' => 0.55, 'lemon' => 0.4, 'pineapple' => 0.25, 'cherry' => 0.12, 'grape' => 0.04];
+const SLICE_RTP = 0.95;
+const SLICE_STEPS = 60;
+
+function slice_public(array $r): array
+{
+    return ['id' => $r['id'], 'game' => 'slice', 'step' => count($r['cuts']), 'cuts' => $r['cuts'], 'bet' => $r['bet'], 'multiplier' => floor($r['mult'] * 100) / 100, 'fruits' => SLICE_FRUITS];
+}
+
+function slice_start(Ctx $c, array $a): array
+{
+    $round = begin($c, 'slice', $a['bet'] ?? null, SLICE_STEPS, ['cuts' => [], 'mult' => SLICE_RTP]);
+    $round['lf'] = $round['floats'];
+    save_open($round);
+    return ['done' => false] + slice_public($round);
+}
+
+function slice_step(Ctx $c, array $a): array
+{
+    $id = $a['id'] ?? null;
+    $fruit = (string) ($a['fruit'] ?? '');
+    if (!isset(SLICE_FRUITS[$fruit])) fail('play.errors.invalid');
+    $r = load_open($c, 'slice', $id);
+    if (!$r) return stale_round($c, 'slice', $id);
+    $k = count($r['cuts']);
+    $p = SLICE_FRUITS[$fruit];
+    if (!empty($r['isTest']) && $r['control'] !== 'off') {
+        $want = $r['control'] === 'win';
+        for ($i = 0; $i < 200 && ($r['lf'][$k] < $p) !== $want; $i++) $r['lf'][$k] = rand_float();
+    }
+    $r['cuts'][] = $fruit;
+    if ($r['lf'][$k] >= $p) {
+        return ['done' => true, 'lost' => true, 'fruit' => $fruit, 'cuts' => $r['cuts']] + finish($c, $r, 0, 'loss', ['cuts' => $k + 1, 'last' => $fruit]);
+    }
+    $r['mult'] = min((float) MAX_MULTIPLIER['slice'], $r['mult'] / $p);
+    if (count($r['cuts']) >= SLICE_STEPS) return slice_cashout($c, ['id' => $id], $r);
+    save_open($r);
+    return ['done' => false, 'fruit' => $fruit] + slice_public($r);
+}
+
+function slice_cashout(Ctx $c, array $a, ?array $loaded = null): array
+{
+    $id = $a['id'] ?? null;
+    $r = $loaded ?? load_open($c, 'slice', $id);
+    if (!$r) return stale_round($c, 'slice', $id);
+    if (!$r['cuts']) return ['done' => true, 'lost' => false, 'cuts' => []] + finish($c, $r, 1, 'push', ['cuts' => 0], 'CANCELLED');
+    $m = floor($r['mult'] * 100) / 100;
+    return ['done' => true, 'lost' => false, 'cuts' => $r['cuts'], 'multiplier' => $m] + finish($c, $r, $m, classify($m), ['cuts' => count($r['cuts'])]);
+}
 
 function snake_dice(array $f, int $k): array
 {
@@ -243,9 +294,6 @@ function cross_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 
 function pump_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'pump'); }
 function pump_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'pump'); }
 function pump_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'pump'); }
-function slice_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'slice'); }
-function slice_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'slice'); }
-function slice_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'slice'); }
 function moles_start(Ctx $c, array $a): array { return ladder_start($c, $a, 'moles'); }
 function moles_step(Ctx $c, array $a): array { return ladder_step($c, $a, 'moles'); }
 function moles_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, 'moles'); }

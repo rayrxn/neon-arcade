@@ -1,3 +1,4 @@
+import ShopIcon from './ShopIcon'
 import clsx from 'clsx'
 import { Emote, ProfileFx } from '@/components/ui/Identity'
 import { CurrencyIcon } from '@/components/ui/Currency'
@@ -22,7 +23,7 @@ export function ItemVisual({ item, className }) {
       return (
         <div className={base}>
           <span className="absolute h-16 w-16 rounded-full blur-2xl" style={{ background: st.color ?? '#22d3ee', opacity: 0.35 }} />
-          <span className="relative text-4xl">{st.glyph ?? '⚡'}</span>
+          <ShopIcon glyph={st.glyph ?? '⚡'} color={st.color ?? '#22d3ee'} size={48} className="relative" />
         </div>
       )
     case 'emote': {
@@ -39,7 +40,7 @@ export function ItemVisual({ item, className }) {
       return (
         <div className={clsx(base, 'px-4')}>
           <p className={clsx('chat-fx w-full px-3 py-2 text-left text-[11px] text-slate-200', st.animated && 'chat-fx--animated')} style={{ '--fx': st.color, '--fx2': st.color2 ?? st.color }}>
-            <b className="text-white">You</b> gg wp 🔥
+            <b className="text-white">You</b> gg wp
           </p>
         </div>
       )
@@ -52,7 +53,7 @@ export function ItemVisual({ item, className }) {
     case 'theme':
       return <div className={base} style={{ backgroundImage: `linear-gradient(130deg, ${(st.colors ?? ['#1e293b', '#0f172a']).join(', ')})` }}><span className="h-2 w-16 rounded-full" style={{ background: st.accent ?? '#fff' }} /></div>
     case 'badge':
-      return <div className={base}><span className="text-4xl" style={{ color: st.color, filter: `drop-shadow(0 0 10px ${st.color ?? '#fff'})` }}>{st.glyph ?? '★'}</span></div>
+      return <div className={base}><ShopIcon glyph={st.glyph ?? '★'} color={st.color ?? '#e2e8f0'} size={46} /></div>
     case 'frame':
       return (
         <div className={base}>

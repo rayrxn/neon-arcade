@@ -1,6 +1,9 @@
 import { Suspense, lazy } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2, Plug } from 'lucide-react'
+import { ArrowLeft, Loader2, Plug, Wrench } from 'lucide-react'
+import Modal from '@/components/ui/Modal'
+import { useAdminStore } from '@/store/useAdminStore'
+import { useCurrentUser } from '@/store/useAuthStore'
 import Button from '@/components/ui/Button'
 import GameArt from '@/components/games/GameArt'
 import { categoryKey, getGame } from '@/config/games'
@@ -38,6 +41,21 @@ function ComingSoon({ game }) {
   )
 }
 
+const STAFF = ['owner', 'super_admin', 'admin', 'moderator', 'support', 'developer']
+
+/** Popup over a game the admin turned off or put in maintenance (staff may still open maintenance games). */
+function GameClosed({ game, status, message }) {
+  const { t } = useT()
+  const navigate = useNavigate()
+  const back = () => navigate('/games')
+  return (
+    <Modal open locked onClose={back} icon={<Wrench className="h-5 w-5 text-neon-gold" />} title={t(status === 'disabled' ? 'games.closed.offTitle' : 'games.closed.maintTitle', { game: game.name })}
+      footer={<Button className="w-full" onClick={back}><ArrowLeft className="h-4 w-4" /> {t('games.back')}</Button>}>
+      <p className="text-sm text-slate-300">{message || t(status === 'disabled' ? 'games.closed.offBody' : 'games.closed.maintBody')}</p>
+    </Modal>
+  )
+}
+
 export default function GameRoute() {
   const { slug } = useParams()
   const game = getGame(slug)
@@ -47,8 +65,19 @@ export default function GameRoute() {
 
   const GameComponent = getLazyComponent(game)
   return (
+    <>
+    <ClosedCheck game={game} />
     <Suspense fallback={<div className="glass grid h-[60vh] place-items-center rounded-2xl"><Loader2 className="h-6 w-6 animate-spin text-neon-cyan" /></div>}>
       <GameComponent game={game} api={gameApi} />
     </Suspense>
+    </>
   )
+}
+
+function ClosedCheck({ game }) {
+  const cfg = useAdminStore((s) => s.gameConfig?.[game.slug])
+  const role = useCurrentUser()?.role
+  if (!cfg || cfg.status === 'live') return null
+  if (cfg.status === 'maintenance' && STAFF.includes(role)) return null
+  return <GameClosed game={game} status={cfg.status} message={cfg.maintenanceMessage} />
 }

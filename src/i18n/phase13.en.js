@@ -22,7 +22,7 @@ export default {
     ladder: {
       chance: 'Safe', snake: { roll: 'Roll dice', hint: 'Roll two dice. The sum picks a tile: land on a snake and you lose, any other tile multiplies your win.', idle: 'Pick a difficulty and start.', lost: 'Bitten by a snake!' },
       mode: 'Difficulty', modes: { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', daredevil: 'Daredevil' },
-      go: { cross: 'Next lane', pump: 'Pump', slice: 'Slice', moles: 'Whack', layer: 'Drop layer' }, hint: { tower: 'Pick one tile on the glowing floor.', cross: 'Cross the next lane or cash out.', pump: 'Pump it up or cash out before it pops.', slice: 'Slice the fruit. The % is its chance of not exploding.', moles: 'Whack any hole. The % is the chance a mole is there, not a bomb.', layer: 'Drop the next layer. The % is the chance the tower holds.' },
+      go: { cross: 'Next lane', pump: 'Pump', slice: 'Slice one fruit per throw. Each fruit shows its safe chance: rarer fruit pays a bigger multiplier, a bomb ends the round.', moles: 'Whack', layer: 'Drop layer' }, hint: { tower: 'Pick one tile on the glowing floor.', cross: 'Cross the next lane or cash out.', pump: 'Pump it up or cash out before it pops.', slice: 'Slice the fruit. The % is its chance of not exploding.', moles: 'Whack any hole. The % is the chance a mole is there, not a bomb.', layer: 'Drop the next layer. The % is the chance the tower holds.' },
       idle: 'Choose a difficulty and start.', lost: 'Lost on step {step}.',
     },
     errors: {
@@ -66,6 +66,7 @@ export default {
   chat: { mod: { ban: '{user} was banned by {by} ({duration})', unban: '{user} was unbanned by {by}', kick: '{user} was kicked by {by}', mute: '{user} was muted by {by} ({duration})', unmute: '{user} can chat again', forever: 'permanent', gacor: '🔥 Jam Gacor ×{mult} is live for {minutes} minutes!' } },
   gacor: { global: 'Jam Gacor ×{mult} is live', personal: 'Your luck boost ×{mult} is on', hint: 'wins pay extra' },
   games: {
+    closed: { offTitle: '{game} is turned off', maintTitle: '{game} is under maintenance', offBody: 'This game is turned off for now. Try another game.', maintBody: 'We are working on this game. It will be back soon.' },
     list: { snake: 'Classic snake. Eat, grow, survive.', moles: 'Whack the moles, dodge the bombs.', slice: 'Slice fruit, skip bombs.', layer: 'Stack blocks as high as you can.', chess: 'Real-time chess. Play people for a stake or practise against the bot.', horse: 'Race horses. Pick the winner, get paid its odds.', tarot: 'Three cards, multiplied together.', sweet: 'Tumbling candy, bombs up to ×100.', keno: 'Pick up to 10 numbers, 10 balls drop.', tower: 'Climb floor by floor, avoid the bomb.', cross: 'Lane by lane. Cash out before the car comes.', pump: 'Pump the balloon. Stop before it pops.' },
     categories: { arcade: 'Arcade', slots: 'Slots' },
   },
