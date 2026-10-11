@@ -691,6 +691,7 @@ function open_round(Ctx $c, array $a): ?array
     if ($game === 'blackjack') return ['done' => false] + bj_view($r, false);
     if (isset(LADDER[$game])) return ladder_public($r);
     if ($game === 'snake') return snake_public($r);
+    if ($game === 'slice') return slice_public($r);
     return null;
 }
 
@@ -722,6 +723,7 @@ function open_rounds_view(string $userId): array
         if ($row['game'] === 'blackjack') $out['blackjack'] = ['done' => false] + bj_view($r, false);
         if (isset(LADDER[$row['game']])) $out[$row['game']] = ladder_public($r);
         if ($row['game'] === 'snake') $out['snake'] = snake_public($r);
+        if ($row['game'] === 'slice') $out['slice'] = slice_public($r);
     }
     return $out;
 }
