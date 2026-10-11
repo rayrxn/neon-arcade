@@ -36,6 +36,7 @@ function adm_target(array $admin, $userId, bool $allowSelf = false): array
 {
     $t = is_string($userId) && preg_match('/^[0-9a-f-]{36}$/', $userId) ? q1('SELECT * FROM users WHERE id = ? FOR UPDATE', [$userId]) : null;
     if (!$t) fail('admin.errors.noUser');
+    if (!empty($admin['console'])) return $t; // console outranks every account, Owners included
     if (!$allowSelf && $t['id'] === $admin['id']) fail('admin.errors.self');
     if ($t['id'] !== $admin['id'] && (ROLE_RANK[$t['role']] ?? 0) >= (ROLE_RANK[$admin['role']] ?? 0)) fail('admin.errors.rank');
     return $t;
@@ -84,7 +85,7 @@ function admin_snapshot(array $me): array
     foreach (q('SELECT f.*, s.game, r.username AS reviewer FROM cheat_flags f LEFT JOIN game_sessions s ON s.id = f.session_id LEFT JOIN users r ON r.id = f.reviewed_by ORDER BY f.created_at DESC LIMIT 2000')->fetchAll() as $f) {
         $flagsByUser[$f['user_id']][] = flag_view($f);
     }
-    foreach (q('SELECT u.*, d.progress, d.wallet_meta, d.profile FROM users u LEFT JOIN user_docs d ON d.user_id = u.id ORDER BY u.created_at')->fetchAll() as $r) {
+    foreach (q("SELECT u.*, d.progress, d.wallet_meta, d.profile FROM users u LEFT JOIN user_docs d ON d.user_id = u.id WHERE u.username <> 'neon_console' ORDER BY u.created_at")->fetchAll() as $r) {
         $profile = jdec($r['profile'], []);
         $meta = jdec($r['wallet_meta'], []) + ['inventory' => [], 'redeemed' => [], 'totalWagered' => 0, 'totalWon' => 0, 'rounds' => 0, 'wins' => 0, 'biggestWin' => null, 'lastBonusAt' => null];
         $users[] = admin_user_view($r, $profile, $sensitive);

