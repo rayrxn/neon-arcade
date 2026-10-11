@@ -1,22 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Check, Loader2, ShieldCheck } from 'lucide-react'
 import clsx from 'clsx'
 import { api } from '@/services/server'
-import { loadTurnstile, setPreparedCaptcha, solvePow } from '@/services/captcha'
+import { setPreparedCaptcha, solvePow } from '@/services/captcha'
 import { SERVER_MODE } from '@/config/runtime'
 import { useT } from '@/i18n'
 
 /**
  * Visible anti-bot check, only on sign-in / sign-up / password reset.
- * Cloudflare Turnstile widget when the server has keys, otherwise a "not a robot" box that runs a short
- * proof-of-work in the browser. The proof is attached to the next auth request, then the box resets.
+ * A "not a robot" box that runs a short proof-of-work in the browser. The proof is attached to the next auth request, then the box resets.
  */
 export default function HumanCheck() {
   const { t } = useT()
   const [cfg, setCfg] = useState(null)
   const [state, setState] = useState('idle') // idle | working | done | error
-  const box = useRef(null)
-  const widget = useRef(null)
 
   const load = useCallback(() => {
     setState('idle')
@@ -27,50 +24,11 @@ export default function HumanCheck() {
   useEffect(() => {
     if (!SERVER_MODE) return
     load()
-    const reset = () => {
-      if (widget.current != null && window.turnstile) {
-        try { window.turnstile.reset(widget.current) } catch { /* gone */ }
-        setState('idle')
-      } else load()
-    }
-    window.addEventListener('neon-captcha-used', reset)
-    return () => window.removeEventListener('neon-captcha-used', reset)
+    window.addEventListener('neon-captcha-used', load)
+    return () => window.removeEventListener('neon-captcha-used', load)
   }, [load])
 
-  useEffect(() => {
-    if (cfg?.mode !== 'turnstile' || !box.current) return
-    let alive = true
-    loadTurnstile().then((ts) => {
-      if (!alive || !box.current) return
-      widget.current = ts.render(box.current, {
-        sitekey: cfg.siteKey,
-        theme: document.documentElement.classList.contains('light') ? 'light' : 'dark',
-        callback: (token) => { setPreparedCaptcha({ token }); setState('done') },
-        'expired-callback': () => { setPreparedCaptcha(null); setState('idle') },
-        'error-callback': () => setState('error'),
-      })
-    }).catch(() => alive && setState('error'))
-    return () => {
-      alive = false
-      if (widget.current != null) try { window.turnstile?.remove(widget.current) } catch { /* gone */ }
-      widget.current = null
-    }
-  }, [cfg])
-
   if (!SERVER_MODE || !cfg || cfg.mode === 'off') return null
-  if (cfg.mode === 'turnstile') {
-    return (
-      <div className="mb-4">
-        <div ref={box} className={state === 'error' ? 'hidden' : 'min-h-[65px]'} />
-        {state === 'error' && (
-          <button type="button" onClick={load} className="flex w-full items-center gap-3 rounded-xl bg-neon-red/10 px-3.5 py-3 text-left text-sm ring-1 ring-inset ring-neon-red/40">
-            <ShieldCheck className="h-5 w-5 shrink-0 text-neon-red" />
-            <span className="flex-1 font-semibold text-slate-200">{t('auth.human.retry')}</span>
-          </button>
-        )}
-      </div>
-    )
-  }
 
   const verify = async () => {
     if (state === 'working' || state === 'done') return

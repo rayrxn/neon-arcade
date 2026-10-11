@@ -1,6 +1,17 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.10",
+    "date": "2026-10-11",
+    "emoji": "✅",
+    "colors": ["#22c55e", "#22d3ee", "#a78bfa"],
+    "title": { "en": "Simple anti-bot check", "id": "Cek anti-bot sederhana" },
+    "tagline": { "en": "Cloudflare is gone. Tick \"I'm not a robot\" and log in.", "id": "Cloudflare dihapus. Centang \"I'm not a robot\" lalu login." },
+    "items": [
+      { "tag": "fix", "en": "Login, sign-up and password reset now use our own \"I'm not a robot\" check. The Cloudflare box that failed to load is removed.", "id": "Login, daftar, dan reset password sekarang pakai cek \"I'm not a robot\" bawaan. Kotak Cloudflare yang gagal dimuat dihapus." }
+    ]
+  },
+  {
     "version": "2.9.9",
     "date": "2026-10-11",
     "emoji": "🛡️",

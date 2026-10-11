@@ -57,30 +57,26 @@ export function LuckCard({ luck, me }) {
   )
 }
 
-/** Anti-bot check on login / sign-up / password reset: built-in proof-of-work or Cloudflare Turnstile. */
+/** Anti-bot check on login / sign-up / password reset: built-in proof-of-work. */
 export function CaptchaCard({ captcha, me }) {
   const { t } = useT()
-  const [f, setF] = useState({ mode: captcha?.setting ?? 'config', siteKey: captcha?.siteKey ?? '', secret: '' })
+  const [f, setF] = useState({ mode: captcha?.setting === 'pow' ? 'pow' : 'config' })
   const [pending, setPending] = useState(false)
   return (
     <Card title={t('admin.captcha.title')} bodyClassName="space-y-4 p-4">
       <p className="text-xs text-slate-500">{t('admin.captcha.desc')}</p>
-      <Badge tone={captcha?.mode === 'turnstile' ? 'green' : captcha?.mode === 'off' ? 'red' : 'purple'}>{t('admin.captcha.now', { mode: captcha?.mode ?? '—' })}</Badge>
-      <div className="grid gap-3 sm:grid-cols-4">
+      <Badge tone={captcha?.mode === 'pow' ? 'green' : captcha?.mode === 'off' ? 'red' : 'purple'}>{t('admin.captcha.now', { mode: captcha?.mode ?? '—' })}</Badge>
+      <div className="grid gap-3 sm:grid-cols-2">
         <FormField label={t('admin.captcha.mode')}>
           <select value={f.mode} onChange={(e) => setF({ ...f, mode: e.target.value })} className={inputCls}>
-            {['config', 'pow', 'turnstile'].map((m) => <option key={m} value={m}>{t(`admin.captcha.modes.${m}`)}</option>)}
+            {['config', 'pow'].map((m) => <option key={m} value={m}>{t(`admin.captcha.modes.${m}`)}</option>)}
           </select>
-        </FormField>
-        <FormField label={t('admin.captcha.site')}><input value={f.siteKey} onChange={(e) => setF({ ...f, siteKey: e.target.value })} className={inputCls} /></FormField>
-        <FormField label={t('admin.captcha.secret')} hint={captcha?.hasSecret ? t('admin.captcha.secretSet') : null}>
-          <input type="password" autoComplete="off" value={f.secret} onChange={(e) => setF({ ...f, secret: e.target.value })} className={inputCls} />
         </FormField>
         <div className="flex items-end"><Button className="w-full" onClick={() => setPending(true)}>{t('common.save')}</Button></div>
       </div>
       {pending && (
         <ReasonDialog open onClose={() => setPending(false)} adminName={me.username} tone="primary" title={t('admin.captcha.title')}
-          onConfirm={(r) => adminCall('setCaptcha', { mode: f.mode, siteKey: f.siteKey.trim(), secret: f.secret, reason: r })} />
+          onConfirm={(r) => adminCall('setCaptcha', { mode: f.mode, reason: r })} />
       )}
     </Card>
   )
