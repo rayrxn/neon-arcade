@@ -102,7 +102,8 @@ export default function Roulette({ game }) {
   )
 
   const stage = (
-    <Stage className="space-y-5 p-4 sm:p-5">
+    <Stage className="relative space-y-5 bg-[radial-gradient(ellipse_at_50%_25%,#166534_0%,#0b3b20_55%,#04140b_100%)] p-4 sm:p-5">
+      <div className="pointer-events-none absolute inset-2 rounded-[20px] border-2 border-amber-300/25 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)]" />
       <div className="grid items-center gap-5 sm:grid-cols-[240px_minmax(0,1fr)]">
         <Wheel rotation={rotation} />
         <div className="text-center sm:text-left">

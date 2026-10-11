@@ -54,8 +54,8 @@ function Board({ state, side, onMove, last, disabled }) {
           const dy = moved ? ((from >> 3) - (i >> 3)) * (flip ? -100 : 100) : 0
           return (
             <button key={k} type="button" onClick={() => click(i)}
-              className={clsx('relative grid h-full w-full place-items-center overflow-hidden', dark ? 'bg-[#4b5d7a]' : 'bg-[#c9d4e3]',
-                (last && (last.f === i || last.t === i)) && (dark ? 'bg-[#7c8f4e]' : 'bg-[#d9e39a]'),
+              className={clsx('relative grid h-full w-full place-items-center overflow-hidden', dark ? 'bg-[#a8703f]' : 'bg-[#efd9b4]',
+                (last && (last.f === i || last.t === i)) && (dark ? 'bg-[#b9a14a]' : 'bg-[#f3e08a]'),
                 sel === i && '!bg-amber-300/80', checkSq === i && '!bg-red-500/80')}>
               {(k & 7) === 0 && <span className={clsx('absolute left-0.5 top-0 text-[9px] font-bold', dark ? 'text-white/50' : 'text-slate-600/60')}>{8 - (i >> 3)}</span>}
               {k >= 56 && <span className={clsx('absolute bottom-0 right-1 text-[9px] font-bold', dark ? 'text-white/50' : 'text-slate-600/60')}>{'abcdefgh'[i & 7]}</span>}
@@ -230,7 +230,7 @@ export default function Chess({ game }) {
   if (mode === 'bot') {
     const me = color
     stage = (
-      <Stage className="space-y-2 p-3 sm:p-5">
+      <Stage className="relative space-y-2 bg-[radial-gradient(ellipse_at_50%_30%,#5b3a1e_0%,#2e1d0e_60%,#140c05_100%)] p-3 sm:p-5">
         <ClockBar name={`${t('play.chess.botName')} · ${t(`play.chess.levels.${level}`)}`} active={bs.playing && bs.state.t !== me && !botEnd} />
         <Board state={bs.state} side={me} last={bs.last} disabled={!bs.playing || !!botEnd || bs.state.t !== me} onMove={(m) => setBs((s) => ({ ...s, state: apply(s.state, m), last: m }))} />
         <ClockBar name={t('play.chess.you')} active={bs.playing && bs.state.t === me && !botEnd} />
@@ -247,7 +247,7 @@ export default function Chess({ game }) {
     const oppSide = match.you === 'w' ? 'b' : 'w'
     const last = match.moves[match.moves.length - 1] ?? null
     stage = (
-      <Stage className="space-y-2 p-3 sm:p-5">
+      <Stage className="relative space-y-2 bg-[radial-gradient(ellipse_at_50%_30%,#5b3a1e_0%,#2e1d0e_60%,#140c05_100%)] p-3 sm:p-5">
         <ClockBar name={opp?.username ?? t('play.chess.waiting')} ms={match.status === 'waiting' ? null : liveMs(oppSide)} active={match.status === 'active' && match.state.t === oppSide} />
         <Board state={match.state} side={match.you} last={last} disabled={match.status !== 'active' || match.state.t !== match.you || match._pending} onMove={pvpMove} />
         <ClockBar name={meU?.username ?? ''} you ms={match.status === 'waiting' ? null : liveMs(match.you)} active={match.status === 'active' && match.state.t === match.you} />
@@ -262,7 +262,7 @@ export default function Chess({ game }) {
     )
   } else {
     stage = (
-      <Stage className="p-4 sm:p-5">
+      <Stage className="relative bg-[radial-gradient(ellipse_at_50%_30%,#5b3a1e_0%,#2e1d0e_60%,#140c05_100%)] p-4 sm:p-5">
         <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-white"><Users className="h-4 w-4 text-neon-cyan" />{t('play.chess.openGames')}</p>
         {!lobby ? (
           <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-white/[0.04]" />)}</div>

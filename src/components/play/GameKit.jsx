@@ -421,6 +421,8 @@ export function LiveFeed({ slug }) {
 
 /** Panggung standar (latar grid tipis). */
 export function Stage({ children, className }) {
-  return <div className={clsx('glass relative overflow-hidden rounded-2xl', className)}>{children}</div>
+  // A stage with its own environment background (bg-…) skips the glass panel so the scene shows.
+  const themed = /(^|\s)bg-/.test(className ?? '')
+  return <div className={clsx(themed ? 'ring-1 ring-inset ring-white/10' : 'glass', 'relative overflow-hidden rounded-2xl', className)}>{children}</div>
 }
 

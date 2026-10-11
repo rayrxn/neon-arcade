@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.4",
+    "date": "2026-10-11",
+    "emoji": "🌌",
+    "colors": ["#22d3ee", "#22c55e", "#f59e0b"],
+    "title": { "en": "New worlds, part 2", "id": "Dunia baru, bagian 2" },
+    "tagline": { "en": "Every remaining game now has its own themed stage.", "id": "Semua game lainnya sekarang punya panggung bertema sendiri." },
+    "items": [
+      { "tag": "improve", "en": "Crash flies through deep space past a ringed planet. Mines is a crystal cave. Limbo streaks through the stars.", "id": "Crash terbang di luar angkasa melewati planet bercincin. Mines jadi gua kristal. Limbo melesat di antara bintang." },
+      { "tag": "improve", "en": "Dice, Roulette and Blackjack sit on green felt with a gold rim. Coinflip has a velvet spotlight, Plinko a lit cabinet.", "id": "Dice, Roulette, dan Blackjack di atas meja hijau berbingkai emas. Coinflip disorot lampu di atas beludru, Plinko punya kabinet bercahaya." },
+      { "tag": "improve", "en": "Cases open in a vault, Case Battle on red felt, Chess on a wooden board, and each arcade game has its own backdrop.", "id": "Case dibuka di brankas, Case Battle di meja merah, Catur di papan kayu, dan tiap game arkade punya latar sendiri." }
+    ]
+  },
+  {
     "version": "2.9.3",
     "date": "2026-10-11",
     "emoji": "🏰",

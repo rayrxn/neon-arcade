@@ -41,7 +41,8 @@ export default function Dice({ game }) {
   )
 
   const stage = (
-    <Stage className="p-5 sm:p-8">
+    <Stage className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_30%,#14532d_0%,#0b2e1b_60%,#05140c_100%)] p-5 sm:p-8">
+      <div className="pointer-events-none absolute inset-3 rounded-[22px] border-2 border-amber-200/20" />
       <div className="flex min-h-[120px] items-center justify-center">
         <motion.span
           key={outcome?.session.id ?? 'idle'}

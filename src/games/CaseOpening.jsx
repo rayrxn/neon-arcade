@@ -205,7 +205,8 @@ export default function CaseOpening({ game }) {
   )
 
   const stage = (
-    <Stage className="overflow-hidden">
+    <Stage className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_20%,#334155_0%,#111827_55%,#05070d_100%)]">
+      <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.025)_0_1px,transparent_1px_60px)]" />
       <div className="relative flex items-center gap-4 border-b hairline px-4 py-3 sm:px-5">
         <CaseArt tone={TONE_HEX[def.tone]} size={52} />
         <div className="min-w-0 flex-1">

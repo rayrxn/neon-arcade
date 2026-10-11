@@ -62,7 +62,11 @@ export default function Limbo({ game }) {
   )
 
   const stage = (
-    <Stage className="grid min-h-[300px] place-items-center p-6">
+    <Stage className="relative grid min-h-[320px] place-items-center overflow-hidden bg-gradient-to-b from-[#030712] via-[#0b1736] to-[#1e1b4b] p-6">
+      {Array.from({ length: 30 }, (_, k) => (
+        <motion.span key={k} className="pointer-events-none absolute w-px rounded bg-white/70" style={{ left: `${(k * 37) % 100}%`, height: 6 + (k % 4) * 8 }} animate={{ top: ['-10%', '110%'] }} transition={{ duration: 1.6 + (k % 5) * 0.5, delay: -(k % 7) * 0.4, repeat: Infinity, ease: 'linear' }} />
+      ))}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-violet-700/30 to-transparent" />
       <div className="text-center">
         <motion.p key={settled ? `s-${outcome?.session.id}` : 'run'} initial={settled ? { scale: 1.25 } : false} animate={{ scale: 1 }} transition={{ type: 'spring', duration: 0.55, bounce: 0.45 }}
           className={clsx('num font-mono text-6xl font-bold sm:text-8xl', !outcome ? 'text-slate-600' : !settled ? 'text-white' : outcome.session.result === 'win' ? 'text-neon-green drop-shadow-[0_0_24px_rgba(34,197,94,0.55)]' : 'text-neon-red')}>

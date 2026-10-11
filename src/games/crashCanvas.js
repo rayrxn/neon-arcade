@@ -31,6 +31,7 @@ export function drawFrame(canvas, state, colors) {
   const ctx = canvas.getContext('2d')
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, w, h)
+  drawSpace(ctx, w, h, state)
 
   const padL = 44
   const padB = 26
@@ -131,6 +132,7 @@ export function drawFrame(canvas, state, colors) {
     ctx.save()
     ctx.translate(tx, ty)
     ctx.rotate(angle)
+    ctx.scale(1.9, 1.9)
     const flicker = 6 + Math.random() * 5
     ctx.fillStyle = 'rgba(255,170,60,0.9)'
     ctx.beginPath()
@@ -160,3 +162,30 @@ export const makeParticles = (colors) =>
     return { vx: Math.cos(a) * s, vy: Math.sin(a) * s, r: 1.5 + Math.random() * 3, c: Math.random() < 0.5 ? colors.red : 'rgba(255,190,90,0.95)' }
   })
 
+
+// Deep-space backdrop: three parallax star layers that stream faster as the multiplier climbs, plus a ringed planet.
+const STAR_LAYERS = [0.15, 0.4, 0.9].map((speed, l) => ({ speed, stars: Array.from({ length: 40 - l * 10 }, (_, i) => ({ x: (i * 97 + l * 31) % 1000 / 1000, y: (i * 57 + l * 71) % 1000 / 1000, r: 0.5 + l * 0.6 })) }))
+function drawSpace(ctx, w, h, state) {
+  const g = ctx.createLinearGradient(0, 0, 0, h)
+  g.addColorStop(0, '#05030f'); g.addColorStop(0.6, '#0d0a24'); g.addColorStop(1, '#1b0f2e')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, w, h)
+  const t = (state.elapsed ?? 0) / 1000
+  const boost = Math.min(6, Math.log2(Math.max(1, state.multiplier ?? 1)) + 1)
+  for (const layer of STAR_LAYERS) {
+    ctx.fillStyle = `rgba(226,232,240,${0.35 + layer.speed * 0.6})`
+    for (const st of layer.stars) {
+      const x = (((st.x - t * layer.speed * 0.05 * boost) % 1) + 1) % 1
+      const y = (((st.y + t * layer.speed * 0.03 * boost) % 1) + 1) % 1
+      const len = layer.speed * boost * 3
+      ctx.fillRect(x * w, y * h, st.r + len, st.r)
+    }
+  }
+  const px = w * 0.82, py = h * 0.24, pr = Math.min(w, h) * 0.11
+  const pg = ctx.createRadialGradient(px - pr * 0.4, py - pr * 0.4, pr * 0.1, px, py, pr)
+  pg.addColorStop(0, '#c084fc'); pg.addColorStop(1, '#4c1d95')
+  ctx.fillStyle = pg
+  ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill()
+  ctx.strokeStyle = 'rgba(244,114,182,0.55)'; ctx.lineWidth = 3
+  ctx.beginPath(); ctx.ellipse(px, py, pr * 1.7, pr * 0.42, -0.35, 0, Math.PI * 2); ctx.stroke()
+}

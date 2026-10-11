@@ -57,7 +57,9 @@ export default function Coinflip({ game }) {
   )
 
   const stage = (
-    <Stage className="grid min-h-[300px] place-items-center p-6" >
+    <Stage className="relative grid min-h-[340px] place-items-center overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,#3b1d4a_0%,#1a0f24_55%,#08060d_100%)] p-6" >
+      <div className="pointer-events-none absolute left-1/2 top-0 h-full w-72 -translate-x-1/2 bg-gradient-to-b from-amber-100/15 via-amber-100/5 to-transparent [clip-path:polygon(40%_0,60%_0,100%_100%,0_100%)]" />
+      <div className="pointer-events-none absolute bottom-10 left-1/2 h-6 w-56 -translate-x-1/2 rounded-[50%] bg-black/50 blur-md" />
       <div style={{ perspective: 800 }} className="flex flex-col items-center gap-6">
         <motion.div
           className="relative h-36 w-36"

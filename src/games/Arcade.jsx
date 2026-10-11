@@ -115,7 +115,7 @@ export default function Arcade({ game }) {
   )
 
   const stage = (
-    <Stage className="relative p-3 sm:p-5">
+    <Stage className={clsx('relative p-3 sm:p-5', ARCADE_BG[slug])}>
       <Game key={round} playing={phase === 'playing'} onScore={setScore} onOver={over} />
       <AnimatePresence>
         {phase !== 'playing' && (
@@ -444,3 +444,9 @@ function Layer({ playing, onScore, onOver }) {
 }
 
 const GAMES = { snake: Snake, moles: Moles, slice: Slice, layer: Layer }
+const ARCADE_BG = {
+  snake: 'bg-[radial-gradient(ellipse_at_50%_30%,#064e3b_0%,#022c22_60%,#01110d_100%)]',
+  moles: 'bg-[radial-gradient(ellipse_at_50%_20%,#65a30d_0%,#365314_55%,#1a2e05_100%)]',
+  slice: 'bg-[radial-gradient(ellipse_at_50%_30%,#7c2d12_0%,#3b1306_60%,#140602_100%)]',
+  layer: 'bg-[radial-gradient(ellipse_at_50%_20%,#312e81_0%,#1e1b4b_60%,#0b0a1f_100%)]',
+}

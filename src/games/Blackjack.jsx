@@ -83,7 +83,9 @@ export default function Blackjack({ game }) {
   )
 
   const stage = (
-    <Stage className="space-y-6 p-4 sm:p-6">
+    <Stage className="relative space-y-6 bg-[radial-gradient(ellipse_at_50%_25%,#166534_0%,#0b3b20_55%,#04140b_100%)] p-4 sm:p-6">
+      <div className="pointer-events-none absolute inset-2 rounded-[20px] border-2 border-amber-300/25 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)]" />
+      <p className="pointer-events-none absolute inset-x-0 top-[46%] text-center font-display text-[11px] font-bold uppercase tracking-[0.35em] text-amber-200/25">Blackjack pays 3 to 2</p>
       {hand ? (
         <>
           <Hand label={t('play.bj.dealer')} cards={hand.dealer} total={hand.dealerTotal} />

@@ -74,7 +74,8 @@ export default function CaseBattle({ game }) {
 
   const result = finished ? battle.session.result : null
   const stage = (
-    <Stage className="p-4 sm:p-5">
+    <Stage className="relative bg-[radial-gradient(ellipse_at_50%_30%,#7f1d1d_0%,#3b0a0a_55%,#120404_100%)] p-4 sm:p-5">
+      <div className="pointer-events-none absolute inset-2 rounded-[20px] border-2 border-amber-300/25 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)]" />
       {battle ? (
         <div className="grid gap-3 md:grid-cols-2">
           <Side title={t('play.bj.you')} icon={UserRound} items={battle.player} shown={shown} total={battle.playerTotal} winner={result === 'win'} />

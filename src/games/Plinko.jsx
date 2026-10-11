@@ -110,7 +110,8 @@ export default function Plinko({ game }) {
   )
 
   const stage = (
-    <Stage className="p-3 sm:p-5">
+    <Stage className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_0%,#4a044e_0%,#1a0b2e_50%,#07050f_100%)] p-3 sm:p-5">
+      <div className="pointer-events-none absolute inset-x-6 top-2 flex justify-between">{Array.from({ length: 16 }, (_, k) => <motion.span key={k} className="h-1.5 w-1.5 rounded-full bg-pink-300" animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1, delay: (k % 5) * 0.2, repeat: Infinity }} />)}</div>
       {recent.length > 0 && (
         <ol className="absolute right-2 top-2 z-10 flex flex-col gap-1 sm:right-3 sm:top-3" aria-label={t('play.plinko.recent')}>
           <AnimatePresence initial={false}>
