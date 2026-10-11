@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="build" content="c08427a">
+<meta name="build" content="eaac7b3">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "c08427a", "at": "2026-10-11T17:02:01Z", "version": "3.1.1"};</script>
+<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "eaac7b3", "at": "2026-10-11T17:05:37Z", "version": "3.1.1"};</script>
 <title>Neon Arcade</title>
 <meta name="theme-color" content="#06070c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6951,6 +6951,7 @@ exports.default = [
             { "tag": "new", "en": "Owner/Admin: strict 3-hour sessions with a code on every sign-in.", "id": "Owner/Admin: sesi ketat 3 jam dengan kode setiap login." },
             { "tag": "new", "en": "Owner Console: every Admin action, with guided forms and help.", "id": "Owner Console: semua aksi Admin, dengan form terpandu dan bantuan." },
             { "tag": "improve", "en": "Release trailer plays once after 3+ hours away.", "id": "Trailer rilis diputar sekali setelah 3+ jam tidak online." },
+            { "tag": "fix", "en": "MAX bet uses your balance when it is below your Loyalty Card limit.", "id": "Bet MAX memakai saldomu jika saldo lebih kecil dari batas Loyalty Card." },
             { "tag": "fix", "en": "Wallet no longer runs off the screen on phones.", "id": "Wallet tidak lagi melebar keluar layar di HP." }
         ]
     },
@@ -7898,7 +7899,7 @@ function BetInput({ value, onChange, disabled, label, acOnly = false }) {
     return ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("div", { className: "mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold", children: [(0, jsx_runtime_1.jsx)("span", { className: "text-slate-400", children: label ?? t('play.bet') }), (0, jsx_runtime_1.jsxs)("span", { className: "truncate text-slate-500", children: [t('play.balance'), " ", (0, format_1.formatCoins)(balance), " ", currency] })] }), runtime_1.SERVER_MODE && !acOnly && ((0, jsx_runtime_1.jsx)("div", { className: "mb-2 grid grid-cols-2 gap-1 rounded-xl bg-white/[0.04] p-1 ring-1 ring-inset ring-white/[0.06]", role: "radiogroup", "aria-label": t('play.currency'), children: ['AC', 'AG'].map((c) => ((0, jsx_runtime_1.jsxs)("button", { type: "button", role: "radio", "aria-checked": currency === c, disabled: disabled, onClick: () => switchTo(c), className: (0, clsx_1.default)('flex h-8 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50', currency === c ? 'bg-white/[0.1] text-white shadow-sm' : 'text-slate-500 hover:text-slate-200'), children: [(0, jsx_runtime_1.jsx)(Currency_1.CurrencyIcon, { currency: c, size: 14 }), " ", c] }, c))) })), (0, jsx_runtime_1.jsxs)("div", { className: (0, clsx_1.default)('input-shell flex items-center gap-2 pl-3 pr-1.5', (over || overLimit) && '!border-neon-red/60'), children: [(0, jsx_runtime_1.jsx)(Currency_1.CurrencyIcon, { currency: currency, size: 18 }), (0, jsx_runtime_1.jsx)("input", { id: "bet-amount", inputMode: "numeric", value: value || '', disabled: disabled, onChange: (e) => onChange(Math.min(maxBet * 10, Number(e.target.value.replace(/\D/g, '')) || 0)), onBlur: () => set(value), className: "num h-11 min-w-0 flex-1 bg-transparent font-mono text-base font-bold text-white outline-none disabled:opacity-60", "aria-label": label ?? t('play.bet') }), (0, jsx_runtime_1.jsx)("div", { className: "flex shrink-0 gap-1", children: [
                             ['½', () => set(value / 2)],
                             ['2×', () => set(value * 2)],
-                            ['Max', () => set(maxBet)], // Max = the Loyalty Card bet limit (not the whole balance)
+                            ['Max', () => set(Math.min(maxBet, Math.floor(useWalletStoreBalance(currency)) || 0))], // Max = the smaller of the Loyalty Card bet limit and the balance
                         ].map(([lbl, fn]) => ((0, jsx_runtime_1.jsx)("button", { type: "button", disabled: disabled, onClick: fn, className: "h-8 min-w-[2.25rem] rounded-lg bg-white/[0.06] px-2.5 text-xs font-bold text-slate-300 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-40", children: lbl }, lbl))) })] }), over && (0, jsx_runtime_1.jsx)("p", { className: "mt-1.5 text-xs font-medium text-neon-red", children: t(currency === 'AG' ? 'errors.insufficientAG' : 'errors.insufficientAC') }), !over && overLimit && ((0, jsx_runtime_1.jsxs)("p", { className: "mt-1.5 text-xs font-medium text-neon-red", children: [t('play.errors.loyaltyMaxShort', { max: (0, format_1.formatCoins)(maxBet), currency }), " ", (0, jsx_runtime_1.jsx)(react_router_dom_1.Link, { to: "/loyalty", className: "underline", children: t('loyalty.upgradeLink') })] }))] }));
 }
 const useWalletStoreBalance = (c) => {
