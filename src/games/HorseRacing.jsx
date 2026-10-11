@@ -7,11 +7,22 @@ import { BetInput, Field, GameShell, Stage, fmtMult, useRunner } from '@/compone
 import { horseBet, horseState } from '@/services/games'
 import { hydrate } from '@/services/server'
 import { formatCoins } from '@/utils/format'
-import { useNow } from '@/hooks/useNow'
 import { useT } from '@/i18n'
 
 const COLORS = ['#f43f5e', '#f59e0b', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899']
 const NAMES = ['Blaze', 'Comet', 'Jade', 'Nova', 'Shadow', 'Tango']
+
+/** Frame-accurate clock (requestAnimationFrame) so the race moves smoothly instead of in 100 ms steps. */
+function useFrameNow() {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    let id
+    const tick = () => { setNow(Date.now()); id = requestAnimationFrame(tick) }
+    id = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(id)
+  }, [])
+  return now
+}
 
 /** Where horse i is at progress k (0..1) given its finishing rank. Deterministic per round so every viewer sees the same race. */
 function position(rank, i, k, roundId) {
@@ -24,7 +35,7 @@ function position(rank, i, k, roundId) {
 export default function HorseRacing({ game }) {
   const { t } = useT()
   const { run } = useRunner()
-  const now = useNow(100)
+  const now = useFrameNow()
   const [st, setSt] = useState(null)
   const [bet, setBet] = useState(100)
   const [pick, setPick] = useState(null)
@@ -116,11 +127,14 @@ export default function HorseRacing({ game }) {
           return (
             <div key={n} className="relative h-9 rounded-md bg-black/20 sm:h-10">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-white/40">{i + 1}</span>
-              <motion.div className="absolute top-1/2 -translate-y-1/2" style={{ left: `calc(${4 + x * 84}% )` }}>
-                <span className={clsx('relative grid h-7 w-7 place-items-center rounded-full text-base shadow sm:h-8 sm:w-8', first && 'ring-2 ring-neon-gold')} style={{ background: COLORS[i] }}>
+              <div className="absolute top-1/2 -translate-y-1/2 will-change-[left]" style={{ left: `${4 + x * 84}%` }}>
+                {phase === 'racing' && <span className="na-dust absolute -left-3 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-amber-200/40 blur-[2px]" style={{ animationDelay: `${i * 0.07}s` }} />}
+                <span className={clsx('relative grid h-7 w-7 place-items-center rounded-full text-base shadow-lg sm:h-8 sm:w-8', phase === 'racing' && 'na-gallop', first && 'ring-2 ring-neon-gold')}
+                  style={{ background: COLORS[i], animationDelay: `${i * 0.05}s` }}>
                   🏇
                 </span>
-              </motion.div>
+                {mine?.horse === i && <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded bg-white px-1 text-[8px] font-black text-ink-950">YOU</span>}
+              </div>
               {phase === 'finished' && <span className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-slate-300">{(rank[i] ?? 0) + 1}.</span>}
             </div>
           )

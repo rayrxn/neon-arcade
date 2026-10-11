@@ -1255,3 +1255,19 @@ html[data-perf='medium'] .lc-nebula { filter: none; }
 /* Ultra: everything on, plus light-follow tilt on loyalty cards. */
 html[data-perf='ultra'] .lc-face { transition: transform 0.35s cubic-bezier(.2, .8, .2, 1), filter 0.35s; transform-style: preserve-3d; }
 html[data-perf='ultra'] .lc-face:not(.lc-face--sm):hover { transform: perspective(700px) rotateX(4deg) rotateY(-6deg) scale(1.02); filter: brightness(1.08) saturate(1.1); }
+
+/* ── v2.6 game motion ── */
+@keyframes na-shake { 0%,100% { transform: translateX(0) } 20% { transform: translateX(-6px) } 40% { transform: translateX(5px) } 60% { transform: translateX(-3px) } 80% { transform: translateX(2px) } }
+.na-shake { animation: na-shake .45s cubic-bezier(.36,.07,.19,.97) both }
+@keyframes na-glow { 0%,100% { box-shadow: 0 0 0 0 rgb(var(--glow, 34 197 94) / .0) } 50% { box-shadow: 0 0 18px 2px rgb(var(--glow, 34 197 94) / .45) } }
+.na-glow { animation: na-glow 1.4s ease-in-out infinite }
+@keyframes na-breathe { 0%,100% { transform: scale(1) rotate(-1.5deg) } 50% { transform: scale(1.025) rotate(1.5deg) } }
+.na-breathe { animation: na-breathe 2.4s ease-in-out infinite }
+@keyframes na-drive { from { transform: translateY(-140%) } to { transform: translateY(560%) } }
+.na-drive { animation: na-drive linear infinite }
+@keyframes na-gallop { 0%,100% { transform: translateY(0) rotate(0) } 50% { transform: translateY(-3px) rotate(-4deg) } }
+.na-gallop { animation: na-gallop .28s ease-in-out infinite }
+@keyframes na-dust { from { opacity: .55; transform: translateX(0) scale(.6) } to { opacity: 0; transform: translateX(-18px) scale(1.4) } }
+.na-dust { animation: na-dust .5s ease-out infinite }
+@media (prefers-reduced-motion: reduce) { .na-shake, .na-glow, .na-breathe, .na-drive, .na-gallop, .na-dust { animation: none } }
+.na-3d { transform-style: preserve-3d } .na-back { backface-visibility: hidden; -webkit-backface-visibility: hidden }

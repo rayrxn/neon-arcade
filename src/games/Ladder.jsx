@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bird, Bomb, Car, Gem } from 'lucide-react'
 import clsx from 'clsx'
@@ -21,6 +21,7 @@ export default function Ladder({ game }) {
   const [round, setRound] = useState(resumed) // { id, mode, step, path }
   const [end, setEnd] = useState(null) // { lost, step, path, layout | failAt }
   const [outcome, setOutcome] = useState(null)
+  const [pumps, setPumps] = useState(0) // bumps the balloon squash animation on every pump
 
   const live = round ?? null
   const step = live?.step ?? end?.step ?? 0
@@ -43,6 +44,7 @@ export default function Ladder({ game }) {
   }
   const advance = async (pick) => {
     if (!live) return
+    setPumps((n) => n + 1)
     const res = await run(() => ladderStep(slug, live.id, pick))
     if (!res) return
     if (res.done) finish(res)
@@ -87,9 +89,11 @@ export default function Ladder({ game }) {
 
   const stage = (
     <Stage className="p-4 sm:p-6">
-      {slug === 'tower' && <TowerBoard cfg={cfg} mode={m} live={live} end={end} onPick={advance} />}
-      {slug === 'cross' && <RoadBoard cfg={cfg} mode={m} step={step} live={live} end={end} />}
-      {slug === 'pump' && <Balloon mode={m} step={step} live={live} end={end} />}
+      <div key={end?.lost ? `lost-${end.step}` : 'play'} className={clsx(end?.lost && 'na-shake')}>
+        {slug === 'tower' && <TowerBoard cfg={cfg} mode={m} live={live} end={end} onPick={advance} />}
+        {slug === 'cross' && <RoadBoard cfg={cfg} mode={m} live={live} end={end} />}
+        {slug === 'pump' && <Balloon mode={m} step={step} live={live} end={end} pumps={pumps} />}
+      </div>
       <p className="mt-4 text-center text-xs text-slate-500">{live ? t(`play.ladder.hint.${slug}`) : end?.lost ? t('play.ladder.lost', { step: end.step + 1 }) : t('play.ladder.idle')}</p>
     </Stage>
   )
@@ -101,100 +105,145 @@ function TowerBoard({ cfg, mode, live, end, onPick }) {
   const { cols, one } = cfg.modes[mode]
   const path = live?.path ?? end?.path ?? []
   const active = live ? live.step : -1
+  const climbed = live ? live.step : end ? end.step : 0
   return (
-    <div className="mx-auto flex max-w-[360px] flex-col-reverse gap-1.5">
+    <div className="relative mx-auto flex max-w-[380px] flex-col-reverse gap-1.5">
       {Array.from({ length: cfg.steps }, (_, row) => {
         const special = end?.layout?.[row]
+        const isActive = row === active
+        const past = row < climbed
         return (
-          <div key={row} className="flex items-center gap-2">
-            <span className="num w-14 shrink-0 text-right font-mono text-[11px] text-slate-500">{fmtMult(ladderMult('tower', mode, row + 1))}</span>
-            <div className="grid flex-1 gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+          <motion.div key={row} className="flex items-center gap-2" animate={{ opacity: !live && !end ? 0.7 : row > active && live ? 0.55 : 1 }}>
+            <span className={clsx('num w-14 shrink-0 text-right font-mono text-[11px] transition-colors', isActive ? 'font-bold text-neon-cyan' : past ? 'text-neon-green' : 'text-slate-500')}>
+              {fmtMult(ladderMult('tower', mode, row + 1))}
+            </span>
+            <div className={clsx('grid flex-1 gap-1.5 rounded-lg p-0.5 transition-colors', isActive && 'bg-neon-cyan/[0.06] ring-1 ring-inset ring-neon-cyan/30')} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
               {Array.from({ length: cols }, (_, c) => {
                 const chosen = path[row] === c
                 const known = special != null
                 const isBomb = known && (one === 'bomb' ? special === c : special !== c)
+                const show = known || (chosen && past)
                 return (
                   <motion.button
                     key={c}
-                    whileTap={row === active ? { scale: 0.92 } : undefined}
-                    disabled={row !== active}
+                    whileHover={isActive ? { y: -2 } : undefined}
+                    whileTap={isActive ? { scale: 0.9 } : undefined}
+                    disabled={!isActive}
                     onClick={() => onPick(c)}
-                    className={clsx(
-                      'grid h-9 place-items-center rounded-lg ring-1 ring-inset transition-colors',
-                      row === active ? 'bg-neon-purple/20 ring-neon-purple/40 hover:bg-neon-purple/30'
-                        : chosen && !isBomb ? 'bg-neon-green/15 ring-neon-green/40'
-                          : chosen && isBomb ? 'bg-neon-red/30 ring-neon-red'
-                            : 'bg-white/[0.04] ring-white/[0.06]',
-                      known && !chosen && 'opacity-60',
-                    )}
+                    className="na-3d relative h-10 [perspective:600px]"
                   >
-                    {known ? (isBomb ? <Bomb className="h-4 w-4 text-neon-red" /> : <Gem className="h-4 w-4 text-neon-green" />) : chosen ? <Gem className="h-4 w-4 text-neon-green" /> : null}
+                    <motion.span
+                      className="na-3d absolute inset-0"
+                      initial={false}
+                      animate={{ rotateX: show ? 180 : 0 }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 22, delay: known && !chosen ? 0.04 * (row + c) : 0 }}
+                    >
+                      <span className={clsx('na-back absolute inset-0 rounded-lg ring-1 ring-inset', isActive ? 'bg-gradient-to-b from-violet-500/30 to-violet-700/20 ring-violet-300/40' : 'bg-white/[0.05] ring-white/[0.07]')} />
+                      <span
+                        className={clsx('na-back absolute inset-0 grid place-items-center rounded-lg ring-1 ring-inset [transform:rotateX(180deg)]',
+                          isBomb ? (chosen ? 'bg-neon-red/35 ring-neon-red' : 'bg-neon-red/10 ring-neon-red/30') : chosen ? 'bg-neon-green/20 ring-neon-green/60' : 'bg-white/[0.04] ring-white/10')}
+                      >
+                        {isBomb ? <Bomb className="h-4 w-4 text-neon-red" /> : <Gem className={clsx('h-4 w-4', chosen ? 'text-neon-green' : 'text-slate-500')} />}
+                      </span>
+                    </motion.span>
                   </motion.button>
                 )
               })}
             </div>
-          </div>
+          </motion.div>
         )
       })}
     </div>
   )
 }
 
-function RoadBoard({ cfg, mode, step, live, end }) {
+const LANE_SPEED = [2.6, 1.9, 3.1, 2.2, 1.6, 2.8, 2.0, 3.4]
+
+function RoadBoard({ cfg, mode, live, end }) {
   const ref = useRef(null)
-  const pos = live ? live.step : end ? (end.lost ? end.step : end.step) : 0
+  const pos = live ? live.step : end ? end.step : 0
+  const lost = !!end?.lost
   useEffect(() => {
-    const el = ref.current?.querySelector(`[data-lane="${Math.max(0, pos - 1)}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    const el = ref.current?.querySelector(`[data-lane="${Math.max(0, pos - 2)}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
   }, [pos])
+  const LANE_W = 60
   return (
     <div ref={ref} className="overflow-x-auto pb-2 scrollbar-none">
-      <div className="flex w-max items-stretch gap-1">
-        <div className="grid w-14 place-items-center rounded-lg bg-neon-green/10 ring-1 ring-inset ring-neon-green/30">
-          {pos === 0 && !end?.lost && <Bird className="h-6 w-6 text-neon-gold" />}
-        </div>
+      <div className="relative flex w-max items-stretch">
+        <div data-lane="-1" className="grid h-40 w-16 place-items-center rounded-l-xl bg-gradient-to-b from-emerald-800/40 to-emerald-900/40" />
         {Array.from({ length: cfg.steps }, (_, i) => {
           const crossed = i < pos
-          const here = i === pos - 1 && !end?.lost
-          const crash = end?.lost && i === end.step
+          const crash = lost && i === end.step
           return (
-            <div key={i} data-lane={i} className={clsx('relative flex h-36 w-14 flex-col items-center justify-between rounded-lg py-2 ring-1 ring-inset', crossed ? 'bg-white/[0.06] ring-white/10' : 'bg-ink-950/60 ring-white/[0.05]')}>
-              <span className="num font-mono text-[10px] font-bold text-slate-400">{fmtMult(ladderMult('cross', mode, i + 1))}</span>
-              <div className="h-full w-px border-l border-dashed border-white/10" />
-              <AnimatePresence>
-                {here && <motion.span key="b" initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="absolute top-1/2 -translate-y-1/2"><Bird className="h-6 w-6 text-neon-gold" /></motion.span>}
-                {crash && <motion.span key="c" initial={{ y: -60 }} animate={{ y: 0 }} className="absolute top-1/2 -translate-y-1/2"><Car className="h-7 w-7 text-neon-red" /></motion.span>}
-              </AnimatePresence>
-              <span className="text-[10px] text-slate-600">{i + 1}</span>
+            <div key={i} data-lane={i} className={clsx('relative h-40 overflow-hidden border-l border-dashed border-white/15', crossed ? 'bg-slate-700/40' : 'bg-slate-800/70')} style={{ width: LANE_W }}>
+              <span className={clsx('absolute left-1/2 top-1.5 z-10 -translate-x-1/2 rounded bg-black/40 px-1 font-mono text-[10px] font-bold', crossed ? 'text-neon-green' : 'text-slate-300')}>
+                {fmtMult(ladderMult('cross', mode, i + 1))}
+              </span>
+              {!crossed && !crash && (
+                <span className="na-drive absolute left-1/2 top-0 -ml-3.5" style={{ animationDuration: `${LANE_SPEED[i % 8]}s`, animationDelay: `-${(i * 0.37) % 2}s` }}>
+                  <Car className="h-7 w-7 rotate-90 text-slate-400/70" />
+                </span>
+              )}
+              {crash && (
+                <motion.span initial={{ y: -120 }} animate={{ y: 52 }} transition={{ duration: 0.25, ease: 'easeIn' }} className="absolute left-1/2 top-0 -ml-4">
+                  <Car className="h-8 w-8 rotate-90 text-neon-red" />
+                </motion.span>
+              )}
             </div>
           )
         })}
+        <div className="grid h-40 w-12 place-items-center rounded-r-xl bg-gradient-to-b from-emerald-800/40 to-emerald-900/40">
+          <span className="font-mono text-[10px] font-bold text-neon-gold">END</span>
+        </div>
+        <motion.span
+          className="pointer-events-none absolute top-1/2 z-20 -mt-4"
+          initial={false}
+          animate={{ left: (pos === 0 ? 32 : 64 + (pos - 1) * LANE_W + LANE_W / 2) - 16, opacity: lost ? 0 : 1, scale: lost ? 0.4 : 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        >
+          <motion.span key={pos} className="block" initial={{ y: 0 }} animate={{ y: [0, -14, 0] }} transition={{ duration: 0.35 }}>
+            <Bird className="h-8 w-8 text-neon-gold drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
+          </motion.span>
+        </motion.span>
       </div>
     </div>
   )
 }
 
-function Balloon({ mode, step, live, end }) {
-  const popped = end?.lost
-  const size = 90 + Math.min(step, 25) * 7
-  const hue = mode === 'expert' ? 'from-rose-400 to-red-600' : mode === 'hard' ? 'from-orange-300 to-pink-500' : mode === 'medium' ? 'from-sky-300 to-violet-500' : 'from-emerald-300 to-cyan-500'
+function Balloon({ mode, step, live, end, pumps }) {
+  const popped = !!end?.lost
+  const size = 92 + Math.min(step, 25) * 6.5
+  const hue = mode === 'expert' ? 'from-rose-300 via-rose-500 to-red-700' : mode === 'hard' ? 'from-amber-200 via-orange-400 to-pink-600' : mode === 'medium' ? 'from-sky-200 via-sky-400 to-violet-600' : 'from-emerald-200 via-emerald-400 to-cyan-600'
+  const bits = useMemo(() => Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * Math.PI * 2, d: 70 + (i % 4) * 22, r: (i * 47) % 360 })), [])
+  const tension = Math.min(1, step / 18)
   return (
-    <div className="grid h-[300px] place-items-center">
+    <div className="relative grid h-[320px] place-items-center overflow-hidden">
       <AnimatePresence mode="wait">
         {popped ? (
-          <motion.div key="pop" initial={{ scale: 1.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
-            <p className="font-display text-4xl font-black text-neon-red">POP!</p>
-            <p className="mt-1 text-xs text-slate-500">{fmtMult(ladderMult('pump', mode, step))}</p>
+          <motion.div key="pop" className="relative grid place-items-center" initial={{ opacity: 1 }} animate={{ opacity: 1 }}>
+            {bits.map((b, i) => (
+              <motion.span key={i} className={clsx('absolute h-3 w-2 rounded-sm bg-gradient-to-br', hue)}
+                initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }} animate={{ x: Math.cos(b.a) * b.d, y: Math.sin(b.a) * b.d + 40, rotate: b.r, opacity: 0 }} transition={{ duration: 0.9, ease: 'easeOut' }} />
+            ))}
+            <motion.p initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }} className="font-display text-5xl font-black text-neon-red">POP!</motion.p>
           </motion.div>
         ) : (
-          <motion.div key="b" animate={{ width: size, height: size * 1.15 }} transition={{ type: 'spring', stiffness: 220, damping: 14 }}
-            className={clsx('relative grid place-items-center rounded-[50%] bg-gradient-to-br shadow-[inset_-12px_-16px_30px_rgba(0,0,0,0.25)]', hue, !live && !end && 'opacity-70')}>
-            <span className="absolute left-[22%] top-[16%] h-[18%] w-[12%] rotate-[-30deg] rounded-full bg-white/50" />
-            <span className="num font-mono text-sm font-black text-white drop-shadow">{fmtMult(ladderMult('pump', mode, step))}</span>
-            <span className="absolute -bottom-2 h-3 w-3 rotate-45 bg-inherit" />
+          <motion.div key="b" className="flex flex-col items-center" exit={{ scale: 1.25, opacity: 0, transition: { duration: 0.12 } }}>
+            <motion.div key={pumps} initial={{ scaleX: 1.08, scaleY: 0.92 }} animate={{ scaleX: 1, scaleY: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 9 }}>
+              <motion.div animate={{ width: size, height: size * 1.16 }} transition={{ type: 'spring', stiffness: 200, damping: 13 }}
+                className={clsx('relative grid place-items-center rounded-[50%_50%_48%_48%] bg-gradient-to-br shadow-[inset_-14px_-18px_34px_rgba(0,0,0,0.28),0_18px_40px_-12px_rgba(0,0,0,0.6)]', hue, live ? 'na-breathe' : 'opacity-80')}
+                style={{ filter: `saturate(${1 + tension * 0.4})` }}>
+                <span className="absolute left-[20%] top-[14%] h-[20%] w-[13%] rotate-[-28deg] rounded-full bg-white/60 blur-[1px]" />
+                <span className="num font-mono text-base font-black text-white drop-shadow">{fmtMult(ladderMult('pump', mode, step))}</span>
+              </motion.div>
+            </motion.div>
+            <span className="-mt-0.5 h-2.5 w-3 rounded-b-full bg-slate-400/70" />
+            <svg width="20" height="60" viewBox="0 0 20 60" className="text-slate-500"><path d="M10 0 C2 15 18 30 10 45 C6 52 10 58 10 60" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
           </motion.div>
         )}
       </AnimatePresence>
+      {live && tension > 0.5 && <p className="absolute bottom-2 text-[11px] font-semibold text-amber-300/80">{'•'.repeat(Math.round(tension * 5))}</p>}
     </div>
   )
 }

@@ -1,6 +1,19 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.6.0",
+    "date": "2026-10-11",
+    "emoji": "✨",
+    "colors": ["#22d3ee", "#f472b6", "#facc15"],
+    "title": { "en": "Smoother games, fairer economy", "id": "Game lebih mulus, ekonomi lebih adil" },
+    "tagline": { "en": "New animations everywhere, and Silver is cheaper.", "id": "Animasi baru di mana-mana, dan Silver lebih murah." },
+    "items": [
+      { "tag": "improve", "en": "New animations: Keno balls drop one by one, Tower tiles flip, cars drive in Cross the Road, the balloon wobbles and bursts, Tarot cards turn over, Sweet candy really tumbles, horses gallop.", "id": "Animasi baru: bola Keno jatuh satu per satu, kotak Tower terbalik, mobil melaju di Cross the Road, balon bergoyang dan meletus, kartu Tarot terbuka, permen Sweet benar-benar berjatuhan, kuda berlari." },
+      { "tag": "improve", "en": "Silver card now costs 150,000 AC + 5 AG.", "id": "Kartu Silver sekarang 150.000 AC + 5 AG." },
+      { "tag": "improve", "en": "Payouts of the newest games adjusted so the economy stays healthy.", "id": "Bayaran game-game terbaru disesuaikan supaya ekonomi tetap sehat." }
+    ]
+  },
+  {
     "version": "2.5.0",
     "date": "2026-10-10",
     "emoji": "🏇",

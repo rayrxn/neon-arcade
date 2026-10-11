@@ -356,11 +356,11 @@ expect_error('rate limited after 5 wrong keys', $con('console/unlock', ['key' =>
 echo "New games: Keno + ladder (Tower, Cross the Road, Pump)\n";
 $hyper = fn($n, $k) => (function ($n, $k) { $C = function ($a, $b) { if ($b < 0 || $b > $a) return 0; $r = 1; for ($i = 1; $i <= $b; $i++) $r = $r * ($a - $b + $i) / $i; return $r; }; return $C($n, $k) * $C(40 - $n, 10 - $k) / $C(40, 10); })($n, $k);
 $ok = true; $worst = [];
-foreach (KENO_PAY as $n => $row) { $rtp = 0; foreach ($row as $k => $m) $rtp += $m * $hyper($n, $k); $worst[$n] = round($rtp, 4); if ($rtp < 0.95 || $rtp > 0.99) $ok = false; }
-check('Keno RTP between 95% and 99% for every pick count', $ok, $worst);
+foreach (KENO_PAY as $n => $row) { $rtp = 0; foreach ($row as $k => $m) $rtp += $m * $hyper($n, $k); $worst[$n] = round($rtp, 4); if ($rtp < 0.92 || $rtp > 0.95) $ok = false; }
+check('Keno RTP between 92% and 95% for every pick count', $ok, $worst);
 $ok = true;
-foreach (LADDER as $g => $cfg) foreach (array_keys($cfg['modes']) as $mode) for ($k = 1; $k <= $cfg['steps']; $k++) if (ladder_mult($g, $mode, $k) * ladder_p($g, $mode) ** $k > 0.99 + 1e-9 || ladder_mult($g, $mode, $k) > MAX_MULTIPLIER[$g]) $ok = false;
-check('ladder: every step returns ≤ 99% and stays under the max multiplier', $ok);
+foreach (LADDER as $g => $cfg) foreach (array_keys($cfg['modes']) as $mode) for ($k = 1; $k <= $cfg['steps']; $k++) if (ladder_mult($g, $mode, $k) * ladder_p($g, $mode) ** $k > LADDER_RTP + 1e-9 || ladder_mult($g, $mode, $k) > MAX_MULTIPLIER[$g]) $ok = false;
+check('ladder: every step returns ≤ 96% and stays under the max multiplier', $ok);
 $d = keno_draw(array_fill(0, 10, 0.999999));
 check('Keno draws 10 distinct numbers 1..40', count(array_unique($d)) === 10 && min($d) >= 1 && max($d) <= 40);
 setbal($A, 1000000, 100);
@@ -369,7 +369,7 @@ check('Keno round settles on the server', $r['ok'] && count($r['data']['result']
 expect_error('Keno: 11 picks refused', call('POST', 'game/keno', ['bet' => 100, 'picks' => range(1, 11)], 'a'), 'play.errors.invalid');
 expect_error('Keno: number 41 refused', call('POST', 'game/keno', ['bet' => 100, 'picks' => [41]], 'a'), 'play.errors.invalid');
 $st = call('POST', 'game/pump-start', ['bet' => 100, 'mode' => 'easy'], 'a');
-check('Pump starts an open round', $st['ok'] && $st['data']['result']['step'] === 0 && $st['data']['result']['next'] == 1.03, $st);
+check('Pump starts an open round', $st['ok'] && $st['data']['result']['step'] === 0 && $st['data']['result']['next'] == 1.0, $st);
 expect_error('one open Pump round at a time', call('POST', 'game/pump-start', ['bet' => 100, 'mode' => 'easy'], 'a'), 'play.errors.roundOpen');
 $id = $st['data']['result']['id'];
 $res = null;
@@ -391,8 +391,8 @@ expect_error('unknown mode refused', call('POST', 'game/cross-start', ['bet' => 
 
 echo "New games: Tarot + Sweet\n";
 $ok = true; $rt = [];
-foreach (TAROT_PAY as $risk => $vals) { $r = (array_sum($vals) / 22) ** 3; $rt[$risk] = round($r, 4); if ($r < 0.95 || $r > 0.99 || count($vals) !== 22) $ok = false; }
-check('Tarot RTP between 95% and 99% for every risk', $ok, $rt);
+foreach (TAROT_PAY as $risk => $vals) { $r = (array_sum($vals) / 22) ** 3; $rt[$risk] = round($r, 4); if ($r < 0.92 || $r > 0.95 || count($vals) !== 22) $ok = false; }
+check('Tarot RTP between 92% and 95% for every risk', $ok, $rt);
 setbal($A, 1000000, 100);
 $r = call('POST', 'game/tarot', ['bet' => 100, 'risk' => 'medium'], 'a');
 $cm = $r['ok'] ? floor(array_product(array_column($r['data']['result']['cards'], 'mult')) * 100) / 100 : -1;
@@ -407,7 +407,7 @@ check('Sweet spin settles; last grid has no more wins (or 20 tumbles)', $r['ok']
 echo "Horse Racing\n";
 $d = horse_draw(str_repeat('ab', 32), 7);
 $rtp = 0; foreach ($d['p'] as $i => $pp) $rtp = max($rtp, $pp * $d['odds'][$i]);
-check('horse odds pay ≤ 96% and finishing order is a permutation', $rtp <= 0.96 + 1e-9 && $rtp > 0.94 && count(array_unique($d['finish'])) === 6, ['rtp' => $rtp]);
+check('horse odds pay ≤ 94% and finishing order is a permutation', $rtp <= 0.94 + 1e-9 && $rtp > 0.92 && count(array_unique($d['finish'])) === 6, ['rtp' => $rtp]);
 check('same seed → same race (verifiable)', horse_draw(str_repeat('ab', 32), 7) === $d);
 setbal($A, 1000000, 100);
 $st = call('GET', 'horse/state', [], 'a');

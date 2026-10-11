@@ -4,20 +4,20 @@
 declare(strict_types=1);
 
 // ───────────────────────────── Keno ─────────────────────────────
-// 40 numbers, the player picks 1–10, the server draws 10. Paytable ≈ 97% RTP (see api/tests/stage9_test.php).
+// 40 numbers, the player picks 1–10, the server draws 10. Paytable ≈ 94% RTP (v2.6 economy pass) (see api/tests/stage9_test.php).
 const KENO_POOL = 40;
 const KENO_DRAW = 10;
 const KENO_PAY = [
-    1 => [0.0, 3.88],
-    2 => [0.0, 1.88, 4.31],
-    3 => [0.0, 0.0, 5.89, 13.56],
-    4 => [0.0, 0.0, 3.06, 7.04, 16.19],
-    5 => [0.0, 0.0, 1.87, 4.29, 9.87, 45.38],
-    6 => [0.0, 0.0, 0.0, 5.02, 11.53, 26.53, 122.04],
-    7 => [0.0, 0.0, 0.0, 3.06, 7.03, 16.18, 37.21, 171.18],
-    8 => [0.0, 0.0, 0.0, 0.0, 8.64, 19.86, 45.69, 105.08, 483.35],
-    9 => [0.0, 0.0, 0.0, 0.0, 5.2, 11.96, 27.51, 63.28, 145.55, 669.54],
-    10 => [0.0, 0.0, 0.0, 0.0, 3.37, 7.74, 17.81, 40.96, 94.21, 216.69, 996.77],
+    1 => [0.0, 3.76],
+    2 => [0.0, 1.81, 4.17],
+    3 => [0.0, 0.0, 5.71, 13.13],
+    4 => [0.0, 0.0, 2.96, 6.82, 15.68],
+    5 => [0.0, 0.0, 1.8, 4.15, 9.56, 43.98],
+    6 => [0.0, 0.0, 0.0, 4.85, 11.17, 25.7, 118.26],
+    7 => [0.0, 0.0, 0.0, 2.96, 6.81, 15.67, 36.06, 165.88],
+    8 => [0.0, 0.0, 0.0, 0.0, 8.36, 19.24, 44.27, 101.82, 468.4],
+    9 => [0.0, 0.0, 0.0, 0.0, 5.04, 11.59, 26.66, 61.32, 141.05, 648.83],
+    10 => [0.0, 0.0, 0.0, 0.0, 3.26, 7.5, 17.25, 39.69, 91.29, 209.98, 965.94],
 ];
 
 /** Draw 10 distinct numbers 1..40 with a partial Fisher–Yates over the round floats. */
@@ -50,9 +50,10 @@ function play_keno(Ctx $c, array $a): array
 }
 
 // ───────────────────────────── Ladder: Tower / Cross the Road / Pump ─────────────────────────────
-// Each step survives with probability p. Multiplier after k steps = 0.99 / p^k (1% edge), floored to 2 decimals.
+// Each step survives with probability p. Multiplier after k steps = 0.96 / p^k (4% edge), floored to 2 decimals.
 // Tower: one float per row decides where the single bomb (or the single safe tile) is; the player's pick decides.
 // Cross / Pump: step k fails when float[k] >= p.
+const LADDER_RTP = 0.96;
 const LADDER = [
     'tower' => ['steps' => 9, 'modes' => [
         'easy' => ['cols' => 4, 'one' => 'bomb'], 'medium' => ['cols' => 3, 'one' => 'bomb'],
@@ -71,7 +72,7 @@ function ladder_p(string $game, string $mode): float
 
 function ladder_mult(string $game, string $mode, int $k): float
 {
-    return $k <= 0 ? 1.0 : floor(0.99 / (ladder_p($game, $mode) ** $k) * 100) / 100;
+    return $k <= 0 ? 1.0 : floor(LADDER_RTP / (ladder_p($game, $mode) ** $k) * 100) / 100;
 }
 
 /** Tower row layout from its float: the column holding the single bomb / safe tile. */
@@ -173,12 +174,12 @@ function pump_cashout(Ctx $c, array $a): array { return ladder_cashout($c, $a, '
 
 // ───────────────────────────── Tarot ─────────────────────────────
 // Three cards are drawn (with replacement) from the 22 major arcana. Each card has a multiplier for the chosen
-// risk; the payout is the product of the three, floored to 2 decimals. Mean card value = 0.97^(1/3) → ≈ 97% RTP.
+// risk; the payout is the product of the three, floored to 2 decimals. Mean card value ≈ 0.94^(1/3) → ≈ 94% RTP.
 const TAROT_CARDS = ['tower', 'death', 'devil', 'hanged', 'moon', 'hermit', 'fool', 'temperance', 'justice', 'hierophant', 'priestess', 'strength', 'emperor', 'empress', 'lovers', 'chariot', 'magician', 'judgement', 'wheel', 'star', 'sun', 'world'];
 const TAROT_PAY = [
-    'low' => [0.27, 0.46, 0.55, 0.64, 0.73, 0.73, 0.82, 0.82, 0.91, 0.91, 0.91, 0.91, 1.0, 1.0, 1.09, 1.09, 1.18, 1.28, 1.37, 1.46, 1.64, 2.0],
-    'medium' => [0.0, 0.15, 0.3, 0.37, 0.44, 0.52, 0.59, 0.67, 0.74, 0.74, 0.74, 0.89, 0.89, 0.96, 1.11, 1.19, 1.33, 1.48, 1.63, 1.85, 2.22, 2.96],
-    'high' => [0.0, 0.0, 0.0, 0.0, 0.0, 0.12, 0.18, 0.3, 0.3, 0.48, 0.6, 0.6, 0.72, 0.89, 0.89, 1.19, 1.49, 1.79, 2.09, 2.39, 2.98, 4.77],
+    'low' => [0.26, 0.45, 0.54, 0.63, 0.72, 0.72, 0.81, 0.81, 0.9, 0.9, 0.9, 0.9, 0.98, 0.98, 1.07, 1.07, 1.16, 1.26, 1.35, 1.44, 1.62, 1.97],
+    'medium' => [0.0, 0.14, 0.29, 0.36, 0.43, 0.51, 0.58, 0.66, 0.73, 0.73, 0.73, 0.88, 0.88, 0.94, 1.09, 1.17, 1.31, 1.46, 1.61, 1.83, 2.19, 2.92],
+    'high' => [0.0, 0.0, 0.0, 0.0, 0.0, 0.11, 0.17, 0.29, 0.29, 0.47, 0.59, 0.59, 0.71, 0.88, 0.88, 1.17, 1.47, 1.77, 2.06, 2.36, 2.94, 4.72],
 ];
 
 function play_tarot(Ctx $c, array $a): array
@@ -206,7 +207,7 @@ const SWEET_FLOATS = 1300;
 const SWEET_MAX = 5000;
 const SWEET_WEIGHTS = [90, 85, 80, 75, 55, 45, 35, 25, 3]; // 0–7 symbols, 8 = bomb
 const SWEET_BOMBS = [2, 2, 3, 3, 4, 5, 8, 10, 15, 25, 50, 100];
-const SWEET_PAY_SCALE = 0.24; // measured: 0.2467 → 98.5% over 500k spins, so 0.24 ≈ 96%
+const SWEET_PAY_SCALE = 0.2355; // measured: 0.2467 → 98.5% over 500k spins, so 0.2355 ≈ 94%
 const SWEET_PAY = [ // [8–9, 10–11, 12+] × bet, before SWEET_PAY_SCALE
     [0.25, 0.75, 2], [0.4, 0.9, 4], [0.5, 1, 5], [0.8, 1.2, 8],
     [1, 1.5, 10], [1.5, 2, 12], [2, 5, 15], [10, 25, 50],
@@ -261,13 +262,13 @@ function play_sweet(Ctx $c, array $a): array
 
 // ───────────────────────────── Horse Racing (shared rounds) ─────────────────────────────
 // Every round: 6 horses with odds from the round seed, one race for everyone. Bets close when the race starts.
-// Win probability p_i = w_i / Σw, payout = 0.96 / p_i (4% edge). Winner and finishing order come from the same
+// Win probability p_i = w_i / Σw, payout = 0.94 / p_i (6% edge). Winner and finishing order come from the same
 // seed (HMAC "horse:<id>:<n>"), published as a hash before and revealed after the race.
 const HORSE_COUNT = 6;
 const HORSE_BET_MS = 15000;
 const HORSE_RACE_MS = 12000;
 const HORSE_PAUSE_MS = 5000;
-const HORSE_EDGE = 0.04;
+const HORSE_EDGE = 0.06;
 
 function horse_float(string $seed, int $id, int $n): float
 {

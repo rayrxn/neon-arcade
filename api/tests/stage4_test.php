@@ -144,12 +144,12 @@ expect_error('bad currency rejected', call('POST', 'game/dice', ['bet' => 5, 'ta
 // ───────── Loyalty: Silver can be bought, the rest is XP only ─────────
 echo "Loyalty (XP only)\n";
 setbal($P1, 5000000, 20);
-setbal($P1, 1000000, 20);
+setbal($P1, 100000, 20);
 expect_error('Silver: not enough AC to buy', call('POST', 'loyalty/unlock', [], 'p1'), 'loyalty.errors.insufficient');
 setbal($P1, 5000000, 20);
-check('Silver can be bought (1.5M AC + 5 AG)', ($x = call('POST', 'loyalty/unlock', [], 'p1'))['ok'] && extras('p1')['loyalty']['card'] === 'silver' && bal('p1') == 3500000 && bal('p1', 'AG') == 15, $x);
+check('Silver can be bought (150K AC + 5 AG)', ($x = call('POST', 'loyalty/unlock', [], 'p1'))['ok'] && extras('p1')['loyalty']['card'] === 'silver' && bal('p1') == 4850000 && bal('p1', 'AG') == 15, $x);
 expect_error('cards after Silver cannot be bought', call('POST', 'loyalty/unlock', [], 'p1'), 'loyalty.errors.notForSale');
-check('balances unchanged after refused unlock', bal('p1') == 3500000 && bal('p1', 'AG') == 15);
+check('balances unchanged after refused unlock', bal('p1') == 4850000 && bal('p1', 'AG') == 15);
 tx(fn() => add_loyalty_xp($P1, 5000, 'admin'));
 check('5,000 Loyalty XP → Silver', extras('p1')['loyalty']['card'] === 'silver');
 setbal($P1, 600000, 30);
