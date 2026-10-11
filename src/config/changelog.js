@@ -13,7 +13,7 @@ export default [
       { "tag": "improve", "en": "Sessions now end after 7 days. Sign in again to keep playing.", "id": "Sesi sekarang berakhir setelah 7 hari. Login lagi untuk lanjut bermain." },
       { "tag": "new", "en": "Owners and Admins can turn on strict sessions: 3 hours, with a two-step code on every sign-in (authenticator app or verified email). It can be turned off in Settings or from the console.", "id": "Owner dan Admin bisa menyalakan sesi ketat: 3 jam, dengan kode dua langkah di setiap login (aplikasi authenticator atau email terverifikasi). Bisa dimatikan di Pengaturan atau lewat console." },
       { "tag": "new", "en": "Owner Console redesign: every Admin panel action as a guided form, plus server tools the panel does not have.", "id": "Desain ulang Owner Console: semua aksi Admin panel sebagai form terpandu, ditambah alat server yang tidak ada di panel." },
-      { "tag": "improve", "en": "The release trailer plays as a cutscene whenever you come back after 3 hours or more away.", "id": "Trailer rilis diputar sebagai cutscene setiap kamu kembali setelah 3 jam atau lebih tidak membuka situs." },
+      { "tag": "improve", "en": "The release trailer plays once as a cutscene when you come back after 3 hours or more away.", "id": "Trailer rilis diputar sekali sebagai cutscene saat kamu kembali setelah 3 jam atau lebih tidak membuka situs." },
       { "tag": "improve", "en": "Console help in plain words, search, examples, autocomplete and a confirmation step for risky actions.", "id": "Bantuan console dengan bahasa sederhana, pencarian, contoh, autocomplete, dan konfirmasi untuk aksi berisiko." }
     ]
   },

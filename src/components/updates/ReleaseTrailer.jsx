@@ -6,20 +6,23 @@ import { useT } from '@/i18n'
 
 export const TRAILER_SRC = '/neon-arcade-1.0.0-reel.mp4'
 const HOLD_MS = 3000
-/** The trailer plays as a cutscene for anyone who has not been on the site for 3 hours. */
+/**
+ * Cutscene rule: the trailer plays once per player, the first time they arrive after 3+ hours away
+ * (a first visit counts as away). Players who stay active are not interrupted; it can always be replayed by hand.
+ */
 export const AWAY_MS = 3 * 60 * 60 * 1000
-const key = (uid) => `neon-arcade:last-active:${uid}`
-const lastActive = (uid) => {
-  try { return Number(localStorage.getItem(key(uid))) || 0 } catch { return 0 }
-}
-export const trailerDue = (uid) => Date.now() - lastActive(uid) > AWAY_MS
-export const touchActive = (uid) => {
-  try { localStorage.setItem(key(uid), String(Date.now())) } catch { /* storage blocked: may replay next visit */ }
-}
-const markSeen = touchActive
+const activeKey = (uid) => `neon-arcade:last-active:${uid}`
+const seenKey = (uid) => `neon-arcade:trailer2-seen:${uid}`
+const read = (k) => { try { return localStorage.getItem(k) } catch { return null } }
+const write = (k, v) => { try { localStorage.setItem(k, v) } catch { /* storage blocked: may replay next visit */ } }
+export const trailerSeen = (uid) => read(seenKey(uid)) === '1'
+export const awayLong = (uid) => Date.now() - (Number(read(activeKey(uid))) || 0) > AWAY_MS
+export const trailerDue = (uid) => !trailerSeen(uid) && awayLong(uid)
+export const touchActive = (uid) => write(activeKey(uid), String(Date.now()))
+const markSeen = (uid) => { write(seenKey(uid), '1'); touchActive(uid) }
 
 /**
- * Full-screen 1.0.0 trailer, played as a cutscene when a player comes back after 3 hours away. To skip, hold Space (or press and hold
+ * Full-screen 1.0.0 trailer, played once as a cutscene when a player comes back after 3 hours away. To skip, hold Space (or press and hold
  * anywhere on the screen) for 3 seconds: a ring fills around a white Space keycap.
  */
 export default function ReleaseTrailer({ userId, onDone }) {

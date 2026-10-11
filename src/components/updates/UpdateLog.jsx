@@ -11,7 +11,7 @@ import { pick, useT } from '@/i18n'
 import { isRelease, useChangelog, useRelease } from '@/config/release'
 import { useAuthStore, useCurrentUser } from '@/store/useAuthStore'
 import { usePlatformStore } from '@/store/usePlatformStore'
-import ReleaseTrailer, { AWAY_MS, touchActive, trailerDue } from './ReleaseTrailer'
+import ReleaseTrailer, { AWAY_MS, touchActive, trailerDue, trailerSeen } from './ReleaseTrailer'
 
 const SEEN_KEY = 'neon-arcade:seen-version'
 const POLL_MS = 60_000
@@ -187,7 +187,7 @@ export const useTrailer = create((set) => ({ on: false, play: () => set({ on: tr
 /**
  * Shows the update log once per new version (after a reload), and watches version.json while the tab is open:
  * when the server publishes a new build, the log for it pops up with a reload button.
- * The 1.0.0 release (staff in DEV TEST, everyone once published) first plays the trailer; it plays again after 3 hours away.
+ * The 1.0.0 release (staff in DEV TEST, everyone once published) first plays the trailer; once per player, on their first visit after 3+ hours away.
  */
 export default function UpdateLog() {
   const show = useUpdateLog((s) => s.show)
@@ -208,7 +208,7 @@ export default function UpdateLog() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latest?.version, visible, me?.id, synced])
 
-  // Cutscene: anyone away for 3+ hours (or back on a tab hidden that long) sees the trailer again.
+  // Cutscene: a player who has not seen the trailer and was away 3+ hours (or back on a tab hidden that long) sees it once.
   // Activity is stamped every minute while the tab is visible, and when it is hidden or closed.
   useEffect(() => {
     if (!synced || !visible || !me?.id || !latest || !isRelease(latest.version)) return
@@ -219,7 +219,7 @@ export default function UpdateLog() {
     const stamp = () => { if (document.visibilityState === 'visible' && !useTrailer.getState().on) touchActive(uid) }
     const onVis = () => {
       if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); if (!useTrailer.getState().on) touchActive(uid); return }
-      if (hiddenAt && Date.now() - hiddenAt > AWAY_MS) useTrailer.getState().play()
+      if (hiddenAt && Date.now() - hiddenAt > AWAY_MS && !trailerSeen(uid)) useTrailer.getState().play()
       else stamp()
     }
     const id = setInterval(stamp, 60_000)
