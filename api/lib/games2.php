@@ -59,7 +59,7 @@ const LADDER = [
         'easy' => ['cols' => 4, 'one' => 'bomb'], 'medium' => ['cols' => 3, 'one' => 'bomb'],
         'hard' => ['cols' => 2, 'one' => 'safe'], 'expert' => ['cols' => 3, 'one' => 'safe'],
     ]],
-    'cross' => ['steps' => 20, 'rtp' => 0.94, 'modes' => ['easy' => ['p' => 0.84], 'medium' => ['p' => 0.7], 'hard' => ['p' => 0.56], 'daredevil' => ['p' => 0.4]]],
+    'cross' => ['steps' => 20, 'rtp' => 0.94, 'modes' => ['easy' => ['p' => 0.6], 'medium' => ['p' => 0.45], 'hard' => ['p' => 0.33], 'daredevil' => ['p' => 0.22]]],
     'pump' => ['steps' => 25, 'modes' => ['easy' => ['p' => 0.96], 'medium' => ['p' => 0.9], 'hard' => ['p' => 0.8], 'expert' => ['p' => 0.65]]],
 ];
 
@@ -214,14 +214,16 @@ const SWEET_PAY = [ // [8–9, 10–11, 12+] × bet, before SWEET_PAY_SCALE
     [1, 1.5, 10], [1.5, 2, 12], [2, 5, 15], [10, 25, 50],
 ];
 
-function sweet_spin(array $f, float $scale = SWEET_PAY_SCALE): array
+function sweet_spin(array $f, float $scale = SWEET_PAY_SCALE, int $bombWeight = 0): array
 {
+    $weights = SWEET_WEIGHTS;
+    if ($bombWeight > 0) $weights[8] = $bombWeight;
     $i = 0;
     $next = function () use (&$f, &$i): float { return $f[$i++] ?? 0.5; };
-    $total = array_sum(SWEET_WEIGHTS);
-    $draw = function () use ($next, $total): array {
+    $total = array_sum($weights);
+    $draw = function () use ($next, $total, $weights): array {
         $r = $next() * $total;
-        foreach (SWEET_WEIGHTS as $s => $w) { if ($r < $w) break; $r -= $w; }
+        foreach ($weights as $s => $w) { if ($r < $w) break; $r -= $w; }
         return $s === 8 ? ['s' => 8, 'b' => SWEET_BOMBS[min(11, (int) floor($next() * 12))]] : ['s' => $s];
     };
     $grid = [];
@@ -253,8 +255,36 @@ function sweet_spin(array $f, float $scale = SWEET_PAY_SCALE): array
     return ['steps' => $steps, 'base' => round($win, 2), 'bombs' => $bombs, 'mult' => $mult];
 }
 
+// Bonus buy: N free spins with bombs 4× more common. Price per spin = SWEET_FS_EV / 0.94 (measured EV of one free spin,
+// see api/tests/sweet_rtp.php fs), so the bought round also returns ≈ 94%. The whole price is one bet.
+const SWEET_FS_BOMB = 12;
+const SWEET_FS_EV = 2.63;           // mean multiplier of one free spin (Monte Carlo, 400k spins: 2.594–2.650)
+const SWEET_FS_COUNTS = [5, 10, 15];
+
+function sweet_fs_price(): float
+{
+    return round(SWEET_FS_EV / 0.94, 2);
+}
+
 function play_sweet(Ctx $c, array $a): array
 {
+    $buy = (int) ($a['buy'] ?? 0);
+    if ($buy) {
+        if (!in_array($buy, SWEET_FS_COUNTS, true)) fail('play.errors.invalid');
+        $unit = check_bet($a['bet'] ?? null);
+        $cost = (int) ceil($unit * $buy * sweet_fs_price());
+        $round = begin($c, 'sweet', $cost, SWEET_FLOATS * $buy, ['buy' => $buy, 'unit' => $unit]);
+        $spins = [];
+        $sum = 0.0;
+        for ($k = 0; $k < $buy; $k++) {
+            $sp = sweet_spin(array_slice($round['floats'], $k * SWEET_FLOATS, SWEET_FLOATS), SWEET_PAY_SCALE, SWEET_FS_BOMB);
+            $spins[] = $sp;
+            $sum += $sp['mult'];
+        }
+        $m = min(SWEET_MAX, floor($sum * $unit / $cost * 100) / 100);
+        return ['free' => $spins, 'unit' => $unit, 'cost' => $cost, 'totalMult' => round($sum, 2), 'mult' => $m]
+            + finish($c, $round, $m, $m > 1 ? 'win' : ($m == 1 ? 'push' : 'loss'), ['buy' => $buy, 'spinMult' => round($sum, 2)]);
+    }
     $round = begin($c, 'sweet', $a['bet'] ?? null, SWEET_FLOATS);
     $spin = sweet_spin(forced($round, SWEET_FLOATS, fn($f) => sweet_spin($f)['mult'] > 1));
     $m = $spin['mult'];

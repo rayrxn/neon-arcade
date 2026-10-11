@@ -158,56 +158,112 @@ function TowerBoard({ cfg, mode, live, end, onPick }) {
   )
 }
 
-const LANE_SPEED = [2.6, 1.9, 3.1, 2.2, 1.6, 2.8, 2.0, 3.4]
+const LANE_SPEED = [2.4, 1.7, 2.9, 2.0, 1.5, 2.6, 1.9, 3.2]
+const CAR_COLORS = ['#ef4444', '#3b82f6', '#f59e0b', '#a855f7', '#10b981', '#ec4899', '#f97316', '#06b6d4']
+const LANE_W = 78
+const SIDE_W = 84
+
+/** Top-down car, pointing down (flip for up lanes). */
+function CarSvg({ color, className, style }) {
+  return (
+    <svg viewBox="0 0 40 70" className={className} style={style}>
+      <rect x="3" y="2" width="34" height="66" rx="10" fill={color} />
+      <rect x="3" y="2" width="34" height="66" rx="10" fill="url(#carShade)" />
+      <rect x="8" y="44" width="24" height="14" rx="4" fill="#0f172a" opacity="0.85" />
+      <rect x="8" y="14" width="24" height="12" rx="4" fill="#0f172a" opacity="0.7" />
+      <rect x="6" y="64" width="8" height="3" rx="1.5" fill="#fef9c3" /><rect x="26" y="64" width="8" height="3" rx="1.5" fill="#fef9c3" />
+      <rect x="6" y="3" width="7" height="2.5" rx="1" fill="#fca5a5" /><rect x="27" y="3" width="7" height="2.5" rx="1" fill="#fca5a5" />
+    </svg>
+  )
+}
+
+function ChickenSvg({ className }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className}>
+      <ellipse cx="24" cy="44" rx="13" ry="3" fill="#000" opacity="0.25" />
+      <path d="M16 38l-2 5M22 39l-1 5M28 39l1 5M34 38l2 5" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+      <ellipse cx="24" cy="27" rx="15" ry="13" fill="#f8fafc" />
+      <path d="M11 26c-4 2-5 7-2 9 3-1 5-4 6-7z" fill="#e2e8f0" />
+      <circle cx="30" cy="16" r="9" fill="#ffffff" />
+      <path d="M27 8c1-4 4-5 5-2 2-3 5-1 4 2 3 0 3 4 0 4h-8z" fill="#ef4444" />
+      <path d="M38 17l6 2-6 3z" fill="#f59e0b" />
+      <path d="M35 22c1 3 0 5-2 5-1-2 0-4 2-5z" fill="#ef4444" />
+      <circle cx="32" cy="15" r="1.8" fill="#0f172a" /><circle cx="32.6" cy="14.4" r="0.6" fill="#fff" />
+    </svg>
+  )
+}
 
 function RoadBoard({ cfg, mode, live, end }) {
-  const ref = useRef(null)
+  const box = useRef(null)
+  const [vw, setVw] = useState(640)
+  useEffect(() => {
+    const ro = new ResizeObserver(([e]) => setVw(e.contentRect.width))
+    if (box.current) ro.observe(box.current)
+    return () => ro.disconnect()
+  }, [])
   const pos = live ? live.step : end ? end.step : 0
   const lost = !!end?.lost
-  useEffect(() => {
-    const el = ref.current?.querySelector(`[data-lane="${Math.max(0, pos - 2)}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
-  }, [pos])
-  const LANE_W = 60
+  const won = end && !lost && end.step > 0
+  const total = SIDE_W * 2 + cfg.steps * LANE_W
+  const chickenX = pos === 0 ? SIDE_W / 2 : SIDE_W + (pos - 1) * LANE_W + LANE_W / 2
+  const camX = Math.max(0, Math.min(total - vw, chickenX - vw * 0.35))
   return (
-    <div ref={ref} className="overflow-x-auto pb-2 scrollbar-none">
-      <div className="relative flex w-max items-stretch">
-        <div data-lane="-1" className="grid h-40 w-16 place-items-center rounded-l-xl bg-gradient-to-b from-emerald-800/40 to-emerald-900/40" />
+    <div ref={box} className="relative h-[230px] overflow-hidden rounded-2xl ring-1 ring-white/10">
+      <svg width="0" height="0" className="absolute"><defs><linearGradient id="carShade" x1="0" x2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.25" /><stop offset="0.5" stopColor="#fff" stopOpacity="0" /><stop offset="1" stopColor="#000" stopOpacity="0.25" /></linearGradient></defs></svg>
+      <motion.div className="absolute inset-y-0 left-0 flex" style={{ width: total }} animate={{ x: -camX }} transition={spring(0.7, 0.15)}>
+        <div className="relative h-full bg-gradient-to-b from-emerald-700 to-emerald-900" style={{ width: SIDE_W }}>
+          <div className="absolute inset-0 opacity-30 [background:radial-gradient(circle_at_20%_30%,#86efac_2px,transparent_3px),radial-gradient(circle_at_70%_70%,#86efac_2px,transparent_3px)] [background-size:22px_22px]" />
+          <div className="absolute inset-y-0 right-0 w-2 bg-slate-300/70" />
+        </div>
         {Array.from({ length: cfg.steps }, (_, i) => {
-          const crossed = i < pos
+          const crossed = i < pos && !(lost && i === end.step)
+          const isNext = live && i === pos
           const crash = lost && i === end.step
+          const down = i % 2 === 0
           return (
-            <div key={i} data-lane={i} className={clsx('relative h-40 overflow-hidden border-l border-dashed border-white/15', crossed ? 'bg-slate-700/40' : 'bg-slate-800/70')} style={{ width: LANE_W }}>
-              <span className={clsx('absolute left-1/2 top-1.5 z-10 -translate-x-1/2 rounded bg-black/40 px-1 font-mono text-[10px] font-bold', crossed ? 'text-neon-green' : 'text-slate-300')}>
-                {fmtMult(ladderMult('cross', mode, i + 1))}
-              </span>
+            <div key={i} className="relative h-full overflow-hidden bg-gradient-to-b from-slate-700 to-slate-800" style={{ width: LANE_W }}>
+              <div className="absolute inset-y-0 right-0 w-0 border-r-2 border-dashed border-white/35" />
+              <div className={clsx('absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full ring-2 transition-colors',
+                crossed ? 'bg-emerald-500/30 ring-emerald-300/70' : isNext ? 'bg-amber-400/20 ring-amber-300 na-glow' : 'bg-black/30 ring-white/15')} style={isNext ? { '--glow': '252 211 77' } : undefined}>
+                <span className={clsx('num font-mono text-[10px] font-black', crossed ? 'text-emerald-200' : isNext ? 'text-amber-200' : 'text-slate-300')}>{fmtMult(ladderMult('cross', mode, i + 1))}</span>
+              </div>
               {!crossed && !crash && (
-                <span className="na-drive absolute left-1/2 top-0 -ml-3.5" style={{ animationDuration: `${LANE_SPEED[i % 8]}s`, animationDelay: `-${(i * 0.37) % 2}s` }}>
-                  <Car className="h-7 w-7 rotate-90 text-slate-400/70" />
+                <span className="na-drive absolute left-1/2 -ml-[17px] block" style={{ top: 0, animationDuration: `${LANE_SPEED[i % 8]}s`, animationDelay: `-${(i * 0.53) % 2.4}s`, animationDirection: down ? 'normal' : 'reverse' }}>
+                  <CarSvg color={CAR_COLORS[i % 8]} className="h-[60px] w-[34px]" style={{ transform: down ? 'none' : 'rotate(180deg)' }} />
                 </span>
               )}
+              {crossed && <div className="absolute inset-x-2 top-3 h-2 rounded bg-[repeating-linear-gradient(90deg,#ef4444_0_8px,#fff_8px_16px)] opacity-80" />}
               {crash && (
-                <motion.span initial={{ y: -120 }} animate={{ y: 52 }} transition={{ duration: 0.25, ease: 'easeIn' }} className="absolute left-1/2 top-0 -ml-4">
-                  <Car className="h-8 w-8 rotate-90 text-neon-red" />
+                <motion.span className="absolute left-1/2 -ml-[19px]" initial={{ top: -90 }} animate={{ top: 70 }} transition={{ duration: 0.22, ease: 'easeIn' }}>
+                  <CarSvg color="#ef4444" className="h-[68px] w-[38px]" />
                 </motion.span>
               )}
             </div>
           )
         })}
-        <div className="grid h-40 w-12 place-items-center rounded-r-xl bg-gradient-to-b from-emerald-800/40 to-emerald-900/40">
-          <span className="font-mono text-[10px] font-bold text-neon-gold">END</span>
+        <div className="relative h-full bg-gradient-to-b from-amber-600 to-amber-800" style={{ width: SIDE_W }}>
+          <div className="absolute inset-y-0 left-0 w-2 bg-slate-300/70" />
+          <p className="absolute inset-0 grid place-items-center font-display text-sm font-black text-amber-100">🏁</p>
         </div>
-        <motion.span
-          className="pointer-events-none absolute top-1/2 z-20 -mt-4"
-          initial={false}
-          animate={{ left: (pos === 0 ? 32 : 64 + (pos - 1) * LANE_W + LANE_W / 2) - 16, opacity: lost ? 0 : 1, scale: lost ? 0.4 : 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        >
-          <motion.span key={pos} className="block" initial={{ y: 0 }} animate={{ y: [0, -14, 0] }} transition={{ duration: 0.35 }}>
-            <Bird className="h-8 w-8 text-neon-gold drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
-          </motion.span>
-        </motion.span>
-      </div>
+        <motion.div className="pointer-events-none absolute top-1/2 z-10 -mt-7" initial={false} animate={{ left: chickenX - 28 }} transition={spring(0.42, 0.2)}>
+          <AnimatePresence mode="wait">
+            {lost ? (
+              <motion.div key="splat" className="relative h-14 w-14">
+                {[...Array(10)].map((_, k) => (
+                  <motion.span key={k} className="absolute left-1/2 top-1/2 h-3 w-1.5 rounded-full bg-white" initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+                    animate={{ x: Math.cos(k * 0.63) * 46, y: Math.sin(k * 0.63) * 46 - 10, rotate: k * 70, opacity: 0 }} transition={{ duration: 0.9, ease: 'easeOut' }} />
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div key={`c${pos}`} initial={{ y: 0, scaleY: 1 }} animate={{ y: [0, -26, 0, 0], scaleY: [1, 1.08, 0.82, 1], scaleX: [1, 0.94, 1.14, 1] }} transition={{ duration: 0.42, times: [0, 0.45, 0.8, 1] }}>
+                <motion.div animate={won ? { rotate: [0, -10, 10, 0], y: [0, -6, 0] } : { y: [0, -2, 0] }} transition={{ duration: won ? 0.6 : 1.4, repeat: Infinity }}>
+                  <ChickenSvg className="h-14 w-14 drop-shadow-[0_6px_6px_rgba(0,0,0,0.4)]" />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

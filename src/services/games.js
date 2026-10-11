@@ -750,7 +750,7 @@ export const ladderStep = (game, id, pick) =>
   SERVER_MODE ? remote(`${game}-step`, pick == null ? { id } : { id, pick }).then((r) => (play(r?.lost ? 'explode' : 'reveal'), r)) : serverOnly()
 export const ladderCashout = (game, id) => (SERVER_MODE ? remote(`${game}-cashout`, { id }) : serverOnly())
 export const playTarot = ({ bet, risk }) => (SERVER_MODE ? remoteStart('tarot', { bet, risk }) : serverOnly())
-export const playSweet = ({ bet }) => (SERVER_MODE ? remoteStart('sweet', { bet }) : serverOnly())
+export const playSweet = ({ bet, buy }) => (SERVER_MODE ? remoteStart('sweet', buy ? { bet, buy } : { bet }) : serverOnly())
 
 /** True while a game request is on its way (a live refresh then would show the balance before the result). */
 export const gameBusy = () => inflight.size > 0

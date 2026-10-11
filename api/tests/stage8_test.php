@@ -450,6 +450,10 @@ $r = call('POST', 'game/sweet', ['bet' => 100], 'a');
 $last = $r['ok'] ? end($r['data']['result']['steps']) : null;
 check('Sweet spin settles; last grid has no more wins (or 20 tumbles)', $r['ok'] && ($last['wins'] === [] || count($r['data']['result']['steps']) === 20) && $r['data']['result']['session']['multiplier'] == $r['data']['result']['mult'], $r['ok'] ? ['mult' => $r['data']['result']['mult']] : $r);
 
+$b = call('POST', 'game/sweet', ['bet' => 100, 'buy' => 10], 'a');
+check('Sweet bonus buy: 10 free spins for 10 × 2.80 × bet, paid as one round', $b['ok'] && count($b['data']['result']['free']) === 10 && $b['data']['result']['cost'] === (int) ceil(100 * 10 * sweet_fs_price()) && abs($b['data']['result']['mult'] - min(SWEET_MAX, floor($b['data']['result']['totalMult'] * 100 / $b['data']['result']['cost'] * 100) / 100)) < 0.011, $b['ok'] ? array_diff_key($b['data']['result'], ['free' => 1, 'state' => 1]) : $b);
+expect_error('only 5, 10 or 15 free spins', call('POST', 'game/sweet', ['bet' => 100, 'buy' => 7], 'a'), 'play.errors.invalid');
+
 echo "Horse Racing\n";
 $d = horse_draw(str_repeat('ab', 32), 7);
 $rtp = 0; foreach ($d['p'] as $i => $pp) $rtp = max($rtp, $pp * $d['odds'][$i]);

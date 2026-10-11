@@ -12,7 +12,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { usePrefsStore } from '@/store/usePrefsStore'
 import { resolveAppearance } from '@/components/runtime/ThemeController'
 import { useT } from '@/i18n'
-import { BUILD, formatRelease } from '@/config/build'
+import { BUILD, formatRelease, versionLabel } from '@/config/build'
 
 /** Bahasa & tema bisa diganti sebelum login. */
 function QuickPrefs() {
@@ -58,7 +58,7 @@ export default function AuthPage() {
         <p className="mt-6 flex flex-wrap items-center justify-center gap-x-2 text-xs text-slate-500">
           <Link to="/status" className="hover:text-slate-300">{t('status.title')}</Link>
           <span aria-hidden="true">·</span>
-          <span className="font-mono">v{BUILD.version}</span>
+          <span className="font-mono">v{versionLabel(BUILD.version)}</span>
           {BUILD.at && <><span aria-hidden="true">·</span><span>{t('updates.released', { time: formatRelease(BUILD.at, lang) })}</span></>}
         </p>
       </main>

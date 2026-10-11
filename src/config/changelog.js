@@ -1,6 +1,20 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.1",
+    "date": "2026-10-11",
+    "emoji": "🍬",
+    "colors": ["#f472b6", "#facc15", "#22c55e"],
+    "title": { "en": "Free spins & a new road", "id": "Free spin & jalan baru" },
+    "tagline": { "en": "Buy free spins in Sweet, and Cross the Road got a full makeover.", "id": "Beli free spin di Sweet, dan Cross the Road tampil baru." },
+    "items": [
+      { "tag": "new", "en": "Sweet: buy 5, 10 or 15 free spins. Bombs drop far more often during free spins.", "id": "Sweet: beli 5, 10, atau 15 free spin. Bom jauh lebih sering muncul saat free spin." },
+      { "tag": "improve", "en": "Sweet has new hand-drawn candy, sparkle pops and Nice / Big / Mega win screens.", "id": "Sweet punya permen gambar baru, efek pecah berkilau, dan layar Lumayan / Big / Mega win." },
+      { "tag": "improve", "en": "Cross the Road: real cars, a hopping chicken, a camera that follows you. And it is much harder now.", "id": "Cross the Road: mobil asli, ayam melompat, kamera mengikuti. Dan sekarang jauh lebih sulit." },
+      { "tag": "improve", "en": "Neon Arcade is in beta: versions now show BETA.", "id": "Neon Arcade masih beta: versi sekarang tertulis BETA." }
+    ]
+  },
+  {
     "version": "2.9.0",
     "date": "2026-10-11",
     "emoji": "🕹️",

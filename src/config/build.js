@@ -16,4 +16,14 @@ export function formatRelease(ms, lang) {
   return `${s} WIB`
 }
 
+/**
+ * Public version label. Neon Arcade is in beta until internal 3.0.0, which ships as "1.0.0 Release":
+ * 2.9.0 → "2.9.0 BETA", 3.0.0 → "1.0.0 Release", 3.1.0 → "1.1.0 Release".
+ */
+export function versionLabel(v) {
+  const [maj, min = 0, pat = 0] = String(v ?? '').split('.').map(Number)
+  if (!Number.isFinite(maj)) return String(v ?? '')
+  return maj >= 3 ? `${maj - 2}.${min}.${pat} Release` : `${maj}.${min}.${pat} BETA`
+}
+
 export { CHANGELOG }

@@ -5,7 +5,7 @@ import { ChevronDown, RefreshCw, Sparkles, Wrench, Zap } from 'lucide-react'
 import clsx from 'clsx'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
-import { BUILD, CHANGELOG, formatRelease } from '@/config/build'
+import { BUILD, CHANGELOG, formatRelease, versionLabel } from '@/config/build'
 import { SERVER_MODE } from '@/config/runtime'
 import { pick, useT } from '@/i18n'
 
@@ -82,7 +82,7 @@ function UpdateLogModal() {
         <span className="update-banner__emoji" aria-hidden="true">{entry.emoji}</span>
         <div className="relative">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-white ring-1 ring-inset ring-white/20">
-            v{entry.version} {mode === 'reload' && <span className="rounded-full bg-white px-1.5 text-[9px] uppercase text-ink-950">{t('updates.live')}</span>}
+            v{versionLabel(entry.version)} {mode === 'reload' && <span className="rounded-full bg-white px-1.5 text-[9px] uppercase text-ink-950">{t('updates.live')}</span>}
           </span>
           <h2 className="mt-3 max-w-[80%] font-display text-2xl font-extrabold leading-tight tracking-tight text-white">{pick(entry.title, lang)}</h2>
           <p className="mt-1.5 max-w-[85%] text-sm text-white/80">{pick(entry.tagline, lang)}</p>
@@ -103,7 +103,7 @@ function UpdateLogModal() {
                 <div className="max-h-72 space-y-4 overflow-y-auto pt-3 pr-1">
                   {rest.map((e) => (
                     <section key={e.version}>
-                      <p className="mb-2 flex items-center gap-2 text-sm font-bold text-white"><span aria-hidden="true">{e.emoji}</span> v{e.version} · {pick(e.title, lang)} <span className="text-[11px] font-semibold text-slate-500">{e.date}</span></p>
+                      <p className="mb-2 flex items-center gap-2 text-sm font-bold text-white"><span aria-hidden="true">{e.emoji}</span> v{versionLabel(e.version)} · {pick(e.title, lang)} <span className="text-[11px] font-semibold text-slate-500">{e.date}</span></p>
                       <Items entry={e} />
                     </section>
                   ))}
