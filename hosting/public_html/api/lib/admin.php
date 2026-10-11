@@ -58,7 +58,7 @@ function admin_user_view(array $u, array $profile, bool $sensitive): array
 {
     $v = user_view($u, $profile);
     if (!$sensitive) $v['email'] = '';
-    $v['key'] = $sensitive ? $u['email'] : 'u:' . $u['id'];
+    $v['key'] = 'u:' . $u['id']; // never the email: one email can hold up to 3 accounts
     $v['muteReason'] = $u['mute_reason'] ?? null;
     $v['loyaltyFloor'] = $u['loyalty_floor'] ?? 'none';
     $v['loyaltyOverride'] = $u['loyalty_override'] ?? null;
