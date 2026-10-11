@@ -82,7 +82,7 @@ export default function Mines({ game }) {
 
   const revealed = round?.revealed ?? board?.revealed ?? []
   const stage = (
-    <Stage className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_110%,#1e3a2f_0%,#0f1a17_45%,#070b0a_100%)] p-4 sm:p-6">
+    <Stage className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_110%,#1e3a2f_0%,#0f1a17_45%,#070b0a_100%)] p-4 pt-20 sm:p-6 sm:pt-20">
       <svg className="pointer-events-none absolute inset-x-0 top-0 h-20 w-full" viewBox="0 0 400 60" preserveAspectRatio="none"><path d="M0 0h400v20l-20 18-15-14-25 26-20-22-30 20-18-16-22 24-25-28-20 18-30-20-20 26-25-22-30 18-20-16-30 22-25-20-20 14L0 30z" fill="#0b1210" /></svg>
       {[[8, 30, '#34d399'], [90, 22, '#22d3ee'], [14, 78, '#a78bfa'], [88, 70, '#34d399']].map(([x, y, c], k) => (
         <motion.span key={k} className="pointer-events-none absolute h-6 w-3 rotate-12 rounded-sm" style={{ left: `${x}%`, top: `${y}%`, background: c, boxShadow: `0 0 18px ${c}` }} animate={{ opacity: [0.4, 0.9, 0.4] }} transition={{ duration: 2.4, delay: k * 0.5, repeat: Infinity }} />

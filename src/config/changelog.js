@@ -1,6 +1,17 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.8",
+    "date": "2026-10-11",
+    "emoji": "💎",
+    "colors": ["#34d399", "#22d3ee", "#a78bfa"],
+    "title": { "en": "Mines top row fix", "id": "Perbaikan baris atas Mines" },
+    "tagline": { "en": "The cave ceiling no longer covers the first row of tiles.", "id": "Atap gua tidak lagi menutupi baris pertama kotak." },
+    "items": [
+      { "tag": "fix", "en": "Mines: the stalactites at the top no longer hide the first row of tiles.", "id": "Mines: stalaktit di atas tidak lagi menutupi baris pertama kotak." }
+    ]
+  },
+  {
     "version": "2.9.7",
     "date": "2026-10-11",
     "emoji": "🔴",
