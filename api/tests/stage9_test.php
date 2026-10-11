@@ -142,9 +142,23 @@ $l = call('POST', 'auth/login', ['email' => "sec_$tag", 'password' => 'rahasia12
 check('login sends an email code', $l['ok'] && $l['data']['twofa']['method'] === 'email' && strlen(lastCode()) === 6, $l);
 $v = call('POST', 'auth/2fa', ['ticket' => $l['data']['twofa']['ticket'], 'code' => lastCode()], 'u6');
 check('email code signs in', $v['ok'] && $v['data']['user']['id'] === $UID, $v);
+echo "Strict sessions with email\n";
+q("UPDATE users SET role = 'admin' WHERE id = ?", [$UID]);
 q("UPDATE auth_codes SET created_at = created_at - interval '2 minutes' WHERE user_id = ?", [$UID]);
-check('confirm code for turning off', call('POST', 'security/2fa/send', [], 'u6')['ok']);
-$d = call('POST', 'security/2fa/disable', ['password' => 'rahasia123', 'code' => lastCode()], 'u6');
+check('strict: send email code', call('POST', 'security/2fa/send', [], 'u6')['ok']);
+$st = call('POST', 'security/strict', ['on' => true, 'code' => lastCode()], 'u6');
+check('admin turns on strict mode with email codes', $st['ok'] && $st['data']['security']['strict'] === true && $st['data']['security']['sessionHours'] === 3, $st);
+q("UPDATE auth_codes SET created_at = created_at - interval '2 minutes' WHERE user_id = ?", [$UID]);
+$l = call('POST', 'auth/login', ['email' => "sec_$tag", 'password' => 'rahasia123'], 'u7');
+check('strict + email: login asks for an email code', $l['ok'] && $l['data']['twofa']['method'] === 'email' && $l['data']['twofa']['strict'] === true, $l);
+$v = call('POST', 'auth/2fa', ['ticket' => $l['data']['twofa']['ticket'], 'code' => lastCode()], 'u7');
+check('strict + email: session lasts 3 hours', $v['ok'] && abs(strtotime((string) qv('SELECT max(expires_at) FROM sessions WHERE user_id = ?', [$UID])) - time() - 3 * 3600) < 60, $v);
+q('UPDATE users SET email_verified_at = NULL, strict_session = FALSE WHERE id = ?', [$UID]);
+expect_error('strict + email needs a verified email', call('POST', 'security/strict', ['on' => true, 'code' => '123456'], 'u7'), 'security.errors.verifyEmailFirst');
+q("UPDATE users SET email_verified_at = now(), role = 'user' WHERE id = ?", [$UID]);
+q("UPDATE auth_codes SET created_at = created_at - interval '2 minutes' WHERE user_id = ?", [$UID]);
+check('confirm code for turning off', call('POST', 'security/2fa/send', [], 'u7')['ok']);
+$d = call('POST', 'security/2fa/disable', ['password' => 'rahasia123', 'code' => lastCode()], 'u7');
 check('2FA off with password + code', $d['ok'] && $d['data']['security']['method'] === null, $d);
 
 check('console words: JSON in single quotes keeps its quotes', console_words("do editUser patch='{\"displayName\":\"Ray X\"}' reason=\"two words\"") === ['do', 'editUser', 'patch={"displayName":"Ray X"}', 'reason=two words']);

@@ -81,7 +81,14 @@ export default function TwoFactorCard() {
     toast({ tone: 'success', title: t('security2fa.disabled') })
     reset()
   })
-  const beginStrict = (on) => setFlow({ kind: 'strict', method: 'totp', on })
+  // Strict sessions work with either method; email needs a verified address.
+  const strictReady = sec.method === 'totp' || (sec.method === 'email' && !!user?.emailVerified)
+  const strictBlock = !sec.method ? 'security.errors.needTwofa' : 'security.errors.verifyEmailFirst'
+  const beginStrict = (on) => run(async () => {
+    let email = null
+    if (sec.method === 'email') email = (await sendSecurityCode()).email
+    setFlow({ kind: 'strict', method: sec.method, email, on })
+  })
   const confirmStrict = () => run(async () => {
     await setStrictSessions(flow.on, code)
     toast({ tone: 'success', title: t(flow.on ? 'security2fa.strictOn' : 'security2fa.strictOff') })
@@ -147,7 +154,7 @@ export default function TwoFactorCard() {
               )}
               {flow.kind === 'setup' && flow.method === 'email' && <p className="text-sm text-slate-300">{t('security2fa.emailSent', { email: flow.email })}</p>}
               {flow.kind === 'disable' && <p className="text-sm text-slate-300">{flow.method === 'email' ? t('security2fa.emailSent', { email: flow.email }) : t('security2fa.disableTotp')}</p>}
-              {flow.kind === 'strict' && <p className="text-sm text-slate-300">{t(flow.on ? 'security2fa.strictConfirmOn' : 'security2fa.strictConfirmOff')}</p>}
+              {flow.kind === 'strict' && <p className="text-sm text-slate-300">{flow.method === 'email' ? t('security2fa.emailSent', { email: flow.email }) : t(flow.on ? 'security2fa.strictConfirmOn' : 'security2fa.strictConfirmOff')}</p>}
 
               <CodeInput value={code} onChange={(v) => { setCode(v); setError(null) }} disabled={busy} autoFocus id="sec-code" />
               {flow.kind !== 'strict' && <Field id="sec-pw" label={t('settings.security.current')} icon={Lock} type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(null) }} disabled={busy} />}
@@ -165,9 +172,9 @@ export default function TwoFactorCard() {
 
       {sec.strictAllowed && (
         <div className="rounded-2xl bg-neon-gold/[0.04] p-4 ring-1 ring-inset ring-neon-gold/20">
-          <Switch id="strict-session" checked={!!sec.strict} onChange={(v) => (sec.method === 'totp' ? beginStrict(v) : setError(t('security.errors.needTotp')))} label={t('security2fa.strictTitle')} />
+          <Switch id="strict-session" checked={!!sec.strict} onChange={(v) => (strictReady ? beginStrict(v) : setError(t(strictBlock)))} label={t('security2fa.strictTitle')} />
           <p className="mt-2 text-xs leading-relaxed text-slate-400">{t('security2fa.strictHint')}</p>
-          {sec.method !== 'totp' && <p className="mt-1 text-xs font-semibold text-neon-gold">{t('security.errors.needTotp')}</p>}
+          {!strictReady && <p className="mt-1 text-xs font-semibold text-neon-gold">{t(strictBlock)}</p>}
         </div>
       )}
     </div>
