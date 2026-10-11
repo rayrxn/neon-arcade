@@ -81,7 +81,7 @@ const LEVEL_MILESTONES = [
     ['type' => 'L50', 'every' => 50, 'reward' => ['kind' => 'AG', 'amount' => 1]],
 ];
 
-const XP_CAP = ['game' => 70, 'quest' => 500, 'daily' => 400, 'achievement' => 1000, 'admin' => INF, 'test' => INF];
+const XP_CAP = ['game' => 70, 'arcade' => 100, 'quest' => 500, 'daily' => 400, 'achievement' => 1000, 'admin' => INF, 'test' => INF];
 const XP_PER_MINUTE_LIMIT = 4000;
 
 // ───────────────────────────── Rumus dasar ─────────────────────────────

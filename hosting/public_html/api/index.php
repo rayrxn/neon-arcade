@@ -10,6 +10,7 @@ require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/games.php';
 require __DIR__ . '/lib/games2.php';
 require __DIR__ . '/lib/chess.php';
+require __DIR__ . '/lib/arcade.php';
 require __DIR__ . '/lib/platform.php';
 require __DIR__ . '/lib/admin.php';
 require __DIR__ . '/lib/platform2.php';
@@ -64,6 +65,10 @@ function route(string $method, string $path): array
     if ($method === 'GET' && $path === 'pulse') {
         $u = current_user(false);
         return pulse_view($u);
+    }
+    if ($method === 'GET' && $path === 'arcade/board') {
+        $u = current_user(false);
+        return tx(fn() => arcade_board($u, (string) ($_GET['game'] ?? '')));
     }
     if ($method === 'GET' && $path === 'chess/lobby') {
         $u = current_user(false);
@@ -225,6 +230,10 @@ function route(string $method, string $path): array
             return ['result' => tx(fn() => admin_action($u, $name, $args))];
         }
 
+        case 'arcade/start':
+            return with_user(fn(Ctx $c) => arcade_start($c, body()));
+        case 'arcade/finish':
+            return with_user(fn(Ctx $c) => arcade_finish($c, body()));
         case 'chess/create':
         case 'chess/join':
         case 'chess/cancel':
