@@ -243,7 +243,7 @@ function sync_view(array $me): array
         'users' => $users,
         'progress' => (object) $progress,
         'platform' => [
-            'chat' => $chat, 'hidden' => (object) [$me['id'] => $hidden], 'presence' => (object) $presence, 'jackpots' => $jackpots, 'gacor' => luck_public($me),
+            'chat' => $chat, 'hidden' => (object) [$me['id'] => $hidden], 'presence' => (object) $presence, 'jackpots' => $jackpots, 'gacor' => luck_public($me), 'bots' => (bool) kv_get('bots')['enabled'],
             'friendships' => $friendships, 'blocks' => (object) $blocks, 'favorites' => (object) $favorites, 'chatSettings' => ['slowMode' => $slow],
             'codeUsage' => (object) code_usage_view(), 'seededAt' => 1, 'catalog' => catalog_view() + ['pass' => pass_catalog()],
             'live' => live_results(), 'vipRoom' => $vipRoom,
