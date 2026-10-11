@@ -121,6 +121,7 @@ export default {
       doneTitle: 'Password berhasil diganti', doneBody: 'Password barumu sudah aktif. Semua perangkat sudah keluar, jadi masuk lagi untuk lanjut.', signIn: 'Masuk',
       invalidTitle: 'Link ini sudah tidak berlaku', invalidBody: 'Link reset hanya bisa dipakai sekali dan berlaku 30 menit. Link yang lebih baru juga menggantikan link lama. Minta link baru untuk mencoba lagi.', newLink: 'Kirim link baru',
     },
+    email: { change: 'Ganti email', hint: 'Daftar pakai email yang salah? Ganti di sini selama belum diverifikasi. Masukkan kata sandi untuk konfirmasi.', newEmail: 'Email baru', save: 'Simpan email', changed: 'Email diganti. Kirim link verifikasi baru untuk memverifikasinya.', locked: 'Email yang sudah diverifikasi tidak bisa diganti di sini.', same: 'Itu sudah email kamu.' },
     verify: {
       verified: 'Terverifikasi', unverified: 'Belum diverifikasi', verifiedHint: 'Email ini bisa dipakai untuk reset password.',
       unverifiedHint: 'Verifikasi email supaya kamu bisa reset password kalau lupa.',

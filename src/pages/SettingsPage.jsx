@@ -14,7 +14,7 @@ import { passwordRules } from '@/utils/validation'
 import { errorKey } from '@/utils/errors'
 import { formatDateTime } from '@/utils/format'
 import { play } from '@/services/sound'
-import { sendVerificationEmail } from '@/services/account'
+import { changeEmail, sendVerificationEmail } from '@/services/account'
 import { lowSpecDevice, usePotato } from '@/components/runtime/PerformanceController'
 import { SERVER_MODE } from '@/config/runtime'
 import { PlayerName } from '@/components/ui/Identity'
@@ -245,6 +245,10 @@ function EmailStatus({ user }) {
   const [busy, setBusy] = useState(false)
   const [sentTo, setSentTo] = useState(null)
   const [wait, setWait] = useState(0)
+  const [editing, setEditing] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [pw, setPw] = useState('')
+  const [emailError, setEmailError] = useState(null)
   useEffect(() => {
     if (wait <= 0) return
     const id = setTimeout(() => setWait((w) => w - 1), 1000)
@@ -266,7 +270,22 @@ function EmailStatus({ user }) {
       setBusy(false)
     }
   }
+  const saveEmail = async (e) => {
+    e.preventDefault()
+    setBusy(true)
+    setEmailError(null)
+    try {
+      await changeEmail(newEmail, pw)
+      setEditing(false); setNewEmail(''); setPw(''); setSentTo(null); setWait(0)
+      toast({ tone: 'success', title: t('account.email.changed') })
+    } catch (err) {
+      setEmailError(t(errorKey(err), err?.vars))
+    } finally {
+      setBusy(false)
+    }
+  }
   return (
+    <>
     <div className={clsx('mt-5 flex flex-col gap-3 rounded-xl p-3.5 ring-1 ring-inset sm:flex-row sm:items-center', verified ? 'bg-neon-green/[0.05] ring-neon-green/20' : 'bg-neon-gold/[0.05] ring-neon-gold/20')}>
       <span className={clsx('grid h-10 w-10 shrink-0 place-items-center rounded-xl', verified ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-gold/10 text-neon-gold')}>{verified ? <MailCheck className="h-5 w-5" /> : <Mail className="h-5 w-5" />}</span>
       <div className="min-w-0 flex-1">
@@ -277,11 +296,27 @@ function EmailStatus({ user }) {
         <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{verified ? t('account.verify.verifiedHint') : sentTo ? t('account.verify.sentBody', { email: sentTo }) : t('account.verify.unverifiedHint')}</p>
       </div>
       {!verified && (
+        <Button size="sm" variant="ghost" onClick={() => setEditing((v) => !v)} className="shrink-0"><Pencil className="h-3.5 w-3.5" /> {t('account.email.change')}</Button>
+      )}
+      {!verified && (
         <Button size="sm" variant={sentTo ? 'ghost' : 'gold'} loading={busy} disabled={wait > 0} onClick={send} className="shrink-0">
           {wait > 0 ? t('account.verify.resendIn', { seconds: wait }) : sentTo ? t('account.verify.resend') : t('account.verify.send')}
         </Button>
       )}
     </div>
+    {editing && !verified && (
+      <form onSubmit={saveEmail} className="mt-3 grid gap-3 rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-inset ring-white/[0.06] sm:grid-cols-2">
+        <p className="text-xs text-slate-400 sm:col-span-2">{t('account.email.hint')}</p>
+        <Field id="email-new" label={t('account.email.newEmail')} icon={Mail} type="email" autoComplete="email" value={newEmail} onChange={(e) => { setNewEmail(e.target.value); setEmailError(null) }} disabled={busy} />
+        <Field id="email-pw" label={t('settings.security.current')} icon={Lock} type="password" autoComplete="current-password" value={pw} onChange={(e) => { setPw(e.target.value); setEmailError(null) }} disabled={busy} />
+        {emailError && <p className="rounded-xl bg-neon-red/10 px-3.5 py-3 text-sm font-semibold text-neon-red sm:col-span-2" role="alert">{emailError}</p>}
+        <div className="flex gap-2 sm:col-span-2">
+          <Button type="submit" size="sm" loading={busy} disabled={!newEmail || !pw}>{t('account.email.save')}</Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>{t('common.cancel')}</Button>
+        </div>
+      </form>
+    )}
+    </>
   )
 }
 

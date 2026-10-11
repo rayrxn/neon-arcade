@@ -27,7 +27,6 @@ export default function WhoOnline() {
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-slate-100">
                 {user.displayName || user.username}
-                {bot && <span className="rounded bg-white/10 px-1 text-[9px] font-black tracking-wider text-slate-400">BOT</span>}
               </p>
               {playing && <Link to={`/games/${playing}`} className="block truncate text-[11px] text-slate-500 hover:text-neon-cyan">{t('online.playing', { game: getGame(playing)?.name ?? playing })}</Link>}
             </div>

@@ -410,7 +410,7 @@ export function LiveFeed({ slug }) {
         <ul className="divide-y divide-white/[0.04]">
           {rows.map((r) => (
             <li key={r.id} className={clsx('grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-2 text-xs', r.userId === meId && 'bg-neon-cyan/[0.04]')}>
-              <span className="flex min-w-0 items-center gap-1.5 truncate font-semibold text-slate-200">{r.username}{r.bot && <span className="rounded bg-white/10 px-1 text-[9px] font-black tracking-wider text-slate-400">BOT</span>}</span>
+              <span className="flex min-w-0 items-center gap-1.5 truncate font-semibold text-slate-200">{r.username}</span>
               <span className="num font-mono text-slate-400">{formatCoins(r.bet)} {r.currency}</span>
               <span className={clsx('num w-28 text-right font-mono font-bold', r.result === 'win' ? 'text-neon-green' : r.result === 'push' ? 'text-slate-300' : 'text-neon-red')}>
                 {r.result === 'win' ? `${fmtMult(r.multiplier)} · +${formatCoins(r.payout)}` : r.result === 'push' ? fmtMult(1) : `−${formatCoins(r.bet)}`}

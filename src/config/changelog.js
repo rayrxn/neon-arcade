@@ -17,7 +17,8 @@ export default [
       { "tag": "improve", "en": "Withdrawals are AG only. AC→AG exchange and AG/AC transfer limits now grow with your Loyalty Card.", "id": "Penarikan hanya AG. Batas tukar AC→AG dan kirim AG/AC sekarang naik sesuai Loyalty Card." },
       { "tag": "improve", "en": "Hold Space (or hold the screen) for 3 seconds to skip the trailer.", "id": "Tahan Space (atau tahan layar) 3 detik untuk melewati trailer." },
       { "tag": "improve", "en": "New Arcade Gems icon, tighter logo and header.", "id": "Ikon Arcade Gems baru, logo dan header lebih rapat." },
-      { "tag": "new", "en": "House players (tagged BOT) now chat in Global Chat.", "id": "Pemain house (bertanda BOT) sekarang ikut ngobrol di Global Chat." },
+      { "tag": "new", "en": "Global Chat and live feeds are busier with house players. Their mini profile says they are house players.", "id": "Global Chat dan live feed lebih ramai dengan pemain house. Mini profil mereka menandai sebagai pemain house." },
+      { "tag": "new", "en": "Settings: change your sign-in email while it is not verified yet.", "id": "Pengaturan: ganti email login selama belum diverifikasi." },
       { "tag": "fix", "en": "Snake: the lose sound plays together with the result. The NEON/ARCADE logo no longer overlaps.", "id": "Snake: suara kalah sekarang bersamaan dengan hasil. Logo NEON/ARCADE tidak lagi bertumpuk." }
     ]
   },

@@ -68,6 +68,13 @@ $r = call('POST', 'auth/register', ['username' => "mailer_$tag", 'email' => "mai
 if (!$r['ok']) { echo "register failed\n"; exit(1); }
 $EMAIL = "mailer$tag@t.id";
 
+echo "Change unverified email\n";
+expect_error('wrong password refused', call('POST', 'auth/email', ['email' => "new$tag@t.id", 'password' => 'nope12345'], 'u'), 'errors.wrongPassword');
+expect_error('bad format refused', call('POST', 'auth/email', ['email' => 'x', 'password' => 'rahasia123'], 'u'), 'validation.emailFormat');
+$r = call('POST', 'auth/email', ['email' => "new$tag@t.id", 'password' => 'rahasia123'], 'u');
+check('email changed while unverified', $r['ok'] && me('u')['user']['email'] === "new$tag@t.id", $r);
+call('POST', 'auth/email', ['email' => $EMAIL, 'password' => 'rahasia123'], 'u');
+check('changed back', me('u')['user']['email'] === $EMAIL);
 echo "Email verification\n";
 check('new account starts unverified', me('u')['user']['emailVerified'] === false);
 $r = call('POST', 'auth/verify/send', ['lang' => 'en'], 'u');
@@ -83,6 +90,7 @@ $r = call('POST', 'auth/verify', ['token' => $tok]);
 check('verification link works without being signed in', $r['ok'] && $r['data']['username'] === "mailer_$tag", $r);
 check('account is now verified', me('u')['user']['emailVerified'] === true);
 expect_error('link works only once', call('POST', 'auth/verify', ['token' => $tok]), 'auth.errors.linkInvalid');
+expect_error('verified email cannot be changed', call('POST', 'auth/email', ['email' => "x$tag@t.id", 'password' => 'rahasia123'], 'u'), 'account.email.locked');
 expect_error('verified account cannot request another link', call('POST', 'auth/verify/send', [], 'u'), 'auth.errors.alreadyVerified');
 check('Indonesian email copy', str_contains(mail_render('verify', 'id', ['user' => 'a', 'email' => 'b', 'url' => 'https://x'])['subject'], 'Verifikasi'));
 

@@ -107,6 +107,26 @@ function api_verify_send(): array
     });
 }
 
+/** Change the sign-in email. Only while it is not verified yet, and only with the current password. */
+function api_email_change(): array
+{
+    $u = current_user();
+    if (!empty($u['email_verified_at'])) fail('account.email.locked');
+    $email = normalize_email(arg('email', ''));
+    if (!password_verify((string) arg('password', ''), $u['password_hash'])) fail('errors.wrongPassword');
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120) fail('validation.emailFormat');
+    if (strtolower($email) === strtolower((string) $u['email'])) fail('account.email.same');
+    return tx(function () use ($u, $email) {
+        if (qv('SELECT 1 FROM users WHERE email = ? AND id <> ?', [$email, $u['id']])) fail('errors.emailTaken');
+        q('UPDATE users SET email = ? WHERE id = ?', [$email, $u['id']]);
+        // Verification links sent to the old address stop working.
+        q("UPDATE email_tokens SET used_at = now() WHERE user_id = ? AND kind = 'verify' AND used_at IS NULL", [$u['id']]);
+        log_event('EMAIL_CHANGED', $u['id']);
+        [$p, $meta] = load_docs($u['id']);
+        return me_payload($u['id'], $p, $meta);
+    });
+}
+
 function api_verify_email(): array
 {
     $raw = (string) arg('token', '');

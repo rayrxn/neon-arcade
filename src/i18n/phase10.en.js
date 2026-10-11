@@ -121,6 +121,7 @@ export default {
       doneTitle: 'Password changed', doneBody: 'Your new password is ready. All devices were signed out, so sign in again to continue.', signIn: 'Sign in',
       invalidTitle: 'This link doesn’t work anymore', invalidBody: 'Reset links work once and expire after 30 minutes. A newer link also replaces older ones. Request a fresh link to try again.', newLink: 'Send a new link',
     },
+    email: { change: 'Change email', hint: 'Signed up with the wrong email? Change it here until it is verified. Enter your password to confirm.', newEmail: 'New email', save: 'Save email', changed: 'Email changed. Send a new verification link to verify it.', locked: 'A verified email can’t be changed here.', same: 'That is already your email.' },
     verify: {
       verified: 'Verified', unverified: 'Not verified', verifiedHint: 'You can use this email to reset your password.',
       unverifiedHint: 'Verify your email so you can reset your password if you ever forget it.',

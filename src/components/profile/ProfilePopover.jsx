@@ -59,8 +59,8 @@ export default function ProfilePopover({ user, children, className }) {
   }, [open])
 
   if (!user) return <span className={className}>{children}</span>
-  const online = user.id === me?.id || (seen && Date.now() - seen < ONLINE_MS)
-  const level = levelFromXp(xp).level
+  const online = user.bot || user.id === me?.id || (seen && Date.now() - seen < ONLINE_MS)
+  const level = user.bot ? user.level : levelFromXp(xp).level
   const mobile = typeof window !== 'undefined' && window.innerWidth < 640
 
   return (
@@ -106,9 +106,9 @@ export default function ProfilePopover({ user, children, className }) {
                 <div className="rounded-lg bg-white/[0.04] px-2.5 py-2"><dt className="text-slate-500">{t('miniProfile.level')}</dt><dd className="num font-mono font-bold text-white">{level}</dd></div>
                 <div className="rounded-lg bg-white/[0.04] px-2.5 py-2"><dt className="flex items-center gap-1 text-slate-500"><CalendarDays className="h-3 w-3" /> {t('miniProfile.joined')}</dt><dd className="font-semibold text-white">{user.createdAt ? formatDate(user.createdAt) : '—'}</dd></div>
               </dl>
-              <Link to={`/u/${user.username}`} onClick={() => setOpen(false)} className="mt-3 flex h-9 items-center justify-center gap-2 rounded-xl bg-white/[0.06] text-sm font-bold text-white hover:bg-white/[0.1]">
+              {user.bot ? <p className="mt-3 text-center text-[11px] text-slate-500">{t('miniProfile.house')}</p> : <Link to={`/u/${user.username}`} onClick={() => setOpen(false)} className="mt-3 flex h-9 items-center justify-center gap-2 rounded-xl bg-white/[0.06] text-sm font-bold text-white hover:bg-white/[0.1]">
                 <UserRound className="h-4 w-4" /> {t('miniProfile.view')}
-              </Link>
+              </Link>}
             </div>
           </div>
         </>,

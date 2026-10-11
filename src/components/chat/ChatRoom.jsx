@@ -91,7 +91,6 @@ function UserMessage({ message, author, me, compact, onReport, grouped, onModera
             {message.badge && COSMETICS[message.badge] && <span className="rounded bg-white/[0.06] px-1 text-[10px] font-bold text-neon-gold" title={COSMETICS[message.badge].name?.en}>{COSMETICS[message.badge].glyph}</span>}
             {!compact && <span className="text-xs text-slate-500">@{author?.username}</span>}
             {author?.isDemo && <DemoTag />}
-            {author?.bot && <span className="self-center rounded bg-white/10 px-1 text-[9px] font-black tracking-wider text-slate-400">BOT</span>}
             <span className="text-[11px] text-slate-600">{formatTime(message.at)}</span>
           </p>
         )}

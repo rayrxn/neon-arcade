@@ -1,5 +1,5 @@
 /** Password reset and email verification (server mode only). */
-import { api, applyUser } from '@/services/server'
+import { api, applyPayload, applyUser } from '@/services/server'
 import { useAuthStore } from '@/store/useAuthStore'
 import { usePrefsStore } from '@/store/usePrefsStore'
 
@@ -8,6 +8,7 @@ const lang = () => usePrefsStore.getState().language
 export const requestPasswordReset = (email) => api('auth/forgot', { email: String(email).trim(), lang: lang() })
 export const checkResetLink = (token) => api('auth/reset/check', { token })
 export const resetPassword = (token, password) => api('auth/reset', { token, password })
+export const changeEmail = async (email, password) => applyPayload(await api('auth/email', { email: String(email).trim(), password }))
 export const sendVerificationEmail = () => api('auth/verify/send', { lang: lang() })
 
 export async function verifyEmail(token) {

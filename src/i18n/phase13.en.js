@@ -53,7 +53,7 @@ export default {
     medium: 'Medium', mediumHint: 'Keeps motion, drops blur and ambient effects',
     statusUltra: 'Ultra is on: every effect plus extras.', statusMedium: 'Medium is on: blur and ambient effects are off, motion stays.',
   },
-  miniProfile: { online: 'Online', offline: 'Offline', level: 'Level', joined: 'Joined', view: 'View full profile' },
+  miniProfile: { online: 'Online', offline: 'Offline', level: 'Level', joined: 'Joined', view: 'View full profile', house: 'House player · simulated by Neon Arcade' },
   nameDisplay: {
     title: 'Name display', description: 'How names look for you, and your own prefix / suffix.',
     maxTags: 'Role tags shown next to a name', maxTagsHint: 'Extra tags collapse into “+N”. This only changes what you see — nobody loses a role or permission.',

@@ -53,7 +53,7 @@ export default {
     medium: 'Sedang', mediumHint: 'Gerak tetap, blur & efek latar dimatikan',
     statusUltra: 'Ultra aktif: semua efek plus tambahan.', statusMedium: 'Sedang aktif: blur dan efek latar mati, gerakan tetap.',
   },
-  miniProfile: { online: 'Online', offline: 'Offline', level: 'Level', joined: 'Bergabung', view: 'Lihat profil lengkap' },
+  miniProfile: { online: 'Online', offline: 'Offline', level: 'Level', joined: 'Bergabung', view: 'Lihat profil lengkap', house: 'Pemain house · disimulasikan oleh Neon Arcade' },
   nameDisplay: {
     title: 'Tampilan nama', description: 'Cara nama tampil untukmu, dan prefix / suffix milikmu.',
     maxTags: 'Jumlah tag role di samping nama', maxTagsHint: 'Tag lebih dari ini diringkas jadi “+N”. Ini hanya mengubah tampilanmu — tidak ada yang kehilangan role atau izin.',
