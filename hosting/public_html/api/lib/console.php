@@ -201,6 +201,14 @@ function console_commands(): array
             audit_log(console_actor(), $on ? 'system.maintenance.on' : 'system.maintenance.off', null, 'maintenance', null, null, ['enabled' => $on, 'by' => 'console'], '—');
             return 'maintenance ' . ($on ? 'ON' : 'off');
         }],
+        'release' => ['release <status|publish|unpublish>', 'Show or publish the 1.0.0 release to every player (until then only staff see it as DEV TEST).', false, function (array $a) {
+            $cmd = $a[0] ?? 'status';
+            if ($cmd === 'status') return 'release 1.0.0: ' . (kv_get('release')['published'] ? 'PUBLISHED for all players' : 'DEV TEST (staff only)');
+            if (!in_array($cmd, ['publish', 'unpublish'], true)) throw new ConsoleError('usage: release <status|publish|unpublish>');
+            kv_set('release', ['published' => $cmd === 'publish']);
+            audit_log(console_actor(), 'release.' . $cmd, null, 'release', null, null, ['by' => 'console'], '—');
+            return $cmd === 'publish' ? 'release 1.0.0 published for all players' : 'release 1.0.0 back to DEV TEST';
+        }],
         'games' => ['games', 'List games with status, betting, new rounds and max bets.', false, function () {
             $rows = array_map(fn($g) => ['slug' => $g['slug'], 'status' => $g['status'], 'betting' => $g['betting_enabled'] ? 'on' : 'OFF', 'new' => $g['new_sessions'] ? 'on' : 'OFF', 'max_ac' => num($g['max_bet']), 'max_ag' => num($g['max_bet_ag']),
                 'open' => qv("SELECT count(*) FROM game_sessions WHERE game = ? AND status = 'OPEN'", [$g['slug']])], q('SELECT * FROM games ORDER BY slug')->fetchAll());
