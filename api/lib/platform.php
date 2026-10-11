@@ -6,6 +6,17 @@ declare(strict_types=1);
 
 const TRANSFER_LIMITS = ['AC' => ['min' => 10, 'max' => 100000, 'daily' => 50000], 'AG' => ['min' => 1, 'max' => 10, 'daily' => 3]];
 const AG_HOLD_S = 60;
+/** Transfer limits grow with the Loyalty Card (index = card rank: none, silver … vivace). */
+const TRANSFER_CARD_MULT = [1, 2, 4, 7, 12, 20, 35, 50];
+
+function transfer_limits(array $u): array
+{
+    $rank = (int) (cards_all()[effective_card($u)]['rank'] ?? 0);
+    $m = TRANSFER_CARD_MULT[min(count(TRANSFER_CARD_MULT) - 1, max(0, $rank))];
+    $out = [];
+    foreach (TRANSFER_LIMITS as $cur => $l) $out[$cur] = ['min' => $l['min'], 'max' => $l['max'] * $m, 'daily' => $l['daily'] * $m];
+    return $out;
+}
 // Hanya kemenangan sangat besar yang diumumkan di Global Chat.
 const JACKPOT_THRESHOLD = ['AC' => 100000000, 'AG' => 2500];
 const ONLINE_WINDOW_MS = 75000;
@@ -287,7 +298,7 @@ function transfer_send(array $me, array $a): array
     $amount = $a['amount'] ?? null;
     $note = mb_substr(trim((string) ($a['note'] ?? '')), 0, 80);
     if (!isset(TRANSFER_LIMITS[$currency])) fail('errors.invalidAmount');
-    $lim = TRANSFER_LIMITS[$currency];
+    $lim = transfer_limits($me)[$currency];
     $block = qv('SELECT account_block(?::uuid)', [$me['id']]);
     if ($block) fail($block);
     if ($me['wallet_frozen']) fail('errors.walletFrozen');
