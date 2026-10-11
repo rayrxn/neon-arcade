@@ -1,6 +1,17 @@
 /** Update log, newest first. The first entry is the current site version (shown in the footer and the update pop-up). */
 export default [
   {
+    "version": "2.9.6",
+    "date": "2026-10-11",
+    "emoji": "🪙",
+    "colors": ["#f6c443", "#d3d9e4", "#a855f7"],
+    "title": { "en": "A real coin", "id": "Koin sungguhan" },
+    "tagline": { "en": "Coinflip now tosses a minted gold-and-silver coin.", "id": "Coinflip sekarang melempar koin cetak emas-perak." },
+    "items": [
+      { "tag": "improve", "en": "Coinflip: new coin with a reeded rim, engraved lettering, a crown on heads and a star on tails, and a visible edge while it spins.", "id": "Coinflip: koin baru dengan pinggiran bergerigi, tulisan timbul, mahkota di heads dan bintang di tails, serta sisi koin terlihat saat berputar." }
+    ]
+  },
+  {
     "version": "2.9.5",
     "date": "2026-10-11",
     "emoji": "📦",
