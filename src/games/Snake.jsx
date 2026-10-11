@@ -127,7 +127,12 @@ export default function Snake({ game }) {
 
   const shownMult = outcome ? (outcome.lost ? 0 : outcome.multiplier ?? 1) : mult
   const stage = (
-    <Stage className="relative bg-[radial-gradient(ellipse_at_50%_30%,#1e293b_0%,#0f172a_60%,#020617_100%)] p-4 sm:p-6">
+    <Stage className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_40%,#2f7a3a_0%,#14532d_55%,#052e16_100%)] p-4 sm:p-6">
+      {[['left-0 top-0', ''], ['right-0 top-0', '-scale-x-100'], ['left-0 bottom-0', '-scale-y-100'], ['right-0 bottom-0', '-scale-100']].map(([pos, flip]) => (
+        <svg key={pos} viewBox="0 0 120 120" className={clsx('pointer-events-none absolute h-28 w-28 opacity-70', pos, flip)} aria-hidden>
+          <path d="M0 0 C40 10 70 30 90 70 C60 50 30 40 0 40 Z" fill="#166534" /><path d="M0 0 C20 30 30 60 30 100 C15 70 5 40 0 30 Z" fill="#15803d" /><path d="M0 0 C50 0 90 10 120 30 C80 25 40 20 0 15 Z" fill="#22c55e" opacity="0.6" />
+        </svg>
+      ))}
       <div className="mx-auto grid max-w-[460px] grid-cols-4 grid-rows-4 gap-2 sm:gap-2.5">
         {RING.map(([row, col], r) => {
           const v = r === 0 ? null : board[r - 1]
@@ -139,21 +144,28 @@ export default function Snake({ game }) {
               key={r}
               style={{ gridRow: row + 1, gridColumn: col + 1 }}
               className={clsx(
-                'relative grid aspect-square place-items-center rounded-xl font-mono text-sm font-bold ring-1 ring-inset transition-colors sm:text-base',
-                snake ? 'bg-[#1a2e1a] ring-lime-900/60' : 'bg-slate-800 ring-white/[0.06] text-slate-100',
+                'relative grid aspect-square place-items-center rounded-xl font-display text-sm font-black transition-colors sm:text-lg',
+                r === 0 ? 'bg-gradient-to-b from-emerald-400 to-emerald-700 shadow-[0_5px_0_#065f46]' :
+                snake ? 'bg-[radial-gradient(circle_at_50%_60%,#0b1f0e_0%,#14532d_55%,#166534_100%)] shadow-[0_5px_0_#052e16]' :
+                v >= 2 ? 'bg-gradient-to-b from-amber-200 to-amber-500 text-amber-950 shadow-[0_5px_0_#92400e,0_0_18px_rgba(251,191,36,0.35)]' :
+                'bg-gradient-to-b from-[#e7d7ae] to-[#b89b62] text-[#4a3412] shadow-[0_5px_0_#6b532a]',
                 hit && (landed.bad ? 'bg-red-900/70 ring-2 ring-neon-red' : 'bg-emerald-700/60 ring-2 ring-neon-green'),
               )}
               animate={hit && landed.bad ? { x: [0, -6, 6, -4, 4, 0] } : hit ? { scale: [1, 1.12, 1] } : {}}
               transition={{ duration: 0.45 }}
             >
               {r === 0 ? <Play className="h-7 w-7 fill-white text-white" /> : snake ? <SnakeArt /> : fmtMult(v)}
-              {here && <motion.span layoutId="snake-token" className="pointer-events-none absolute inset-0 rounded-xl ring-4 ring-cyan-300 shadow-[0_0_24px_rgba(103,232,249,0.7)]" transition={{ type: 'spring', stiffness: 700, damping: 35 }} />}
+              {here && (
+                <motion.span layoutId="snake-token" className="pointer-events-none absolute -top-3 left-1/2 z-10 -translate-x-1/2" transition={{ type: 'spring', stiffness: 700, damping: 35 }}>
+                  <svg viewBox="0 0 24 32" className="h-8 w-6 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]" aria-hidden><circle cx="12" cy="8" r="6" fill="#22d3ee" stroke="#0e7490" strokeWidth="1.5" /><path d="M7 14 H17 L20 28 H4 Z" fill="#06b6d4" stroke="#0e7490" strokeWidth="1.5" /><ellipse cx="12" cy="29" rx="9" ry="2.5" fill="#0e7490" /><circle cx="10" cy="6" r="1.8" fill="#fff" opacity="0.7" /></svg>
+                </motion.span>
+              )}
             </motion.div>
           )
         })}
-        <div className="col-span-2 col-start-2 row-span-2 row-start-2 flex flex-col items-center justify-center gap-3 rounded-2xl bg-slate-900/80 p-3 ring-1 ring-inset ring-white/[0.06]">
+        <div className="col-span-2 col-start-2 row-span-2 row-start-2 flex flex-col items-center justify-center gap-3 rounded-2xl bg-[repeating-linear-gradient(90deg,#6b4220_0_18px,#5a3719_18px_20px)] p-3 shadow-[inset_0_0_30px_rgba(0,0,0,0.55),0_6px_0_#3b2412]">
           <div className="flex gap-2"><Die n={dice[0]} rolling={rolling} /><Die n={dice[1]} rolling={rolling} /></div>
-          <span className={clsx('num rounded-lg bg-black/40 px-4 py-1.5 font-mono text-2xl font-black', outcome?.lost ? 'text-neon-red' : 'text-white')}>{fmtMult(shownMult)}</span>
+          <span className={clsx('num rounded-lg bg-black/50 px-4 py-1.5 font-mono text-2xl font-black ring-1 ring-amber-300/30', outcome?.lost ? 'text-neon-red' : 'text-amber-200')}>{fmtMult(shownMult)}</span>
         </div>
       </div>
       <p className="mt-4 text-center text-xs text-slate-500">{outcome?.lost ? t('play.ladder.snake.lost') : live ? t('play.ladder.snake.hint') : t('play.ladder.snake.idle')}</p>

@@ -129,13 +129,14 @@ export function drawFrame(canvas, state, colors) {
     ctx.globalAlpha = 1
   } else {
     // Roket mengikuti arah kurva.
-    const [px, py] = pts[pts.length - 4] ?? pts[0]
-    const angle = Math.atan2(ty - py, tx - px)
+    // Heading from the curve 0.3 s back (stable from the first frame; neighbouring points jittered at the start).
+    const back = Math.max(0, now - 0.3)
+    const angle = now < 0.05 ? -0.35 : Math.atan2(ty - y(Math.exp(CRASH_K * back)), tx - x(back))
     ctx.save()
     ctx.translate(tx, ty)
     ctx.rotate(angle)
     ctx.scale(1.9, 1.9)
-    const flicker = 6 + Math.random() * 5
+    const flicker = 8 + Math.sin(performance.now() / 45) * 2.5
     ctx.fillStyle = 'rgba(255,170,60,0.9)'
     ctx.beginPath()
     ctx.moveTo(-10, -3)

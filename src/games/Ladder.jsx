@@ -309,8 +309,8 @@ function Balloon({ mode, step, live, end, pumps }) {
           <radialGradient id="bal-g" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#fff" stopOpacity="0.9" /><stop offset="0.18" stopColor={c1} /><stop offset="1" stopColor={c2} /></radialGradient>
           <linearGradient id="pump-g" x1="0" x2="1"><stop offset="0" stopColor="#991b1b" /><stop offset="0.5" stopColor="#ef4444" /><stop offset="1" stopColor="#7f1d1d" /></linearGradient>
         </defs>
-        {/* floor */}
         <ellipse cx="200" cy="362" rx="190" ry="14" fill="#000" opacity="0.4" />
+        <g transform="translate(22 0)">
         {/* hose from pump to balloon nozzle */}
         <path d="M92 330 C92 372 200 372 200 336" fill="none" stroke="#1f2937" strokeWidth="7" strokeLinecap="round" />
         {/* hand pump */}
@@ -328,15 +328,12 @@ function Balloon({ mode, step, live, end, pumps }) {
               <path d="M200 316 C120 300 96 200 120 140 C140 88 260 88 280 140 C304 200 280 300 200 316 Z" fill="url(#bal-g)" />
               <ellipse cx="158" cy="150" rx="16" ry="30" fill="#fff" opacity="0.35" transform="rotate(-25 158 150)" />
               <path d="M192 316 L208 316 L204 326 L196 326 Z" fill={c2} />
+              <text x="200" y="210" textAnchor="middle" fontSize="30" fontWeight="900" fill="#fff" fontFamily="ui-monospace, monospace" style={{ paintOrder: 'stroke' }} stroke="#0008" strokeWidth="4">{fmtMult(ladderMult('pump', mode, step))}</text>
             </motion.g>
           </motion.g>
         )}
+        </g>
       </svg>
-      {!popped && (
-        <div className="pointer-events-none absolute inset-x-0 top-[52%] text-center">
-          <motion.span key={step} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="num inline-block font-mono text-2xl font-black text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">{fmtMult(ladderMult('pump', mode, step))}</motion.span>
-        </div>
-      )}
       {popped && (
         <div className="absolute inset-0 grid place-items-center">
           {bits.map((b, i) => (

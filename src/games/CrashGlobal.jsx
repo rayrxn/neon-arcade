@@ -93,9 +93,7 @@ export default function CrashGlobal({ game }) {
     if (phase === 'flying') {
       d.active = true
       d.end = null
-      d.startAt = round.startAt
-      d.elapsed = now - round.startAt
-      d.multiplier = live
+      d.startAt = round.startAt // the render loop advances elapsed/multiplier every frame
     } else if (phase === 'crashed') {
       if (!d.end || d.end.round !== round.id) {
         d.active = false

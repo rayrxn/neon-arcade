@@ -44,11 +44,14 @@ function useFrameNow() {
 }
 
 /** Where horse i is at progress k (0..1) given its finishing rank. Deterministic per round so every viewer sees the same race. */
+// Every horse runs past the finish line; it reaches the line at a time set by its rank, so the winner really crosses first.
+const LINE = 0.86
 function position(rank, i, k, roundId) {
-  const target = 1 - rank * 0.035
-  const wob = Math.sin((k * 9 + i * 1.7 + roundId * 0.3) * Math.PI) * 0.025 * Math.sin(k * Math.PI)
-  const ease = k < 1 ? 1 - (1 - k) ** 2.2 : 1
-  return Math.max(0, Math.min(1, target * ease + wob))
+  const T = 0.8 + rank * 0.035 // share of the race when this horse's nose hits the line (rank 5 → 0.975)
+  const p = k / T
+  if (p >= 1) return Math.min(1, LINE + (p - 1) * 0.55)
+  const wob = Math.sin((p * 7 + i * 1.7 + roundId * 0.3) * Math.PI) * 0.03 * Math.sin(p * Math.PI)
+  return Math.max(0, LINE * (p ** 1.15) + wob)
 }
 
 export default function HorseRacing({ game }) {
@@ -143,14 +146,14 @@ export default function HorseRacing({ game }) {
         </span>
       </div>
       <div className="relative mt-10 space-y-1.5 rounded-xl border-y-4 border-white/70 bg-[repeating-linear-gradient(90deg,#166534_0_60px,#15803d_60px_120px)] p-2 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.8)]">
-        <div className="pointer-events-none absolute inset-y-2 right-[6%] w-0.5 bg-[repeating-linear-gradient(0deg,#fff_0_6px,#000_6px_12px)] opacity-60" />
+        <div className="pointer-events-none absolute inset-y-2 w-1.5 bg-[repeating-linear-gradient(0deg,#fff_0_6px,#000_6px_12px)] opacity-80" style={{ left: `calc(${2 + LINE * 82}% + 3.25rem)` }} />
         {NAMES.map((n, i) => {
           const x = phase === 'betting' || !r?.finish ? 0 : position(rank[i] ?? 5, i, phase === 'finished' ? 1 : k, r.id)
           const first = phase === 'finished' && r.finish[0] === i
           return (
             <div key={n} className="relative h-9 rounded-md bg-black/20 sm:h-10">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-white/40">{i + 1}</span>
-              <div className="absolute top-1/2 -translate-y-1/2 will-change-[left]" style={{ left: `${4 + x * 84}%` }}>
+              <div className="absolute top-1/2 -translate-y-1/2 will-change-[left]" style={{ left: `${2 + x * 82}%` }}>
                 {phase === 'racing' && <span className="na-dust absolute -left-3 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-amber-200/40 blur-[2px]" style={{ animationDelay: `${i * 0.07}s` }} />}
                 <span className={clsx('relative block h-9 w-12 sm:h-10 sm:w-14', phase === 'racing' && 'na-gallop', first && 'drop-shadow-[0_0_10px_rgba(250,204,21,0.9)]')} style={{ animationDelay: `${i * 0.05}s` }}>
                   <HorseSvg silk={COLORS[i]} running={phase === 'racing'} />

@@ -7,7 +7,7 @@ import { SERVER_MODE } from '@/config/runtime'
 
 /**
  * Ledger dompet per akun. Dua mata uang terpisah:
- *   AC (Arcade Coin) → field `balance`  (tetap dari Fase 2, data lama aman)
+ *   AC (Arcade Chips) → field `balance`  (tetap dari Fase 2, data lama aman)
  *   AG (Arcade Gems) → field `gems`     (hanya dari Top Up & Redeem Code tertentu)
  *
  * Transaksi: { id, type, currency, amount (bertanda), balanceAfter, at, status,

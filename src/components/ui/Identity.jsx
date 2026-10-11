@@ -1,3 +1,4 @@
+import EmoteArt, { hasEmoteArt } from '@/components/ui/EmoteArt'
 import ProfileParticles, { PARTICLE_FX } from '@/components/ui/ProfileParticles'
 import ShopIcon from '@/components/shop/ShopIcon'
 import { Fragment, useMemo } from 'react'
@@ -159,7 +160,7 @@ export function Emote({ emote, size = 'md', className }) {
   const text = emote.glyph.length > 2 && /^[A-Za-z]+$/.test(emote.glyph)
   return (
     <span className={clsx('emote', `emote--${size}`, emote.anim !== 'none' && `emote-anim--${emote.anim}`, text && 'emote--text', className)} title={`:${emote.code}:`} role="img" aria-label={emote.name}>
-      {emote.glyph}
+      {hasEmoteArt(emote.code) ? <EmoteArt code={emote.code} /> : emote.glyph}
     </span>
   )
 }
@@ -224,6 +225,11 @@ export function ProfileFx({ kind, colors }) {
 
 /** Ring color for an avatar from an equipped shop frame (null → default). */
 export function useFrameColor(user) {
+  return useFrame(user)?.color ?? null
+}
+/** Equipped shop frame: { id, color, style } or null. */
+export function useFrame(user) {
   const catalog = useCatalog()
-  return itemOf(catalog, user?.style?.frame)?.style?.color ?? null
+  const it = itemOf(catalog, user?.style?.frame)
+  return it ? { id: user.style.frame, color: it.style?.color ?? '#22d3ee', style: it.style } : null
 }

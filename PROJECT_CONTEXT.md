@@ -4,7 +4,7 @@ Last audit: 2026-10-10 (after release 2.0.0, commit `a455617` on `main`). Compan
 Status words used: **verified** (automated test or live check), **unverified** (built, no test/visual check), **partial**, **planned**, **suspected**, **confirmed**.
 
 ## 1. Project overview
-Virtual arcade website (no real money). Players use two virtual currencies: **AC** (Arcade Coin) and **AG** (Arcade Gems). Live at `https://arcadebet.my.id` (Domainesia cPanel hosting). Repo: `github.com/rayrxn/neon-arcade`. UI languages: Indonesian + English.
+Virtual arcade website (no real money). Players use two virtual currencies: **AC** (Arcade Chips) and **AG** (Arcade Gems). Live at `https://arcadebet.my.id` (Domainesia cPanel hosting). Repo: `github.com/rayrxn/neon-arcade`. UI languages: Indonesian + English.
 
 Stack (from code):
 - **Frontend:** React 18 SPA, zustand stores, Tailwind, framer-motion, lucide icons, HashRouter (`/#/route`). Built by a custom bundler `tools/standalone/build.mjs` into one HTML file (libraries from CDN, no JSON imports). `vite.config.js` exists but production uses the standalone build.

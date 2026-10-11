@@ -1,5 +1,6 @@
 /** Fase 13 — master update v2.0. */
 export default {
+  online: { title: 'Siapa yang online', playing: 'Main {game}' },
   play: {
     arcade: { stake: 'Taruhan (AC)', free: 'Gratis', reach: 'Capai {n}', stakeMax: 'Taruhan arkade maksimal {max} AC.', start: 'Mulai', again: 'Main lagi', score: 'Skor', best: 'Terbaikmu', today: 'Top 10 hari ini', noScores: 'Belum ada skor hari ini.', tapStart: 'Ketuk untuk mulai', gameOver: 'Game over',
       invalid: 'Skor ini tidak bisa diverifikasi, jadi tidak dapat XP.', xpNote: '{per} XP per poin, maks {cap} XP per game. Sisa {left} XP hari ini. Pasang AC untuk menang sampai ×2,5 dengan mencapai target skor.',
@@ -103,6 +104,7 @@ export default {
     escalatePh: 'Kenapa perlu admin senior?', closeMine: 'Masalahku sudah beres — tutup tiket ini',
   },
   admin: {
+    bots: { title: 'Bot rumah', desc: 'Pemain simulasi (selalu bertanda BOT) di live bets dan daftar online. Tidak menyentuh dompet atau leaderboard.', on: 'Nyalakan bot', off: 'Matikan bot' },
     annReset: 'Akhiri semua pengumuman',
     luck: {
       title: 'Jam Gacor', desc: 'Bonus ekstra tiap menang: profit × (boost − 1), maks 10× taruhan. Hasil game tetap provably fair. Boost 1,1 – {max}×.',

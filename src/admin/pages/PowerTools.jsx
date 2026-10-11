@@ -1,3 +1,4 @@
+import { usePlatformStore } from '@/store/usePlatformStore'
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import ReasonDialog from '@/components/admin/ReasonDialog'
@@ -77,6 +78,23 @@ export function CaptchaCard({ captcha, me }) {
       {pending && (
         <ReasonDialog open onClose={() => setPending(false)} adminName={me.username} tone="primary" title={t('admin.captcha.title')}
           onConfirm={(r) => adminCall('setCaptcha', { mode: f.mode, reason: r })} />
+      )}
+    </Card>
+  )
+}
+
+/** House bots (simulated players, always tagged BOT) in live bets and Who's online. */
+export function BotsCard({ me }) {
+  const { t } = useT()
+  const on = usePlatformStore((s) => s.bots !== false)
+  const [pending, setPending] = useState(null)
+  return (
+    <Card title={t('admin.bots.title')} bodyClassName="flex flex-wrap items-center justify-between gap-3 p-4">
+      <p className="max-w-md text-xs text-slate-500">{t('admin.bots.desc')}</p>
+      <Button variant={on ? 'ghost' : 'primary'} onClick={() => setPending(!on)}>{on ? t('admin.bots.off') : t('admin.bots.on')}</Button>
+      {pending !== null && (
+        <ReasonDialog open onClose={() => setPending(null)} adminName={me.username} tone="primary" title={t('admin.bots.title')}
+          onConfirm={(r) => adminCall('setBots', { enabled: pending, reason: r }).then(() => usePlatformStore.setState({ bots: pending }))} />
       )}
     </Card>
   )

@@ -18,7 +18,7 @@ export default {
     amount: 'Amount to exchange', balance: 'Balance: {amount} {currency}', youGet: 'You receive', next: 'Continue', back: 'Back',
     bank: 'Bank transfer', ewallet: 'E-wallet', choose: 'Choose where to send', confirmTo: 'Send to {method}',
     processing: 'Processing your withdrawal…', processingTo: 'Contacting {method}',
-    prankBody: 'AC and AG are play coins for Neon Arcade. They can’t be exchanged for real money, ever.',
+    prankBody: 'AC and AG are play chips and gems for Neon Arcade. They can’t be exchanged for real money, ever.',
     prankNote: 'Your balance is untouched. The account details you typed were never sent or saved, and they’re already cleared.',
     prankOk: 'You got me 😅',
   },

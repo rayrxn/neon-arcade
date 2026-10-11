@@ -1,7 +1,8 @@
 import clsx from 'clsx'
 import { initials } from '@/utils/format'
 import { ITEMS } from '@/config/economy'
-import { useFrameColor } from './Identity'
+import { useFrame } from './Identity'
+import AvatarDecoration, { decoFor } from './AvatarDecoration'
 
 export const PRESET_STYLES = {
   cyan: 'from-[#5ef0ff] to-[#1a7cff]',
@@ -21,6 +22,7 @@ const SIZES = {
   lg: 'h-12 w-12 rounded-xl text-sm',
   xl: 'h-20 w-20 rounded-2xl text-xl',
 }
+const FRAME_HEX = { 'neon-frame': '#22e1ff', 'gold-frame': '#facc15', 'violet-frame': '#a855f7', 'crimson-frame': '#ef4444', 'mint-frame': '#34d399' }
 const DOT = { xs: 'h-2 w-2', sm: 'h-2.5 w-2.5', md: 'h-2.5 w-2.5', lg: 'h-3 w-3', xl: 'h-4 w-4' }
 
 /**
@@ -30,7 +32,8 @@ const DOT = { xs: 'h-2 w-2', sm: 'h-2.5 w-2.5', md: 'h-2.5 w-2.5', lg: 'h-3 w-3'
 export default function Avatar({ user, name, size = 'md', online, showFrame = true, className }) {
   const label = user?.displayName || user?.username || name || ''
   const avatar = user?.avatar ?? { kind: 'preset', id: 'cyan' }
-  const shopFrame = useFrameColor(user)
+  const shopItem = useFrame(user)
+  const shopFrame = shopItem?.color ?? null
   // A frame bought in the shop wins over an older cosmetic frame.
   const frame = showFrame && !shopFrame && user?.frame ? ITEMS[user.frame] : null
   const ring = showFrame && shopFrame ? { boxShadow: `0 0 0 2px rgb(var(--ink-950, 6 7 12)), 0 0 0 4px ${shopFrame}, 0 0 14px ${shopFrame}66` } : undefined
@@ -49,6 +52,9 @@ export default function Avatar({ user, name, size = 'md', online, showFrame = tr
       >
         {avatar.kind === 'image' ? <img src={avatar.src} alt="" className="h-full w-full object-cover" /> : initials(label)}
       </span>
+      {showFrame && ['md', 'lg', 'xl'].includes(size) && (shopItem || frame) && (
+        <AvatarDecoration design={decoFor(shopItem?.id ?? user?.frame, shopItem?.style)} color={shopFrame ?? FRAME_HEX[user?.frame] ?? '#22d3ee'} />
+      )}
       {online !== undefined && (
         <span
           className={clsx(

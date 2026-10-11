@@ -16,6 +16,7 @@ import { useNow } from '@/hooks/useNow'
 import { useT } from '@/i18n'
 import { PlayerName } from '@/components/ui/Identity'
 import EventBanner from '@/components/home/EventBanner'
+import WhoOnline from '@/components/home/WhoOnline'
 
 function greetingKey(hour) {
   if (hour < 11) return 'home.greeting.morning'
@@ -109,7 +110,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Panel
           title={t('home.recent')}
           icon={History}
@@ -120,6 +121,7 @@ export default function HomePage() {
         <Panel title={t('nav.chat')} icon={MessagesSquare} bodyClassName="flex flex-col">
           <ChatRoom compact limit={5} className="h-[360px]" />
         </Panel>
+        <WhoOnline />
       </div>
     </div>
   )

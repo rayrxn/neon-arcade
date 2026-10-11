@@ -37,7 +37,7 @@ export default {
   },
 
   currency: {
-    AC: { name: 'Arcade Coin', hint: 'Untuk main, transfer, dan aktivitas harian.' },
+    AC: { name: 'Arcade Chips', hint: 'Untuk main, transfer, dan aktivitas harian.' },
     AG: { name: 'Arcade Gems', hint: 'Mata uang langka. Hanya dari Top Up & kode tertentu.' },
   },
 

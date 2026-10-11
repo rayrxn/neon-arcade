@@ -1,5 +1,6 @@
 /** Phase 13 — v2.0 master update. */
 export default {
+  online: { title: "Who's online", playing: 'Playing {game}' },
   play: {
     arcade: { stake: 'Stake (AC)', free: 'Free', reach: 'Reach {n}', stakeMax: 'The maximum arcade stake is {max} AC.', start: 'Start', again: 'Play again', score: 'Score', best: 'Your best', today: "Today's top 10", noScores: 'No scores yet today.', tapStart: 'Tap to start', gameOver: 'Game over',
       invalid: 'This score could not be verified, so it pays no XP.', xpNote: '{per} XP per point, max {cap} XP per game. {left} XP left today. Stake AC to win up to ×2.5 by reaching a score tier.',
@@ -103,6 +104,7 @@ export default {
     escalatePh: 'Why does this need a senior admin?', closeMine: 'My problem is solved — close this ticket',
   },
   admin: {
+    bots: { title: 'House bots', desc: 'Simulated players (always tagged BOT) in live bets and Who\'s online. They never touch wallets or leaderboards.', on: 'Turn bots on', off: 'Turn bots off' },
     annReset: 'End all announcements',
     luck: {
       title: 'Jam Gacor', desc: 'Pays an extra bonus on every win: profit × (boost − 1), max 10× the bet. Game results stay provably fair. Boost 1.1 – {max}×.',

@@ -4,21 +4,24 @@ import CoinIcon from './CoinIcon'
 import AnimatedNumber from './AnimatedNumber'
 import { formatCoins } from '@/utils/format'
 
-/** Arcade Gem (AG) — permata ungu bersegi, sengaja beda bentuk & warna dari koin AC. */
+/** Arcade Gem (AG): a brilliant-cut violet gem with facets and a sparkle — clearly different from the gold chip. */
 export function GemIcon({ size = 20, className }) {
   const gid = `gem-${useId().replace(/:/g, '')}`
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={clsx('shrink-0', className)} aria-hidden>
+    <svg viewBox="0 0 32 32" width={size} height={size} className={clsx('shrink-0', className)} aria-hidden>
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#e3ccff" />
-          <stop offset="0.45" stopColor="#a86bff" />
-          <stop offset="1" stopColor="#6b2fd6" />
+          <stop offset="0" stopColor="#f5e9ff" />
+          <stop offset="0.4" stopColor="#c084fc" />
+          <stop offset="1" stopColor="#6d28d9" />
         </linearGradient>
       </defs>
-      <path d="M7 3h10l5 6-10 12L2 9z" fill={`url(#${gid})`} />
-      <path d="M2 9h20M7 3l5 6 5-6M12 9v12" fill="none" stroke="#f3e8ff" strokeOpacity="0.55" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M7 3h10l5 6-10 12L2 9z" fill="none" stroke="#4c1d95" strokeOpacity="0.5" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M9 5 H23 L30 12 L16 29 L2 12 Z" fill={`url(#${gid})`} stroke="#4c1d95" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M2 12 H30 L16 29 Z" fill="#7c3aed" opacity="0.45" />
+      <path d="M9 5 L12 12 L16 5 L20 12 L23 5" fill="#faf5ff" opacity="0.5" />
+      <path d="M12 12 L16 29 L20 12" fill="none" stroke="#ede9fe" strokeOpacity="0.6" strokeWidth="0.8" />
+      <path d="M2 12 H30" stroke="#ede9fe" strokeOpacity="0.7" strokeWidth="0.8" />
+      <path d="M26 2.5 L26.8 4.6 L29 5.4 L26.8 6.2 L26 8.4 L25.2 6.2 L23 5.4 L25.2 4.6 Z" fill="#fff" />
     </svg>
   )
 }

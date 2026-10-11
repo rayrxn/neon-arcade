@@ -37,7 +37,7 @@ export default {
   },
 
   currency: {
-    AC: { name: 'Arcade Coin', hint: 'For games, transfers, and daily activity.' },
+    AC: { name: 'Arcade Chips', hint: 'For games, transfers, and daily activity.' },
     AG: { name: 'Arcade Gems', hint: 'Rare currency. Only from Top Up and select codes.' },
   },
 

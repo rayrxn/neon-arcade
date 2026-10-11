@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Award, CheckCircle2, ShieldCheck, Sparkles, Target, Trophy } from 'lucide-react'
 import clsx from 'clsx'
+import { botLive, useBotsEnabled } from '@/services/bots'
+import { useNow } from '@/hooks/useNow'
 import GameArt from '@/components/games/GameArt'
 import { CurrencyIcon } from '@/components/ui/Currency'
 import { useDisplayBalance, useWalletStore } from '@/store/useWalletStore'
@@ -392,8 +394,10 @@ export function LiveFeed({ slug }) {
   const { t } = useT()
   const live = usePlatformStore((s) => s.live)
   const meId = useCurrentUser()?.id
+  const bots = useBotsEnabled()
+  const now = useNow(4000)
   if (!SERVER_MODE) return null
-  const rows = (live ?? []).filter((l) => l.game === slug).slice(0, 10)
+  const rows = [...(live ?? []).filter((l) => l.game === slug), ...(bots ? botLive(slug, now) : [])].sort((a, b) => b.at - a.at).slice(0, 10)
   return (
     <section className="glass rounded-2xl">
       <header className="flex items-center justify-between border-b hairline px-4 py-3">
@@ -406,7 +410,7 @@ export function LiveFeed({ slug }) {
         <ul className="divide-y divide-white/[0.04]">
           {rows.map((r) => (
             <li key={r.id} className={clsx('grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-2 text-xs', r.userId === meId && 'bg-neon-cyan/[0.04]')}>
-              <span className="truncate font-semibold text-slate-200">{r.username}</span>
+              <span className="flex min-w-0 items-center gap-1.5 truncate font-semibold text-slate-200">{r.username}{r.bot && <span className="rounded bg-white/10 px-1 text-[9px] font-black tracking-wider text-slate-400">BOT</span>}</span>
               <span className="num font-mono text-slate-400">{formatCoins(r.bet)} {r.currency}</span>
               <span className={clsx('num w-28 text-right font-mono font-bold', r.result === 'win' ? 'text-neon-green' : r.result === 'push' ? 'text-slate-300' : 'text-neon-red')}>
                 {r.result === 'win' ? `${fmtMult(r.multiplier)} · +${formatCoins(r.payout)}` : r.result === 'push' ? fmtMult(1) : `−${formatCoins(r.bet)}`}

@@ -1,3 +1,4 @@
+import AvatarDecoration, { decoFor } from '@/components/ui/AvatarDecoration'
 import ShopIcon from './ShopIcon'
 import clsx from 'clsx'
 import { Emote, ProfileFx } from '@/components/ui/Identity'
@@ -57,7 +58,10 @@ export function ItemVisual({ item, className }) {
     case 'frame':
       return (
         <div className={base}>
-          <span className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#b8c4d6] to-[#5b6b85]" style={{ boxShadow: `0 0 0 2px rgb(var(--ink-950)), 0 0 0 4px ${st.color}, 0 0 18px ${st.color}88` }} />
+          <span className="relative h-12 w-12">
+            <span className="block h-12 w-12 rounded-xl bg-gradient-to-br from-[#b8c4d6] to-[#5b6b85]" style={{ boxShadow: `0 0 0 2px rgb(var(--ink-950)), 0 0 0 4px ${st.color}` }} />
+            <AvatarDecoration design={decoFor(item.id, st)} color={st.color} />
+          </span>
         </div>
       )
     default:

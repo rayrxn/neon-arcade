@@ -101,7 +101,7 @@ function ActionDialogs({ action, user, wallet, close, adminName }) {
   const currencyPicker = (
     <div className="grid grid-cols-2 gap-3">
       <FormField label={t('admin.currency')}>
-        <select id="adj-currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls}><option value="AC">AC — Arcade Coin</option><option value="AG">AG — Arcade Gems</option></select>
+        <select id="adj-currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls}><option value="AC">AC — Arcade Chips</option><option value="AG">AG — Arcade Gems</option></select>
       </FormField>
       <FormField label={t('admin.amount')}>
         <input id="adj-amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(Number(e.target.value.replace(/\D/g, '')) || 0)} className={inputCls} />
