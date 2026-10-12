@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="build" content="eaac7b3">
+<meta name="build" content="c82f634">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "eaac7b3", "at": "2026-10-11T17:05:37Z", "version": "3.1.1"};</script>
+<script>window.NEON_API = "/api"; window.NEON_BUILD = {"sha": "c82f634", "at": "2026-10-12T01:06:01Z", "version": "3.1.1"};</script>
 <title>Neon Arcade</title>
 <meta name="theme-color" content="#06070c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6080,7 +6080,7 @@ exports.default = {
         errors: { disabled: 'Console dimatikan di server ini.', badKey: 'Kunci console salah.', expired: 'Sesi console berakhir. Buka lagi.', tooMany: 'Terlalu banyak kunci salah. Coba lagi dalam {minutes} menit.', invalid: 'Perintah tidak valid.' },
         groups: { start: 'Mulai di sini', players: 'Pemain', economy: 'Ekonomi', games: 'Game', community: 'Chat & bantuan', content: 'Konten & toko', security: 'Keamanan', system: 'Situs & sistem', recent: 'Terakhir dipakai' },
         ui: {
-            search: 'Cari aksi, mis. ban, membership, crash', noResults: 'Tidak ada yang cocok dengan "{q}".', all: 'Semua', items: '{n} alat',
+            keep: 'Biarkan', on: 'Nyala', off: 'Mati', search: 'Cari aksi, mis. ban, membership, crash', noResults: 'Tidak ada yang cocok dengan "{q}".', all: 'Semua', items: '{n} alat',
             actions: 'Aksi', terminal: 'Terminal', run: 'Jalankan', running: 'Menjalankan…', clear: 'Bersihkan', copy: 'Salin perintah', copied: 'Tersalin',
             preview: 'Perintah yang akan dijalankan', danger: 'Minta konfirmasi', admin: 'Aksi Admin', quick: 'Perintah console',
             optional: 'opsional', required: 'Isi {field} dulu.', badJson: '{field} harus JSON yang valid.', gap: 'Isi {field} sebelum kolom setelahnya.',
@@ -6289,7 +6289,7 @@ exports.default = {
         errors: { disabled: 'The console is turned off on this server.', badKey: 'Wrong console key.', expired: 'The console session ended. Unlock it again.', tooMany: 'Too many wrong keys. Try again in {minutes} minutes.', invalid: 'Invalid command.' },
         groups: { start: 'Start here', players: 'Players', economy: 'Economy', games: 'Games', community: 'Chat & support', content: 'Content & shop', security: 'Security', system: 'Site & system', recent: 'Recent' },
         ui: {
-            search: 'Search actions, e.g. ban, membership, crash', noResults: 'Nothing matches "{q}".', all: 'All', items: '{n} tools',
+            keep: 'Leave as is', on: 'On', off: 'Off', search: 'Search actions, e.g. ban, membership, crash', noResults: 'Nothing matches "{q}".', all: 'All', items: '{n} tools',
             actions: 'Actions', terminal: 'Terminal', run: 'Run', running: 'Running…', clear: 'Clear', copy: 'Copy command', copied: 'Copied',
             preview: 'Command that will run', danger: 'Asks for confirmation', admin: 'Admin action', quick: 'Console command',
             optional: 'optional', required: 'Fill in {field} first.', badJson: '{field} must be valid JSON.', gap: 'Fill in {field} before the fields after it.',
@@ -21868,7 +21868,8 @@ function quote(v) {
 const asUser = (v) => { const s = String(v).trim(); return /^@|^\d+$/.test(s) ? s : `@${s}`; };
 /** Form values → the command line the server runs. Returns { line } or { error: [key, vars] }. */
 function buildLine(item, values, loose = false) {
-    const filled = (f) => f.type === 'bool' || String(values[f.key] ?? '').trim() !== '';
+    // Required switches always send on/off; optional ones are three-way (leave as is / on / off).
+    const filled = (f) => (f.type === 'bool' && !f.optional) || (values[f.key] !== undefined && values[f.key] !== null && String(values[f.key]).trim() !== '');
     for (const f of item.fields) {
         if (f.type === 'json' && filled(f) && !loose) {
             try {
@@ -21914,12 +21915,16 @@ function buildLine(item, values, loose = false) {
 const inputCls = 'h-10 w-full rounded-xl bg-black/40 px-3 text-sm text-slate-100 outline-none ring-1 ring-inset ring-white/10 transition placeholder:text-slate-600 focus:ring-emerald-400/50';
 function FieldInput({ field, value, onChange, games, t }) {
     const id = `cf-${field.key}`;
+    if (field.type === 'bool' && field.optional) {
+        const opts = [['', t('console.ui.keep')], [true, t('console.ui.on')], [false, t('console.ui.off')]];
+        return ((0, jsx_runtime_1.jsx)("div", { className: "flex flex-wrap gap-1.5", role: "radiogroup", "aria-label": field.label, children: opts.map(([v, lbl]) => ((0, jsx_runtime_1.jsx)("button", { type: "button", role: "radio", "aria-checked": value === v || (v === '' && (value === undefined || value === '')), onClick: () => onChange(v), className: (0, clsx_1.default)('h-9 rounded-lg px-3 text-xs font-bold ring-1 ring-inset transition', value === v || (v === '' && (value === undefined || value === '')) ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white'), children: lbl }, String(v)))) }));
+    }
     if (field.type === 'bool')
         return (0, jsx_runtime_1.jsx)(Controls_1.Switch, { id: id, checked: !!value, onChange: onChange, label: field.label });
     if (field.type === 'select' || field.type === 'game') {
         const opts = field.type === 'game' ? games : field.options ?? [];
         if (opts.length <= 4) {
-            return ((0, jsx_runtime_1.jsxs)("div", { className: "flex flex-wrap gap-1.5", role: "radiogroup", "aria-label": field.label, children: [field.optional && (0, jsx_runtime_1.jsx)("button", { type: "button", onClick: () => onChange(''), className: (0, clsx_1.default)('h-9 rounded-lg px-3 text-xs font-bold ring-1 ring-inset', !value ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white'), children: t('console.ui.all') }), opts.map((o) => ((0, jsx_runtime_1.jsx)("button", { type: "button", role: "radio", "aria-checked": value === o, onClick: () => onChange(o), className: (0, clsx_1.default)('h-9 rounded-lg px-3 font-mono text-xs font-bold ring-1 ring-inset transition', value === o ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white'), children: o }, o)))] }));
+            return ((0, jsx_runtime_1.jsxs)("div", { className: "flex flex-wrap gap-1.5", role: "radiogroup", "aria-label": field.label, children: [field.optional && (0, jsx_runtime_1.jsx)("button", { type: "button", onClick: () => onChange(''), className: (0, clsx_1.default)('h-9 rounded-lg px-3 text-xs font-bold ring-1 ring-inset', !value ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white'), children: field.type === 'game' ? t('console.ui.all') : t('console.ui.keep') }), opts.map((o) => ((0, jsx_runtime_1.jsx)("button", { type: "button", role: "radio", "aria-checked": value === o, onClick: () => onChange(o), className: (0, clsx_1.default)('h-9 rounded-lg px-3 font-mono text-xs font-bold ring-1 ring-inset transition', value === o ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white'), children: o }, o)))] }));
         }
         return ((0, jsx_runtime_1.jsxs)("select", { id: id, value: value ?? '', onChange: (e) => onChange(e.target.value), className: (0, clsx_1.default)(inputCls, 'font-mono'), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: field.optional ? `— ${t('console.ui.optional')} —` : '—' }), opts.map((o) => (0, jsx_runtime_1.jsx)("option", { value: o, children: o }, o))] }));
     }
@@ -21981,7 +21986,7 @@ function SystemConsolePage() {
     const previewLine = selected ? (built.line ?? buildLine(selected, values, true).line) : null;
     const pick = (it) => {
         setSelected(it);
-        setValues(Object.fromEntries(it.fields.filter((f) => f.type === 'bool').map((f) => [f.key, false])));
+        setValues(Object.fromEntries(it.fields.filter((f) => f.type === 'bool' && !f.optional).map((f) => [f.key, false])));
         setFormErr(null);
         setResult(null);
     };
@@ -22029,6 +22034,12 @@ function SystemConsolePage() {
             const r = await (0, server_1.api)('console/exec', confirming ? { command: cmd, confirm: cmd } : { command: cmd });
             setPending(r.confirm ? cmd : null);
             const kind = r.confirm ? 'warn' : r.ok ? 'out' : 'err';
+            // Server error codes (e.g. admin.errors.invalid) are shown in plain words.
+            if (r.errorCode) {
+                const plain = t(r.errorCode, r.errorVars ?? {});
+                if (plain && plain !== r.errorCode)
+                    r.output = r.output.replace(`error: ${r.errorCode}`, `error: ${plain}`);
+            }
             setLines((l) => [...l, { kind, text: r.output }]);
             if (fromForm)
                 setResult({ kind, text: r.output, confirm: !!r.confirm, cmd });
