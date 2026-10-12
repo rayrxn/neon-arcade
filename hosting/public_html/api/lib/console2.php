@@ -15,7 +15,7 @@ function console_action_catalog(): array
     $U = ['userId', 'user', 'Player (@name)', null, false];
     return [
         // ── Players ──
-        'editUser' => ['players', 'Edit a player', 'Change a player\'s display name, status text or other profile fields. Put the changes in "patch" as JSON.', [$U, ['patch', 'json', 'Changes as JSON, e.g. {"displayName":"Ray"}'], $R], false],
+        'editUser' => ['players', 'Edit a player', 'Change a player\'s display name or username, or reset their avatar. Leave a field empty to keep it.', [$U, ['displayName', 'text', 'Display name (2–24 characters)', null, true], ['username', 'text', 'Username (3–16 letters, digits, _)', null, true], ['resetAvatar', 'bool', 'Reset avatar', null, true], $R], false],
         'warnUser' => ['players', 'Warn a player', 'Adds a written warning to the player\'s record and sends them a notice.', [$U, $R], false],
         'removeWarning' => ['players', 'Remove a warning', 'Deletes one warning from a player\'s record (use the warning id from the Admin panel).', [$U, ['warningId', 'text', 'Warning id'], $R], false],
         'muteUser' => ['players', 'Mute in chat', 'Stops the player from writing in chat for some minutes.', [$U, ['minutes', 'int', 'Minutes'], $R], false],
@@ -23,31 +23,31 @@ function console_action_catalog(): array
         'unbanUser' => ['players', 'Lift a ban', 'Lets the player sign in again.', [$U, $R], false],
         'freezeAccount' => ['players', 'Freeze account', 'A frozen account can sign in but cannot play, send or buy anything.', [$U, ['frozen', 'bool', 'Frozen'], $R], false],
         'setRole' => ['players', 'Change staff role', 'Gives or removes staff powers. super_admin is the Owner role.', [$U, ['role', 'select', 'Role', ['user', 'developer', 'support', 'moderator', 'admin', 'super_admin']], $R], true],
-        'setPlayerRole' => ['players', 'Set player role', 'The player tag shown next to the name (Newcomer, Regular…). Empty = automatic.', [$U, ['role', 'text', 'Role slug', null, true], $R], false],
+        'setPlayerRole' => ['players', 'Set player role', 'The player tag shown next to the name (Newcomer, Regular…). Empty = automatic.', [$U, ['role', 'select', 'Role (empty = automatic)', '@playerRoles', true], $R], false],
         'setTestAccount' => ['players', 'Mark as test account', 'Test accounts can use test tools and are left out of statistics.', [$U, ['isTest', 'bool', 'Test account'], $R], false],
         'terminateUserSessions' => ['players', 'Sign out everywhere', 'Ends every sign-in of the player and refunds their open rounds.', [$U, $R], true],
-        'resetProgress' => ['players', 'Reset progress', 'Resets one part of a player\'s progress.', [$U, ['part', 'select', 'Part', ['level', 'quests', 'achievements', 'pass', 'all']], $R], true],
+        'resetProgress' => ['players', 'Reset progress', 'progression = level, XP, achievements and stats · quests · daily = daily reward streak · profile = name and avatar.', [$U, ['part', 'select', 'Part', ['progression', 'quests', 'daily', 'profile']], $R], true],
         // ── Economy ──
         'adjustCurrency' => ['economy', 'Add / remove coins', 'Puts AC or AG into a player\'s wallet (negative takes it away). Every change is a ledger entry.', [$U, ['currency', 'select', 'Currency', ['AC', 'AG']], ['delta', 'num', 'Amount (+/-)'], $R], true],
         'resetCurrency' => ['economy', 'Reset a balance', 'Sets AC, AG or both back to zero for one player.', [$U, ['which', 'select', 'Which', ['AC', 'AG', 'both']], $R], true],
         'freezeWallet' => ['economy', 'Freeze wallet', 'Blocks all coin movement for one player (bets, transfers, exchange).', [$U, ['frozen', 'bool', 'Frozen'], $R], false],
         'reverseTransaction' => ['economy', 'Reverse a transaction', 'Undoes one ledger transaction by its id.', [['txId', 'text', 'Transaction id'], $R], true],
-        'grantItem' => ['economy', 'Give a shop item', 'Puts a shop item into a player\'s inventory for free.', [$U, ['itemId', 'text', 'Item id'], ['qty', 'int', 'Quantity', null, true], $R], false],
+        'grantItem' => ['economy', 'Give a shop item', 'Puts a shop item into a player\'s inventory for free. A negative quantity takes it away.', [$U, ['itemId', 'select', 'Item', '@items'], ['qty', 'int', 'Quantity (default 1)', null, true], $R], false],
         'setMembership' => ['economy', 'Set membership', 'Gives VIP or VVIP for some days (0 days removes it).', [$U, ['tier', 'select', 'Tier', ['vip', 'vvip']], ['days', 'int', 'Days'], $R], false],
         'grantPass' => ['economy', 'Give premium pass', 'Unlocks the premium Battle Pass track for this season.', [$U, $R], false],
         'setManager' => ['economy', 'Assign private manager', 'Sets the staff member who looks after a VVIP player.', [$U, ['managerId', 'user', 'Manager (@name)'], $R], false],
         'setLoyaltyXp' => ['economy', 'Set Loyalty XP', 'Sets a player\'s Loyalty XP (the card follows the XP).', [$U, ['xp', 'int', 'Loyalty XP'], $R], false],
-        'setLoyaltyCard' => ['economy', 'Set loyalty card', 'Locks a card on a player. mode "floor" = at least this card, "override" = exactly this card.', [$U, ['card', 'select', 'Card', ['none', 'silver', 'gold', 'platinum', 'infinite', 'black', 'monarch', 'vivace']], ['mode', 'select', 'Mode', ['floor', 'override', 'clear']], $R], false],
-        'setEconomy' => ['economy', 'Exchange settings', 'How many AC one AG costs and the AC → AG limits.', [['acPerAg', 'int', 'AC per 1 AG', null, true], ['convertMinAg', 'int', 'Minimum AG per exchange', null, true], ['convertMaxAgPerDay', 'int', 'Max AG per day', null, true], $R], true],
+        'setLoyaltyCard' => ['economy', 'Set loyalty card', 'floor = at least this card · override = exactly this card · clear = remove the override (the card follows XP again).', [$U, ['mode', 'select', 'Mode', ['floor', 'override', 'clear']], ['card', 'select', 'Card (not needed for clear)', '@cards', true], $R], false],
+        'setEconomy' => ['economy', 'Exchange settings', 'How many AC one AG costs and the AC → AG limits. Empty fields keep their current value.', [['acPerAg', 'int', 'AC per 1 AG', null, true], ['convertMinAg', 'int', 'Minimum AG per exchange', null, true], ['convertMaxAgPerDay', 'int', 'Max AG per player per day', null, true], $R], true],
         'setLuck' => ['economy', 'Luck boost (gacor)', 'Temporarily raises the payout multiplier for one player or everyone ("*").', [['username', 'text', 'Player name or *'], ['mult', 'num', 'Multiplier, e.g. 1.2'], ['minutes', 'int', 'Minutes'], ['label', 'text', 'Label', null, true], $R], true],
         'clearLuck' => ['economy', 'Clear luck boost', 'Ends a running luck boost (empty player = the global one).', [['userId', 'user', 'Player (@name)', null, true], $R], false],
         'economyAnalytics' => ['economy', 'Economy report', 'Circulation, wagers, payouts and risk signals.', [], false],
-        'createCode' => ['economy', 'Create redeem code', 'Makes a code players can redeem for coins or an item.', [['code', 'text', 'Code'], ['kind', 'select', 'Reward', ['AC', 'AG', 'item']], ['amount', 'num', 'Amount', null, true], ['itemId', 'text', 'Item id (for item codes)', null, true], ['maxUses', 'int', 'Max uses', null, true], ['perUser', 'int', 'Uses per player', null, true], ['expiresAt', 'text', 'Expires (YYYY-MM-DD)', null, true], ['membersOnly', 'bool', 'Members only', null, true], $R], false],
+        'createCode' => ['economy', 'Create redeem code', 'Makes a code players can redeem. AC/AG codes need an amount (AG max 10), item codes need an item.', [['code', 'text', 'Code (4–16 letters/digits)'], ['kind', 'select', 'Reward', ['AC', 'AG', 'item']], ['amount', 'int', 'Amount (AC/AG)', null, true], ['itemId', 'select', 'Item (item codes)', '@redeemItems', true], ['maxUses', 'int', 'Max uses in total (empty = unlimited)', null, true], ['perUser', 'int', 'Uses per player (1–10)', null, true], ['expiresAt', 'text', 'Expires (YYYY-MM-DD HH:MM)', null, true], ['membersOnly', 'select', 'Only for members', ['vip', 'vvip'], true], $R], false],
         'setCodeActive' => ['economy', 'Turn a code on/off', 'Pauses or resumes a redeem code.', [['code', 'text', 'Code'], ['active', 'bool', 'Active'], $R], false],
         // ── Games ──
         'setGameStatus' => ['games', 'Game status', 'live = open, maintenance = closed with a notice, disabled = hidden.', [['slug', 'game', 'Game'], ['status', 'select', 'Status', ['live', 'maintenance', 'disabled']], $R], false],
         'setGameMaxBet' => ['games', 'Game max bet', 'Highest bet allowed in one game (in AC).', [['slug', 'game', 'Game'], ['maxBet', 'num', 'Max bet'], $R], false],
-        'setGameControls' => ['games', 'Game controls', 'Betting and new rounds on/off. Patch JSON, e.g. {"betting_enabled":false}.', [['slug', 'game', 'Game'], ['patch', 'json', 'Changes as JSON'], ['forceEnd', 'bool', 'Also end open rounds', null, true], $R], false],
+        'setGameControls' => ['games', 'Game controls', 'Switch betting and new rounds, change limits or the maintenance notice of one game. Empty fields stay as they are.', [['slug', 'game', 'Game'], ['status', 'select', 'Status', ['live', 'maintenance', 'disabled'], true], ['bettingEnabled', 'bool', 'Betting', null, true], ['newSessions', 'bool', 'New rounds', null, true], ['maxBet', 'int', 'Max bet AC', null, true], ['maxBetAG', 'int', 'Max bet AG', null, true], ['maintenanceMessage', 'text', 'Maintenance notice', null, true], ['forceEnd', 'bool', 'Also end open rounds', null, true], $R], false],
         'endGameSessions' => ['games', 'End open rounds', 'Cancels every open round of one game and refunds the bets.', [['slug', 'game', 'Game'], $R], true],
         'endSession' => ['games', 'End one round', 'Cancels one open round by its id (refunded).', [['sessionId', 'text', 'Round id'], $R], true],
         'invalidateSession' => ['games', 'Void a round', 'Marks a round invalid after a rule break.', [['sessionId', 'text', 'Round id'], ['violation', 'text', 'What happened'], $R], true],
@@ -57,48 +57,48 @@ function console_action_catalog(): array
         // ── Community ──
         'deleteMessage' => ['community', 'Delete chat message', 'Removes one chat message for everyone.', [['messageId', 'text', 'Message id'], $R], false],
         'setSlowMode' => ['community', 'Chat slow mode', 'Seconds a player must wait between messages (0 = off).', [['seconds', 'int', 'Seconds'], $R], false],
-        'setModeration' => ['community', 'Chat filter settings', 'Filter level and automatic mutes.', [['level', 'select', 'Level', ['off', 'light', 'standard', 'strict']], ['autoMute', 'bool', 'Auto-mute', null, true], ['autoMuteStrikes', 'int', 'Strikes before mute', null, true], ['autoMuteMinutes', 'int', 'Mute minutes', null, true], ['repeatLimit', 'int', 'Repeat limit', null, true], $R], false],
-        'addTerm' => ['community', 'Add blocked word', 'Adds a word to the chat filter.', [['term', 'text', 'Word'], ['match', 'select', 'Match', ['word', 'contains']], ['severity', 'select', 'Severity', ['mask', 'block']]], false],
+        'setModeration' => ['community', 'Chat filter settings', 'Filter level and automatic mutes. Empty fields keep their current value.', [['level', 'select', 'Level', ['relaxed', 'standard', 'strict']], ['autoMute', 'bool', 'Auto-mute', null, true], ['autoMuteStrikes', 'int', 'Strikes before mute (2–20)', null, true], ['autoMuteMinutes', 'int', 'Mute minutes (1–1440)', null, true], ['repeatLimit', 'int', 'Repeat limit (4–30)', null, true], $R], false],
+        'addTerm' => ['community', 'Add blocked word', 'Adds a word (letters only) to the chat filter. Severity 1 = mask, 2 = mask + strike, 3 = block the message.', [['term', 'text', 'Word'], ['match', 'select', 'Match', ['word', 'prefix', 'contains']], ['severity', 'select', 'Severity', ['1', '2', '3']]], false],
         'removeTerm' => ['community', 'Remove blocked word', 'Takes a word out of the chat filter.', [['term', 'text', 'Word']], false],
         'reportAction' => ['community', 'Handle a report', 'Resolve, dismiss or assign a player report.', [['reportId', 'text', 'Report id'], ['action', 'select', 'Action', ['resolve', 'dismiss', 'assign', 'note']], ['resolution', 'text', 'Resolution', null, true], ['assigneeId', 'user', 'Assign to (@name)', null, true], ['note', 'text', 'Note', null, true], $R], false],
         'ticketClaim' => ['community', 'Claim a ticket', 'Takes a support ticket.', [['ticketId', 'text', 'Ticket id'], ['force', 'bool', 'Take over from someone', null, true]], false],
         'assignTicket' => ['community', 'Assign a ticket', 'Gives a support ticket to a staff member.', [['ticketId', 'text', 'Ticket id'], ['adminId', 'user', 'Staff (@name)']], false],
-        'setTicketStatus' => ['community', 'Ticket status', 'Open, pending or closed.', [['ticketId', 'text', 'Ticket id'], ['status', 'select', 'Status', ['OPEN', 'PENDING', 'CLOSED']]], false],
+        'setTicketStatus' => ['community', 'Ticket status', 'Moves a support ticket to another status.', [['ticketId', 'text', 'Ticket id'], ['status', 'select', 'Status', '@ticketStatuses']], false],
         'ticketPriority' => ['community', 'Ticket priority', 'How urgent a ticket is.', [['ticketId', 'text', 'Ticket id'], ['priority', 'select', 'Priority', ['low', 'normal', 'high', 'urgent']]], false],
         'ticketEscalate' => ['community', 'Escalate a ticket', 'Sends a ticket up to Admins.', [['ticketId', 'text', 'Ticket id'], $R], false],
         'addTicketNote' => ['community', 'Ticket note', 'Private staff note on a ticket.', [['ticketId', 'text', 'Ticket id'], ['text', 'text', 'Note']], false],
         'reviewClaim' => ['community', 'Review a mission claim', 'Approve or reject a mission claim (e.g. the Roblox mission).', [['claimId', 'text', 'Claim id'], ['approve', 'bool', 'Approve'], ['note', 'text', 'Note', null, true]], false],
         // ── Content ──
-        'saveAnnouncement' => ['content', 'Save an announcement', 'Create or edit an announcement. Data as JSON (title, body, audience, startsAt…).', [['data', 'json', 'Announcement JSON'], $R], false],
+        'saveAnnouncement' => ['content', 'Announcement', 'Creates an announcement (or edits one when you give its id). Without an end date it shows for 3 days.', [['title', 'text', 'Title (3–80)'], ['message', 'text', 'Message'], ['type', 'select', 'Type', ['info', 'event', 'update', 'maintenance']], ['target', 'select', 'Audience', '@audiences'], ['priority', 'select', 'Priority', ['low', 'normal', 'high', 'urgent'], true], ['active', 'bool', 'Active', null, true], ['startAt', 'text', 'Start (YYYY-MM-DD HH:MM)', null, true], ['endAt', 'text', 'End (YYYY-MM-DD HH:MM)', null, true], ['sound', 'bool', 'Play a sound', null, true], ['id', 'text', 'Edit announcement id', null, true], $R], false],
         'deliverAnnouncements' => ['content', 'Deliver announcements', 'Sends announcements that are due now.', [], false],
         'resetAnnouncements' => ['content', 'Clear announcements', 'Removes every announcement.', [$R], true],
-        'upsertShopItem' => ['content', 'Shop item', 'Create or edit a shop item (JSON).', [['item', 'json', 'Item JSON'], $R], false],
-        'setShopItemActive' => ['content', 'Shop item on/off', 'Shows or hides a shop item.', [['id', 'text', 'Item id'], ['active', 'bool', 'Active'], $R], false],
+        'upsertShopItem' => ['content', 'Shop item', 'Create or edit a shop item. JSON keys: id, name, description, kind (frame, badge, theme, nameEffect, chatEffect, profileEffect, emote, boost), category (cosmetics, badges, themes, name-effects, chat-effects, profile-effects, emotes, boosts, loyalty, limited, event), price (AG), rarity (common, rare, epic, legendary), active, stock, style, effect, requires.', [['item', 'json', 'Item JSON, e.g. {"id":"neon-frame","name":"Neon frame","kind":"frame","category":"cosmetics","price":5}'], $R], false],
+        'setShopItemActive' => ['content', 'Shop item on/off', 'Shows or hides a shop item.', [['id', 'select', 'Item', '@items'], ['active', 'bool', 'Active'], $R], false],
         'upsertEmote' => ['content', 'Emote', 'Create or edit an emote (JSON).', [['emote', 'json', 'Emote JSON'], $R], false],
         'upsertMission' => ['content', 'Mission', 'Create or edit a Rewards mission (JSON).', [['mission', 'json', 'Mission JSON'], $R], false],
         'upsertPlayerRole' => ['content', 'Player role', 'Create or edit a player role tag (JSON).', [['role', 'json', 'Role JSON'], $R], false],
         'deletePlayerRole' => ['content', 'Delete player role', 'Removes a player role tag.', [['slug', 'text', 'Role slug'], $R], true],
-        'updateCard' => ['content', 'Loyalty card settings', 'Edit a loyalty card (JSON patch: limits, bonuses, benefits).', [['slug', 'select', 'Card', ['silver', 'gold', 'platinum', 'infinite', 'black', 'monarch', 'vivace']], ['patch', 'json', 'Changes as JSON'], $R], true],
-        'setMembershipConfig' => ['content', 'Membership settings', 'Prices and perks of VIP and VVIP (JSON fields in the args).', [$R], true],
+        'updateCard' => ['content', 'Loyalty card settings', 'Edit a loyalty card. JSON keys: name, color, xpRequired, maxBetAC, maxBetAG, perks, benefits.', [['slug', 'select', 'Card', ['silver', 'gold', 'platinum', 'infinite', 'black', 'monarch', 'vivace']], ['patch', 'json', 'Changes, e.g. {"maxBetAC":300000}'], $R], true],
+        'setMembershipConfig' => ['content', 'Membership settings', 'Price (AG) and length of VIP and VVIP. Empty fields keep their current value; benefits are separated by ;', [['vipPrice', 'int', 'VIP price (AG)', null, true], ['vipDays', 'int', 'VIP days', null, true], ['vipBenefits', 'text', 'VIP benefits (a; b; c)', null, true], ['vvipPrice', 'int', 'VVIP price (AG)', null, true], ['vvipDays', 'int', 'VVIP days', null, true], ['vvipBenefits', 'text', 'VVIP benefits (a; b; c)', null, true], $R], true],
         'endSeasonNow' => ['content', 'End the season now', 'Closes the Battle Pass season and starts the next one.', [$R], true],
         // ── Security ──
-        'reviewFlag' => ['security', 'Review a security flag', 'Confirm or dismiss an anti-cheat flag.', [['flagId', 'text', 'Flag id'], ['decision', 'select', 'Decision', ['confirm', 'dismiss']], ['note', 'text', 'Note', null, true], $R], false],
-        'updateFlag' => ['security', 'Flag status', 'Change the status of an anti-cheat flag.', [['flagId', 'text', 'Flag id'], ['status', 'select', 'Status', ['open', 'reviewing', 'resolved', 'dismissed']], $R], false],
-        'setCaptcha' => ['security', 'Anti-bot check', 'Mode of the sign-in check (pow = built-in proof of work).', [['mode', 'select', 'Mode', ['pow', 'off']], $R], true],
+        'reviewFlag' => ['security', 'Review a security flag', 'Decide on an anti-cheat flag: confirm, dismiss, false_positive, review, escalate or reopen.', [['flagId', 'text', 'Flag id'], ['decision', 'select', 'Decision', ['confirm', 'dismiss', 'false_positive', 'review', 'escalate', 'reopen']], ['note', 'text', 'Note', null, true], $R], false],
+        'updateFlag' => ['security', 'Flag status', 'Change the status of an anti-cheat flag.', [['flagId', 'text', 'Flag id'], ['status', 'select', 'Status', ['open', 'reviewing', 'confirmed', 'dismissed']], $R], false],
+        'setCaptcha' => ['security', 'Anti-bot check', 'pow = built-in proof of work · config = use the provider set in the server config. Keys are optional.', [['mode', 'select', 'Mode', ['pow', 'config']], ['siteKey', 'text', 'Site key', null, true], ['secret', 'text', 'Secret key', null, true], $R], true],
         'setAutoFreeze' => ['security', 'Auto-freeze', 'Automatically freezes wallets that trip the economy safeguards.', [['on', 'bool', 'On'], $R], false],
         // ── System ──
-        'setMaintenance' => ['system', 'Maintenance mode', 'Closes the site for players (staff keep access).', [['enabled', 'bool', 'On'], ['message', 'text', 'Message', null, true], ['until', 'text', 'Until (YYYY-MM-DD HH:MM)', null, true], $R], true],
+        'setMaintenance' => ['system', 'Maintenance mode', 'Closes the site for players. Staff and testers keep access unless you turn that off.', [['enabled', 'bool', 'On'], ['message', 'text', 'Message', null, true], ['startsAt', 'text', 'Starts (YYYY-MM-DD HH:MM)', null, true], ['until', 'text', 'Until (YYYY-MM-DD HH:MM)', null, true], ['bypassAdmins', 'bool', 'Staff can still enter', null, true], ['bypassTesters', 'bool', 'Testers can still enter', null, true], $R], true],
         'emergencyShutdown' => ['system', 'Emergency shutdown', 'Maintenance on, new rounds off everywhere, open rounds refunded. confirm must be SHUTDOWN.', [['enabled', 'bool', 'On'], ['message', 'text', 'Message', null, true], ['confirm', 'text', 'Type SHUTDOWN'], $R], true],
-        'setFeature' => ['system', 'Feature flag', 'Who can see a feature: off, tester, vip or public.', [['key', 'text', 'Feature key'], ['state', 'select', 'State', ['off', 'tester', 'vip', 'public']], $R], false],
-        'setServiceStatus' => ['system', 'Status page', 'Sets a service on the public status page.', [['service', 'text', 'Service'], ['status', 'select', 'Status', ['operational', 'degraded', 'outage', 'maintenance']], ['note', 'text', 'Note', null, true], $R], false],
+        'setFeature' => ['system', 'Feature flag', 'Who can see a feature: off, tester, vip or public.', [['key', 'select', 'Feature', '@features'], ['state', 'select', 'State', ['off', 'tester', 'vip', 'public']], $R], false],
+        'setServiceStatus' => ['system', 'Status page', 'Sets a service on the public status page. Empty status = automatic.', [['service', 'select', 'Service', ['website', 'api', 'database', 'auth', 'games', 'chat', 'notifications']], ['status', 'select', 'Status', ['OPERATIONAL', 'DEGRADED', 'MAINTENANCE', 'OUTAGE'], true], ['note', 'text', 'Note', null, true], $R], false],
         'setBots' => ['system', 'House players', 'Turns the house players in chat, live feeds and Who\'s online on or off.', [['enabled', 'bool', 'On'], $R], false],
         'publishRelease' => ['system', 'Release gate', 'Shows the release to every player (off = staff only).', [['published', 'bool', 'Published'], $R], true],
-        'setTestControl' => ['system', 'Test controls', 'Mode for test tools.', [['mode', 'text', 'Mode'], $R], false],
-        'simulate' => ['system', 'Simulate an event', 'Runs a test event (test accounts only).', [['kind', 'text', 'Kind'], $R], false],
+        'setTestControl' => ['system', 'Test controls', 'Forces wins or losses for a test account (off = normal).', [$U, ['mode', 'select', 'Mode', ['off', 'win', 'loss']], $R], false],
+        'simulate' => ['system', 'Simulate an event', 'Sends a test event to a test account.', [$U, ['kind', 'select', 'Event', ['wins10', 'losses10', 'jackpot', 'reward', 'levelUp', 'quest']], $R], false],
         'errorLog' => ['system', 'Error log', 'Latest server and browser errors.', [['context', 'text', 'Filter', null, true]], false],
         'clearErrors' => ['system', 'Clear old errors', 'Deletes errors older than one hour.', [$R], false],
         'qaRun' => ['system', 'Run QA checks', 'Runs every automatic health check.', [], false],
-        'releaseReset' => ['system', 'Release reset', 'Wipes test data (scope tester) or everything (global). confirm must be RESET TESTER / RESET GLOBAL.', [['scope', 'select', 'Scope', ['tester', 'global']], ['confirm', 'text', 'Confirmation text'], $R], true],
+        'releaseReset' => ['system', 'Release reset', 'Wipes progress and balances of test accounts (testers) or everyone (global). Type RESET TESTER or RESET GLOBAL to confirm.', [['scope', 'select', 'Scope', ['testers', 'global']], ['confirm', 'text', 'Confirmation text'], $R], true],
     ];
 }
 
@@ -157,25 +157,113 @@ function console_do_actor(): array
     return ['id' => (string) $id, 'username' => 'neon_console'] + console_actor();
 }
 
+/** Choice lists that come from live data (shop items, cards…), resolved when the catalog is built. */
+function console_options($opts): ?array
+{
+    if (!is_string($opts)) return $opts;
+    try {
+        return match ($opts) {
+            '@items' => array_values(array_map('strval', array_keys(shop_items_all()))),
+            '@redeemItems' => array_values(ITEM_IDS),
+            '@cards' => array_values(array_filter(array_map('strval', array_keys(cards_all())), fn($c) => $c !== 'none')),
+            '@playerRoles' => array_values(array_map('strval', array_keys(roles_all()))),
+            '@features' => array_values(array_map('strval', array_keys(FEATURE_KEYS))),
+            '@ticketStatuses' => TICKET_STATUSES,
+            '@audiences' => ANNOUNCE_TARGETS,
+            default => [],
+        };
+    } catch (Throwable) {
+        return [];
+    }
+}
+
 /** key=value words → args. @name resolves to a user id for user fields; numbers, booleans and JSON are typed. */
 function console_parse_fields(array $words, array $spec): array
 {
     $types = [];
-    foreach ($spec as $f) $types[$f[0]] = $f[1];
+    $opts = [];
+    foreach ($spec as $f) { $types[$f[0]] = $f[1]; $opts[$f[0]] = $f[3] ?? null; }
     $args = [];
     foreach ($words as $w) {
         if (!str_contains($w, '=')) throw new ConsoleError("expected key=value, got \"$w\"");
         [$k, $v] = explode('=', $w, 2);
-        $t = $types[$k] ?? null;
-        if ($t === 'user' || ($t === null && str_starts_with($v, '@'))) $v = $v === '' ? null : console_user($v)['id'];
-        elseif ($t === 'bool' || in_array(strtolower($v), ['true', 'false', 'on', 'off', 'yes', 'no'], true) && $t !== 'text') $v = in_array(strtolower($v), ['1', 'true', 'on', 'yes'], true);
-        elseif ($t === 'json' || ($t === null && ($v[0] ?? '') === '{')) { $j = json_decode($v, true); if (!is_array($j)) throw new ConsoleError("$k must be JSON"); $v = $j; }
-        elseif (in_array($t, ['int', 'num'], true) || ($t === null && is_numeric($v))) { if ($v === '') $v = null; elseif (!is_numeric($v)) throw new ConsoleError("$k must be a number"); else $v = $t === 'int' ? (int) $v : $v + 0; }
+        if (!array_key_exists($k, $types)) throw new ConsoleError("unknown field \"$k\" — fields: " . implode(', ', array_keys($types)));
+        $t = $types[$k];
+        if ($t === 'user') $v = $v === '' ? null : console_user($v)['id'];
+        elseif ($t === 'bool') {
+            $low = strtolower($v);
+            if (!in_array($low, ['1', '0', 'true', 'false', 'on', 'off', 'yes', 'no'], true)) throw new ConsoleError("$k must be on or off");
+            $v = in_array($low, ['1', 'true', 'on', 'yes'], true);
+        }
+        elseif ($t === 'json') { $j = json_decode($v, true); if (!is_array($j)) throw new ConsoleError("$k must be JSON, e.g. $k='{\"key\":\"value\"}'"); $v = $j; }
+        elseif ($t === 'int' || $t === 'num') {
+            if ($v === '') $v = null;
+            elseif (!is_numeric($v)) throw new ConsoleError("$k must be a number");
+            elseif ($t === 'int' && floor((float) $v) != (float) $v) throw new ConsoleError("$k must be a whole number");
+            else $v = $t === 'int' ? (int) $v : $v + 0;
+        }
+        elseif (($t === 'select' || $t === 'game') && $v !== '') {
+            $list = $t === 'game' ? array_column(q('SELECT slug FROM games')->fetchAll(), 'slug') : (console_options($opts[$k]) ?? []);
+            if ($list && !in_array($v, array_map('strval', $list), true)) throw new ConsoleError("$k must be one of: " . implode(', ', array_slice($list, 0, 30)));
+        }
+        if ($v === '' && $t !== 'text' && $t !== 'reason') $v = null;
         $args[$k] = $v;
     }
-    foreach ($spec as $f) if (empty($f[4]) && !array_key_exists($f[0], $args) && $f[1] !== 'reason') throw new ConsoleError("missing {$f[0]} ({$f[2]})");
-    if (!isset($args['reason'])) $args['reason'] = 'console';
+    foreach ($spec as $f) if (empty($f[4]) && $f[1] !== 'reason' && ($args[$f[0]] ?? null) === null) throw new ConsoleError("missing {$f[0]} ({$f[2]})");
+    if (!isset($args['reason']) || trim((string) $args['reason']) === '') $args['reason'] = 'console';
     return $args;
+}
+
+/** Friendly console fields → the exact shape each Admin action expects. Empty settings keep their current value. */
+function console_action_prepare(string $name, array $a): array
+{
+    $take = function (array $keys) use (&$a): array {
+        $out = [];
+        foreach ($keys as $k) { if (array_key_exists($k, $a)) { if ($a[$k] !== null) $out[$k] = $a[$k]; unset($a[$k]); } }
+        return $out;
+    };
+    switch ($name) {
+        case 'editUser':
+            $patch = $take(['displayName', 'username', 'resetAvatar']);
+            if (!$patch) throw new ConsoleError('nothing to change — fill displayName, username or resetAvatar');
+            $a['patch'] = $patch;
+            break;
+        case 'setLoyaltyCard':
+            if (($a['mode'] ?? '') === 'clear') { $a['mode'] = 'override'; $a['card'] = null; }
+            elseif (empty($a['card'])) throw new ConsoleError('missing card (needed for floor and override)');
+            break;
+        case 'setEconomy':
+            $a = array_merge((array) kv_get('economy'), array_filter($a, fn($v) => $v !== null));
+            break;
+        case 'setModeration':
+            $a = array_merge((array) kv_get('moderation'), array_filter($a, fn($v) => $v !== null));
+            break;
+        case 'setGameControls':
+            $a['patch'] = $take(['status', 'bettingEnabled', 'newSessions', 'maxBet', 'maxBetAG', 'maintenanceMessage']);
+            if (!$a['patch'] && empty($a['forceEnd'])) throw new ConsoleError('nothing to change — fill at least one field');
+            break;
+        case 'saveAnnouncement':
+            $d = $take(['title', 'message', 'type', 'target', 'priority', 'active', 'startAt', 'endAt', 'sound', 'id']);
+            $d += ['active' => true];
+            $a['data'] = $d;
+            break;
+        case 'setMembershipConfig':
+            $cur = (array) kv_get('memberships');
+            $f = $take(['vipPrice', 'vipDays', 'vipBenefits', 'vvipPrice', 'vvipDays', 'vvipBenefits']);
+            foreach (['vip', 'vvip'] as $tier) {
+                $c = (array) ($cur[$tier] ?? []);
+                $benefits = isset($f["{$tier}Benefits"]) ? array_values(array_filter(array_map('trim', explode(';', (string) $f["{$tier}Benefits"])))) : ($c['benefits'] ?? []);
+                $a[$tier] = ['price' => $f["{$tier}Price"] ?? ($c['price'] ?? 0), 'days' => $f["{$tier}Days"] ?? ($c['days'] ?? 30), 'benefits' => $benefits];
+            }
+            break;
+        case 'addTerm':
+            $a['severity'] = (int) ($a['severity'] ?? 2);
+            break;
+        case 'setPlayerRole':
+            if (($a['role'] ?? '') === '') $a['role'] = null;
+            break;
+    }
+    return $a;
 }
 
 function console_pretty($v, int $depth = 0): string
@@ -202,8 +290,10 @@ function console_help_action(string $name): string
     $cat = console_action_catalog();
     if (!isset($cat[$name])) throw new ConsoleError("unknown action: $name — type `actions`");
     [$group, $title, $help, $fields, $danger] = $cat[$name];
+    foreach ($fields as &$fx) $fx[3] = console_options($fx[3] ?? null);
+    unset($fx);
     $lines = ["$title  (do $name)", '', wordwrap($help, 90), '', 'Fields:'];
-    foreach ($fields as $f) $lines[] = '  ' . str_pad($f[0] . '=', 18) . $f[2] . (!empty($f[3]) ? ' — one of: ' . implode(', ', $f[3]) : '') . (!empty($f[4]) || $f[1] === 'reason' ? ' (optional)' : '');
+    foreach ($fields as $f) $lines[] = '  ' . str_pad($f[0] . '=', 18) . $f[2] . (!empty($f[3]) ? ' — one of: ' . implode(', ', array_slice($f[3], 0, 20)) . (count($f[3]) > 20 ? ', …' : '') : '') . (!empty($f[4]) || $f[1] === 'reason' ? ' (optional)' : '');
     if (!$fields) $lines[] = '  (none)';
     $ex = 'do ' . $name . ' ' . implode(' ', array_map(fn($f) => $f[0] . '=' . ($f[1] === 'user' ? '@name' : ($f[3][0] ?? ($f[1] === 'bool' ? 'on' : ($f[1] === 'reason' ? '"why"' : '…')))), array_filter($fields, fn($f) => empty($f[4]))));
     $lines[] = '';
@@ -221,8 +311,10 @@ function console_extra_commands(): array
             $name = array_shift($a);
             $cat = console_action_catalog();
             if (!isset($cat[$name])) throw new ConsoleError("unknown action: $name — type `actions`");
-            $args = console_parse_fields($a, $cat[$name][3]);
+            $args = console_action_prepare($name, console_parse_fields($a, $cat[$name][3]));
             $res = admin_action(console_do_actor(), $name, $args);
+            // Results can hold objects (JSON maps); normalise to arrays before printing.
+            $res = json_decode((string) json_encode($res), true);
             return "✓ {$cat[$name][1]}\n" . console_pretty($res);
         }],
         'actions' => ['actions [group]', 'List every Admin action you can run with `do`.', false, function (array $a) {
@@ -319,7 +411,7 @@ function console_catalog(): array
     }
     foreach (console_action_catalog() as $k => $x) {
         $c[] = ['kind' => 'action', 'name' => $k, 'group' => $x[0], 'title' => $x[1], 'help' => $x[2], 'usage' => "do $k", 'danger' => (bool) $x[4],
-            'fields' => array_map(fn($f) => ['key' => $f[0], 'type' => $f[1], 'label' => $f[2], 'options' => $f[3] ?? null, 'optional' => !empty($f[4]) || $f[1] === 'reason'], $x[3]), 'examples' => []];
+            'fields' => array_map(fn($f) => ['key' => $f[0], 'type' => $f[1], 'label' => $f[2], 'options' => console_options($f[3] ?? null), 'optional' => !empty($f[4]) || $f[1] === 'reason'], $x[3]), 'examples' => []];
     }
     $games = array_column(q('SELECT slug FROM games ORDER BY slug')->fetchAll(), 'slug');
     return ['groups' => CONSOLE_GROUPS, 'items' => $c, 'games' => $games];

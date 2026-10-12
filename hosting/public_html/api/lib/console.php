@@ -130,7 +130,7 @@ function console_commands(): array
         }],
         'users' => ['users <search>', 'Find players by name or email.', false, function (array $a) {
             if (!$a) throw new ConsoleError('usage: users <search>');
-            $rows = q("SELECT username, role::text AS role, status::text AS status, to_char(created_at, 'YYYY-MM-DD') AS joined FROM users WHERE username ILIKE ? OR email ILIKE ? ORDER BY username LIMIT 25", ['%' . $a[0] . '%', '%' . $a[0] . '%'])->fetchAll();
+            $rows = q("SELECT username, role::text AS role, status::text AS status, to_char(created_at, 'YYYY-MM-DD') AS joined FROM users WHERE lower(username::text COLLATE \"C\") LIKE lower(?) OR lower(email::text COLLATE \"C\") LIKE lower(?) ORDER BY username LIMIT 25", ['%' . $a[0] . '%', '%' . $a[0] . '%'])->fetchAll();
             return console_table($rows, ['username', 'role', 'status', 'joined']);
         }],
         'user' => ['user <name>', 'Show one player: role, status, balances, card, membership.', false, function (array $a) {
@@ -254,7 +254,7 @@ function console_commands(): array
         'announce' => ['announce <all|here|vip|vvip|members|tester|moderator|staff> <message…>', 'Send an announcement now.', false, function (array $a) use ($reasonOf) {
             if (count($a) < 2 || !in_array($a[0], ANNOUNCE_TARGETS, true)) throw new ConsoleError('usage: announce <target> <message>');
             $msg = mb_substr($reasonOf($a, 1), 0, 1000);
-            $id = (string) qv("INSERT INTO announcements (title, message, type, start_at, active, target, priority, created_by) VALUES ('Announcement', ?, 'info', now(), TRUE, ?, 'high', NULL) RETURNING id", [$msg, $a[0]]);
+            $id = (string) qv("INSERT INTO announcements (title, message, type, start_at, active, target, priority, created_by) VALUES ('Announcement', ?, 'info', now(), TRUE, ?, 'high', ?) RETURNING id", [$msg, $a[0], console_do_actor()['id']]);
             $n = deliver_announcements();
             audit_log(console_actor(), 'announcement.create', null, 'console', $id, null, ['target' => $a[0]], '—');
             return "sent to $n players (@{$a[0]})";
@@ -327,8 +327,19 @@ function console_exec(string $line, ?string $confirm = null): array
         return ['ok' => false, 'output' => $e->getMessage() . "\nusage: $usage"];
     } catch (ApiError $e) {
         console_audit($s['short'], $line, false, $e->getMessage());
-        return ['ok' => false, 'output' => 'error: ' . $e->getMessage()];
+        // The web console translates the code; for `do`, the action's fields are listed as a hint.
+        $hint = $name === 'do' && isset($words[0]) && isset(console_action_catalog()[$words[0]]) ? "\n\n" . console_help_action($words[0]) : '';
+        return ['ok' => false, 'output' => 'error: ' . $e->getMessage() . $hint, 'errorCode' => $e->getMessage(), 'errorVars' => $e->vars];
+    } catch (Throwable $e) {
+        log_error_safe('console', $e);
+        console_audit($s['short'], $line, false, 'server error');
+        return ['ok' => false, 'output' => 'server error: ' . mb_substr($e->getMessage(), 0, 240)];
     }
+}
+
+function log_error_safe(string $ctx, Throwable $e): void
+{
+    try { q('INSERT INTO error_log (context, code, message, stack) VALUES (?, ?, ?, ?)', [$ctx, get_class($e), mb_substr($e->getMessage(), 0, 1000), mb_substr($e->getTraceAsString(), 0, 4000)]); } catch (Throwable) { /* logging must not fail the console */ }
 }
 
 function console_api(string $path): array
