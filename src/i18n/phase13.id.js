@@ -48,7 +48,7 @@ export default {
     errors: { disabled: 'Console dimatikan di server ini.', badKey: 'Kunci console salah.', expired: 'Sesi console berakhir. Buka lagi.', tooMany: 'Terlalu banyak kunci salah. Coba lagi dalam {minutes} menit.', invalid: 'Perintah tidak valid.' },
     groups: { start: 'Mulai di sini', players: 'Pemain', economy: 'Ekonomi', games: 'Game', community: 'Chat & bantuan', content: 'Konten & toko', security: 'Keamanan', system: 'Situs & sistem', recent: 'Terakhir dipakai' },
     ui: {
-      search: 'Cari aksi, mis. ban, membership, crash', noResults: 'Tidak ada yang cocok dengan "{q}".', all: 'Semua', items: '{n} alat',
+      keep: 'Biarkan', on: 'Nyala', off: 'Mati', search: 'Cari aksi, mis. ban, membership, crash', noResults: 'Tidak ada yang cocok dengan "{q}".', all: 'Semua', items: '{n} alat',
       actions: 'Aksi', terminal: 'Terminal', run: 'Jalankan', running: 'Menjalankan…', clear: 'Bersihkan', copy: 'Salin perintah', copied: 'Tersalin',
       preview: 'Perintah yang akan dijalankan', danger: 'Minta konfirmasi', admin: 'Aksi Admin', quick: 'Perintah console',
       optional: 'opsional', required: 'Isi {field} dulu.', badJson: '{field} harus JSON yang valid.', gap: 'Isi {field} sebelum kolom setelahnya.',

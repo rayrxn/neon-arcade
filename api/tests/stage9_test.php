@@ -129,6 +129,33 @@ check('do: missing field explained', !$x['ok'] && str_contains($x['output'], 'mi
 $x = $con('console/exec', ['command' => 'actions economy'])['data'];
 check('actions lists a group', $x['ok'] && str_contains($x['output'], 'adjustCurrency'), $x);
 
+echo "Console fixes\n";
+$run = function (string $c) use ($con) { return $con('console/exec', ['command' => $c, 'confirm' => $c])['data']; };
+$x = $run("users sec_");
+check('users search works (no collation error)', $x['ok'] && str_contains($x['output'], "sec_$tag"), $x);
+$x = $run('announce all Console test message');
+check('announce works', $x['ok'] && str_contains($x['output'], 'sent to'), $x);
+$before = kv_get('memberships');
+$x = $run('do setMembershipConfig vvipPrice=777');
+$GLOBALS['NEON_KV_DIRTY']['memberships'] = true;
+$after = kv_get('memberships');
+check('membership settings keep untouched values', $x['ok'] && (int) $after['vvip']['price'] === 777 && (int) $after['vip']['price'] === (int) $before['vip']['price'] && $after['vip']['benefits'] == $before['vip']['benefits'], [$x, $before, $after]);
+$eco = kv_get('economy');
+$x = $run('do setEconomy convertMaxAgPerDay=321');
+$GLOBALS['NEON_KV_DIRTY']['economy'] = true;
+check('exchange settings keep untouched values', $x['ok'] && (int) kv_get('economy')['convertMaxAgPerDay'] === 321 && (int) kv_get('economy')['acPerAg'] === (int) $eco['acPerAg'], $x);
+$x = $run('do setFeature key=chat state=off');
+check('select value "off" stays text', $x['ok'], $x);
+$run('do setFeature key=chat state=public');
+$x = $run('do setGameStatus slug=crash status=bogus');
+check('bad choice is explained', !$x['ok'] && str_contains($x['output'], 'one of: live'), $x);
+$x = $run('do setGameControls slug=crash typo=1');
+check('unknown field is explained', !$x['ok'] && str_contains($x['output'], 'unknown field'), $x);
+$x = $run('do economyAnalytics');
+check('economy report prints', $x['ok'] && str_contains($x['output'], 'circulation'), $x);
+$x = $run('do setTicketStatus ticketId=00000000-0000-0000-0000-000000000000 status=CLOSED');
+check('admin errors come back with a code and the action help', !$x['ok'] && !empty($x['errorCode']) && str_contains($x['output'], 'Fields:'), $x);
+
 echo "Email code\n";
 q("UPDATE users SET email_verified_at = now(), role = 'user' WHERE id = ?", [$UID]);
 $r2 = call('POST', 'auth/login', ['email' => "sec_$tag", 'password' => 'rahasia123'], 'u5');

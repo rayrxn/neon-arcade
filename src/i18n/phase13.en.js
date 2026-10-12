@@ -48,7 +48,7 @@ export default {
     errors: { disabled: 'The console is turned off on this server.', badKey: 'Wrong console key.', expired: 'The console session ended. Unlock it again.', tooMany: 'Too many wrong keys. Try again in {minutes} minutes.', invalid: 'Invalid command.' },
     groups: { start: 'Start here', players: 'Players', economy: 'Economy', games: 'Games', community: 'Chat & support', content: 'Content & shop', security: 'Security', system: 'Site & system', recent: 'Recent' },
     ui: {
-      search: 'Search actions, e.g. ban, membership, crash', noResults: 'Nothing matches "{q}".', all: 'All', items: '{n} tools',
+      keep: 'Leave as is', on: 'On', off: 'Off', search: 'Search actions, e.g. ban, membership, crash', noResults: 'Nothing matches "{q}".', all: 'All', items: '{n} tools',
       actions: 'Actions', terminal: 'Terminal', run: 'Run', running: 'Running…', clear: 'Clear', copy: 'Copy command', copied: 'Copied',
       preview: 'Command that will run', danger: 'Asks for confirmation', admin: 'Admin action', quick: 'Console command',
       optional: 'optional', required: 'Fill in {field} first.', badJson: '{field} must be valid JSON.', gap: 'Fill in {field} before the fields after it.',

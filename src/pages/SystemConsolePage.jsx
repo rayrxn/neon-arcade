@@ -30,7 +30,8 @@ const asUser = (v) => { const s = String(v).trim(); return /^@|^\d+$/.test(s) ? 
 
 /** Form values → the command line the server runs. Returns { line } or { error: [key, vars] }. */
 function buildLine(item, values, loose = false) {
-  const filled = (f) => f.type === 'bool' || String(values[f.key] ?? '').trim() !== ''
+  // Required switches always send on/off; optional ones are three-way (leave as is / on / off).
+  const filled = (f) => (f.type === 'bool' && !f.optional) || (values[f.key] !== undefined && values[f.key] !== null && String(values[f.key]).trim() !== '')
   for (const f of item.fields) {
     if (f.type === 'json' && filled(f) && !loose) { try { JSON.parse(values[f.key]) } catch { return { error: ['console.ui.badJson', { field: f.label }] } } }
   }
@@ -61,13 +62,24 @@ const inputCls = 'h-10 w-full rounded-xl bg-black/40 px-3 text-sm text-slate-100
 
 function FieldInput({ field, value, onChange, games, t }) {
   const id = `cf-${field.key}`
+  if (field.type === 'bool' && field.optional) {
+    const opts = [['', t('console.ui.keep')], [true, t('console.ui.on')], [false, t('console.ui.off')]]
+    return (
+      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={field.label}>
+        {opts.map(([v, lbl]) => (
+          <button key={String(v)} type="button" role="radio" aria-checked={value === v || (v === '' && (value === undefined || value === ''))} onClick={() => onChange(v)}
+            className={clsx('h-9 rounded-lg px-3 text-xs font-bold ring-1 ring-inset transition', value === v || (v === '' && (value === undefined || value === '')) ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white')}>{lbl}</button>
+        ))}
+      </div>
+    )
+  }
   if (field.type === 'bool') return <Switch id={id} checked={!!value} onChange={onChange} label={field.label} />
   if (field.type === 'select' || field.type === 'game') {
     const opts = field.type === 'game' ? games : field.options ?? []
     if (opts.length <= 4) {
       return (
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={field.label}>
-          {field.optional && <button type="button" onClick={() => onChange('')} className={clsx('h-9 rounded-lg px-3 text-xs font-bold ring-1 ring-inset', !value ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white')}>{t('console.ui.all')}</button>}
+          {field.optional && <button type="button" onClick={() => onChange('')} className={clsx('h-9 rounded-lg px-3 text-xs font-bold ring-1 ring-inset', !value ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white')}>{field.type === 'game' ? t('console.ui.all') : t('console.ui.keep')}</button>}
           {opts.map((o) => (
             <button key={o} type="button" role="radio" aria-checked={value === o} onClick={() => onChange(o)} className={clsx('h-9 rounded-lg px-3 font-mono text-xs font-bold ring-1 ring-inset transition', value === o ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/40' : 'text-slate-400 ring-white/10 hover:text-white')}>{o}</button>
           ))}
@@ -179,7 +191,7 @@ export default function SystemConsolePage() {
 
   const pick = (it) => {
     setSelected(it)
-    setValues(Object.fromEntries(it.fields.filter((f) => f.type === 'bool').map((f) => [f.key, false])))
+    setValues(Object.fromEntries(it.fields.filter((f) => f.type === 'bool' && !f.optional).map((f) => [f.key, false])))
     setFormErr(null)
     setResult(null)
   }
@@ -221,6 +233,11 @@ export default function SystemConsolePage() {
       const r = await api('console/exec', confirming ? { command: cmd, confirm: cmd } : { command: cmd })
       setPending(r.confirm ? cmd : null)
       const kind = r.confirm ? 'warn' : r.ok ? 'out' : 'err'
+      // Server error codes (e.g. admin.errors.invalid) are shown in plain words.
+      if (r.errorCode) {
+        const plain = t(r.errorCode, r.errorVars ?? {})
+        if (plain && plain !== r.errorCode) r.output = r.output.replace(`error: ${r.errorCode}`, `error: ${plain}`)
+      }
       setLines((l) => [...l, { kind, text: r.output }])
       if (fromForm) setResult({ kind, text: r.output, confirm: !!r.confirm, cmd })
       return r
