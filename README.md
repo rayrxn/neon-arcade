@@ -1,3 +1,5 @@
+> **Start here:** the current project status, rules and backlog are in [`docs/project-handover/`](docs/project-handover/README.md) (2026-10-17). The text below describes the early phases.
+
 # Neon Arcade — Fase 1–6
 
 Platform arcade virtual (React + Vite + Tailwind + Framer Motion + Zustand + React Router).

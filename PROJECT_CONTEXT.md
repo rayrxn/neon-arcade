@@ -101,3 +101,5 @@ See `docs/ROADMAP.md`.
 2. Inspect first: `api/lib/v2core.php`, `api/lib/console.php`, `api/index.php`, `src/services/server.js`, `src/components/ui/Identity.jsx`, `src/admin/pages/Operations.jsx`, `db/migrations/010…013`.
 3. Don't redo: anything in §3 "verified". Re-check visually anything in §3 "unverified" before changing it.
 4. First step: run the browser server-mode suite (`bash tests/run-server-mode.sh`) + a visual pass (mobile/desktop, light/dark/potato) to turn "unverified" into verified or into bugs; then ROADMAP T1–T3.
+
+> **2026-10-17:** the current status, rules and backlog live in [`docs/project-handover/`](docs/project-handover/README.md). This file is history, except line 42 (current build id).
